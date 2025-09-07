@@ -7,8 +7,8 @@ const ENV = {
     // Add your local development Netlify Functions URL here
   },
   production: {
-    API_BASE_URL: 'https://your-netlify-site.netlify.app/.netlify/functions',
-    // Replace with your actual production Netlify site URL
+    API_BASE_URL: 'https://stefna.xyz/.netlify/functions',
+    // Production Netlify site URL
   },
 };
 
