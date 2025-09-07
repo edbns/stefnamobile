@@ -10,6 +10,7 @@ export interface StoredMedia {
   id: string;
   localUri: string;
   cloudUrl?: string;
+  cloudId?: string; // Cloudinary public ID for deletion
   filename: string;
   createdAt: Date;
   synced: boolean;

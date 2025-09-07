@@ -19,7 +19,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to take photos for AI generation.",
         "NSPhotoLibraryUsageDescription": "This app accesses your photo library to upload images for AI generation.",
-        "NSPhotoLibraryAddUsageDescription": "This app saves generated images to your photo library."
+        "NSPhotoLibraryAddUsageDescription": "This app saves generated images to your photo library.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -33,6 +34,10 @@
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_MEDIA_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.ACCESS_MEDIA_LOCATION"
       ]
     },
@@ -41,6 +46,18 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "20065ae5-0214-413d-8de7-7182c3467641"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641"
+    }
   }
 }

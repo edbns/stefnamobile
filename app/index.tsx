@@ -28,7 +28,6 @@ export default function SplashScreen() {
         style={styles.logo}
         resizeMode="contain"
       />
-      <Text style={styles.appName}>Stefna</Text>
     </View>
   );
 }
@@ -41,8 +40,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     marginBottom: 20,
   },
   appName: {

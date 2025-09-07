@@ -53,7 +53,7 @@ export class AuthService {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, otp }),
+        body: JSON.stringify({ email, code: otp }),
       });
 
       const data = await response.json();
@@ -110,4 +110,5 @@ export class AuthService {
       };
     }
   }
+
 }

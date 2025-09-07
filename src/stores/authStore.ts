@@ -1,74 +1,212 @@
+// Auth Store - Simplified to handle only authentication state
+// User profile and credits are now managed by userStore and creditsStore
+
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface User {
-  id: string;
-  email: string;
-  credits: number;
-}
-
-interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  setUser: (user: User | null) => void;
-  setAuthenticated: (authenticated: boolean) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => Promise<void>;
-  initialize: () => Promise<void>;
-}
+import { AuthService } from '../services/authService';
+import { userService } from '../services/userService';
+import { useErrorStore, errorHelpers } from './errorStore';
+import { useNotificationsStore, notificationHelpers } from './notificationsStore';
+import { AuthState } from '../types/auth';
+import { User } from '../types/user';
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
+  token: null,
   isAuthenticated: false,
   isLoading: true,
+  error: null,
 
-  setUser: (user) => set({ user }),
+  login: async (email: string, otp: string): Promise<boolean> => {
+    try {
+      set({ isLoading: true });
 
-  setAuthenticated: (authenticated) => set({ isAuthenticated: authenticated }),
+      const result = await AuthService.verifyOTP(email, otp);
 
-  setLoading: (loading) => set({ isLoading: loading }),
+      if (result.success && result.user && result.token) {
+        const user: User = {
+          id: result.user.id,
+          email: result.user.email,
+          credits: result.user.credits || 0,
+        };
+
+        // Store auth data
+        await AsyncStorage.setItem('auth_token', result.token);
+        await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+
+        set({
+          user,
+          token: result.token,
+          isAuthenticated: true,
+          isLoading: false
+        });
+
+        // Show success notification
+        useNotificationsStore.getState().addNotification(
+          notificationHelpers.success(
+            'Welcome back!',
+            'Successfully logged in to Stefna.'
+          )
+        );
+
+        return true;
+      } else {
+        // Use centralized error handling
+        useErrorStore.getState().setError(
+          errorHelpers.auth(result.error || 'Login failed')
+        );
+        set({ isLoading: false });
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+
+      // Use centralized error handling
+      useErrorStore.getState().setError(
+        errorHelpers.network(
+          'Login failed due to network error',
+          error,
+          async () => { await get().login(email, otp); } // Retry action
+        )
+      );
+
+      set({ isLoading: false });
+      return false;
+    }
+  },
 
   logout: async () => {
     try {
-      await AsyncStorage.removeItem('user');
-      await AsyncStorage.removeItem('auth_token');
+      set({ isLoading: true });
+
+      // Clear all stored data
+      await AsyncStorage.multiRemove(['auth_token', 'user_profile', 'user_settings']);
+
       set({
         user: null,
+        token: null,
         isAuthenticated: false,
         isLoading: false
       });
+
+      // Show logout notification
+      useNotificationsStore.getState().addNotification(
+        notificationHelpers.info(
+          'Logged out',
+          'You have been successfully logged out.'
+        )
+      );
     } catch (error) {
       console.error('Logout error:', error);
+
+      // Use centralized error handling
+      useErrorStore.getState().setError(
+        errorHelpers.auth('Logout failed', error)
+      );
+
+      set({ isLoading: false });
     }
   },
 
   initialize: async () => {
     try {
-      const userString = await AsyncStorage.getItem('user');
-      const token = await AsyncStorage.getItem('auth_token');
+      set({ isLoading: true });
 
-      if (userString && token) {
-        const user = JSON.parse(userString);
-        set({
-          user,
-          isAuthenticated: true,
-          isLoading: false
-        });
+      const [userString, token] = await AsyncStorage.multiGet(['user_profile', 'auth_token']);
+
+      if (userString[1] && token[1]) {
+        const user = JSON.parse(userString[1]);
+
+        // Validate token with whoami
+        try {
+          const whoamiResult = await userService.whoami(token[1]);
+          if (whoamiResult.ok && whoamiResult.user) {
+            set({
+              user,
+              token: token[1],
+              isAuthenticated: true,
+              isLoading: false
+            });
+
+            // Show welcome back notification
+            useNotificationsStore.getState().addNotification(
+              notificationHelpers.info(
+                'Welcome back!',
+                'Session restored successfully.'
+              )
+            );
+          } else {
+            // Token invalid, clear stored data
+            await AsyncStorage.multiRemove(['auth_token', 'user_profile']);
+
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false
+            });
+
+            // Show session expired notification
+            useNotificationsStore.getState().addNotification(
+              notificationHelpers.warning(
+                'Session Expired',
+                'Please log in again to continue.'
+              )
+            );
+          }
+        } catch (error) {
+          // Token validation failed, clear stored data
+          await AsyncStorage.multiRemove(['auth_token', 'user_profile']);
+
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false
+          });
+
+          // Use centralized error handling
+          useErrorStore.getState().setError(
+            errorHelpers.auth('Session validation failed', error)
+          );
+        }
       } else {
         set({
           user: null,
+          token: null,
           isAuthenticated: false,
           isLoading: false
         });
       }
     } catch (error) {
       console.error('Auth initialization error:', error);
+
+      // Use centralized error handling
+      useErrorStore.getState().setError(
+        errorHelpers.auth('Initialization failed', error)
+      );
+
       set({
         user: null,
+        token: null,
         isAuthenticated: false,
         isLoading: false
       });
     }
   },
+
+  validateToken: async (): Promise<boolean> => {
+    try {
+      const { token } = get();
+      if (!token) return false;
+
+      const whoamiResult = await userService.whoami(token);
+      return whoamiResult.ok;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      return false;
+    }
+  },
+
+  clearError: () => set({ error: null }),
 }));

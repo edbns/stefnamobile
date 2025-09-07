@@ -9,15 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../src/stores/authStore';
 import { AuthService } from '../src/services/authService';
 
 export default function AuthScreen() {
   const router = useRouter();
-  const { setUser, setAuthenticated, setLoading } = useAuthStore();
+  const { login, isAuthenticated, isLoading, error } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -57,9 +57,9 @@ export default function AuthScreen() {
       if (response.success) {
         setShowOTPInput(true);
         setCountdown(60); // 60 second countdown
-        Alert.alert('Success', 'OTP sent to your email. Please check your inbox.');
+        Alert.alert('Success', 'Login code sent to your email. Please check your inbox.');
       } else {
-        Alert.alert('Error', response.error || 'Failed to send OTP');
+        Alert.alert('Error', response.error || 'Failed to send login code');
       }
     } catch (error) {
       Alert.alert('Error', 'Network error. Please try again.');
@@ -70,33 +70,24 @@ export default function AuthScreen() {
 
   const handleVerifyOTP = async () => {
     if (!otp.trim()) {
-      Alert.alert('Error', 'Please enter the OTP');
+      Alert.alert('Error', 'Please enter the login code');
       return;
     }
 
     if (otp.length !== 6) {
-      Alert.alert('Error', 'OTP must be 6 digits');
+      Alert.alert('Error', 'Login code must be 6 digits');
       return;
     }
 
     setIsVerifyingOTP(true);
     try {
-      const response = await AuthService.verifyOTP(email, otp);
+      const success = await login(email, otp);
 
-      if (response.success && response.user && response.token) {
-        // Save auth data
-        await AsyncStorage.setItem('user', JSON.stringify(response.user));
-        await AsyncStorage.setItem('auth_token', response.token);
-
-        // Update store
-        setUser(response.user);
-        setAuthenticated(true);
-        setLoading(false);
-
+      if (success) {
         // Navigate to main screen
         router.replace('/main');
       } else {
-        Alert.alert('Error', response.error || 'Invalid OTP');
+        Alert.alert('Error', 'Invalid login code');
       }
     } catch (error) {
       Alert.alert('Error', 'Network error. Please try again.');
@@ -104,6 +95,13 @@ export default function AuthScreen() {
       setIsVerifyingOTP(false);
     }
   };
+
+  // Auto-verify when OTP is complete (6 digits)
+  useEffect(() => {
+    if (otp.length === 6 && !isVerifyingOTP) {
+      handleVerifyOTP();
+    }
+  }, [otp]);
 
   const handleResendOTP = () => {
     if (countdown === 0) {
@@ -117,11 +115,24 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Stefna</Text>
-        <Text style={styles.subtitle}>Sign in with your email</Text>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        
+        <Text style={styles.title}>Sign in to Stefna</Text>
+        <Text style={styles.subtitle}>
+          {!showOTPInput 
+            ? 'Enter your email to receive a login code'
+            : 'Enter the 6-digit code sent to your email'
+          }
+        </Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email Address</Text>
           <TextInput
             style={styles.input}
             value={email}
@@ -141,14 +152,13 @@ export default function AuthScreen() {
               disabled={isRequestingOTP}
             >
               {isRequestingOTP ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color="#000" />
               ) : (
-                <Text style={styles.buttonText}>Send OTP</Text>
+                <Text style={styles.buttonText}>Get Login Code</Text>
               )}
             </TouchableOpacity>
           ) : (
             <>
-              <Text style={styles.label}>Enter OTP</Text>
               <TextInput
                 style={styles.input}
                 value={otp}
@@ -163,12 +173,14 @@ export default function AuthScreen() {
               <TouchableOpacity
                 style={[styles.button, isVerifyingOTP && styles.buttonDisabled]}
                 onPress={handleVerifyOTP}
-                disabled={isVerifyingOTP}
+                disabled={isVerifyingOTP || otp.length !== 6}
               >
                 {isVerifyingOTP ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color="#000" />
                 ) : (
-                  <Text style={styles.buttonText}>Verify OTP</Text>
+                  <Text style={[styles.buttonText, otp.length !== 6 && styles.buttonTextDisabled]}>
+                    {otp.length === 6 ? 'Verifying...' : 'Enter 6-digit code'}
+                  </Text>
                 )}
               </TouchableOpacity>
 
@@ -184,6 +196,7 @@ export default function AuthScreen() {
             </>
           )}
         </View>
+
       </View>
     </KeyboardAvoidingView>
   );
@@ -199,6 +212,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 40,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logo: {
+    width: 120,
+    height: 40,
   },
   title: {
     fontSize: 32,
@@ -216,12 +237,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     width: '100%',
   },
-  label: {
-    fontSize: 16,
-    color: '#ffffff',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
   input: {
     backgroundColor: '#1a1a1a',
     borderRadius: 8,
@@ -234,7 +249,7 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ffffff',
     borderRadius: 8,
     paddingVertical: 16,
     alignItems: 'center',
@@ -244,9 +259,12 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#ffffff',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonTextDisabled: {
+    color: '#666666',
   },
   resendButton: {
     marginTop: 16,

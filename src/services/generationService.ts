@@ -317,9 +317,24 @@ export class GenerationService {
   }
 
   private static async convertImageToBase64(imageUri: string): Promise<string> {
-    // This would convert the local image URI to base64
-    // For now, return a placeholder - you'll implement this based on your image handling needs
-    return 'data:image/jpeg;base64,PLACEHOLDER_BASE64_DATA';
+    try {
+      // For React Native, we need to fetch the image and convert to base64
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Failed to convert image to base64:', error);
+      throw new Error('Failed to process image for upload');
+    }
   }
 
   private static getLocalPresets(): Preset[] {

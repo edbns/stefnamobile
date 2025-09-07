@@ -1,195 +1,199 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  FlatList, 
+  Alert, 
+  Image
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
-import { useGenerationStore } from '../src/stores/generationStore';
-import CameraPicker from '../src/components/CameraPicker';
-import GenerationModes, { GenerationMode } from '../src/components/GenerationModes';
-import RotatingPresets from '../src/components/RotatingPresets';
-import SpecialModeSelector from '../src/components/SpecialModeSelector';
+import { useMediaStore } from '../src/stores/mediaStore';
+import { Camera, Plus, User, Sparkles } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function MainScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const {
-    isGenerating,
-    presets,
-    loadPresets,
-    startGeneration,
-    currentJob,
-    jobQueue,
-  } = useGenerationStore();
+  const { user } = useAuthStore();
+  const { media, loading, loadUserMedia, deleteMedia } = useMediaStore();
 
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [customPrompt, setCustomPrompt] = useState('');
-  const [selectedSpecialMode, setSelectedSpecialMode] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
 
-  // Load presets on mount
+  // Load user's media on mount
   useEffect(() => {
-    loadPresets();
-  }, [loadPresets]);
+    if (user?.id) {
+      loadUserMedia();
+    }
+  }, [user?.id, loadUserMedia]);
 
-  // Handle generation completion
-  useEffect(() => {
-    if (currentJob && currentJob.status === 'completed' && currentJob.resultUrl) {
+  const handleCameraPress = () => {
+    router.push('/camera');
+  };
+
+  const handleUploadPress = async () => {
+    try {
+      console.log('Upload button pressed');
+
+      // Try to request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log('Permission status:', status);
+
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Please grant photo library access to upload images. You can enable this in your device settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Try Again',
+              onPress: () => handleUploadPress()
+            }
+          ]
+        );
+        return;
+      }
+
+      console.log('Launching image picker...');
+
+      // Try the simplest possible configuration
+      let result;
+      try {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.All,
+          allowsEditing: false,
+          quality: 0.8,
+          allowsMultipleSelection: false,
+          base64: false,
+        });
+        console.log('Image picker succeeded with MediaTypeOptions.All');
+      } catch (error) {
+        console.log('MediaTypeOptions.All failed, trying alternative approach');
+        // Fallback to basic configuration
+        result = await ImagePicker.launchImageLibraryAsync({
+          allowsEditing: false,
+          quality: 0.8,
+          base64: false,
+        });
+        console.log('Image picker succeeded with basic config');
+      }
+
+      console.log('Image picker result:', result);
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        console.log('Selected image:', selectedImage.uri);
+
+        if (selectedImage.uri) {
+          // Navigate to generation screen with selected image
+          router.push({
+            pathname: '/generate',
+            params: { selectedImage: selectedImage.uri }
+          });
+        } else {
+          Alert.alert('Error', 'Failed to get image data. Please try again.');
+        }
+      } else {
+        console.log('Image selection was canceled or no assets found');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
       Alert.alert(
-        'Generation Complete!',
-        'Your image has been generated successfully.',
+        'Upload Failed',
+        'Unable to access photo library. This might be due to device restrictions. Please try again or use the camera instead.',
         [
+          { text: 'Cancel', style: 'cancel' },
           {
-            text: 'View Result',
-            onPress: () => {
-              // TODO: Navigate to result screen or show in gallery
-            },
-          },
-          { text: 'OK' },
+            text: 'Use Camera',
+            onPress: () => handleCameraPress()
+          }
         ]
       );
-    } else if (currentJob && currentJob.status === 'failed') {
-      Alert.alert(
-        'Generation Failed',
-        currentJob.error || 'An error occurred during generation.',
-        [{ text: 'OK' }]
-      );
     }
-  }, [currentJob]);
-
-  const handleLogout = async () => {
-    await logout();
-    router.replace('/auth');
   };
 
-  const handleImageSelected = (imageUri: string) => {
-    setSelectedImage(imageUri);
+  const handleProfilePress = () => {
+    router.push('/profile');
   };
 
-  const handleClearImage = () => {
-    setSelectedImage(null);
-  };
+  const renderMediaItem = ({ item }: { item: any }) => {
+    const getPresetTag = (item: any) => {
+      // Extract preset information from the media item
+      if (item.prompt?.includes('neo') || item.prompt?.includes('glitch')) return 'Neo Glitch';
+      if (item.prompt?.includes('custom')) return 'Custom';
+      if (item.prompt?.includes('studio') || item.prompt?.includes('edit')) return 'Studio';
+      if (item.prompt?.includes('emotion') || item.prompt?.includes('mask')) return 'Emotion Mask';
+      if (item.prompt?.includes('ghibli')) return 'Ghibli Reaction';
+      return 'AI Generated';
+    };
 
-  const handleGenerate = async () => {
-    if (!selectedImage) {
-      Alert.alert('Error', 'Please select an image first');
-      return;
-    }
-
-    if (!user?.id) {
-      Alert.alert('Error', 'User not authenticated');
-      return;
-    }
-
-    // Validation based on mode
-    if (generationMode === 'presets' && !selectedPreset) {
-      Alert.alert('Error', 'Please select a preset style');
-      return;
-    }
-
-    if ((generationMode === 'custom-prompt' || generationMode === 'edit-photo') && !customPrompt.trim()) {
-      Alert.alert('Error', 'Please enter a prompt');
-      return;
-    }
-
-    // Special modes validation
-    const specialModes = ['emotion-mask', 'ghibli-reaction', 'neo-glitch'];
-    if (specialModes.includes(generationMode) && !selectedSpecialMode) {
-      Alert.alert('Error', `Please select an option for ${generationMode}`);
-      return;
-    }
-
-    // Start the generation process
-    await startGeneration({
-      imageUri: selectedImage,
-      mode: generationMode,
-      presetId: selectedPreset || undefined,
-      customPrompt: customPrompt.trim() || undefined,
-      specialModeId: selectedSpecialMode || undefined,
-    });
-
-    // Clear the form after starting generation
-    setCustomPrompt('');
-    setSelectedPreset(null);
-    setSelectedSpecialMode(null);
+    return (
+      <TouchableOpacity style={styles.mediaItem}>
+        <View style={styles.mediaImage}>
+          {item.cloudUrl ? (
+            <Image 
+              source={{ uri: item.cloudUrl }} 
+              style={styles.mediaImageContent}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.mediaImagePlaceholder}>
+              <Sparkles size={24} color="#666666" />
+            </View>
+          )}
+        </View>
+        <View style={styles.mediaInfo}>
+          <Text style={styles.presetTag}>{getPresetTag(item)}</Text>
+          <Text style={styles.mediaDate}>
+            {new Date(item.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          Welcome back, {user?.email?.split('@')[0] || 'User'}!
-        </Text>
-        <Text style={styles.creditsText}>
-          Credits: {user?.credits || 0}
-        </Text>
-      </View>
-
-      {/* Camera Picker */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Select Image</Text>
-        <CameraPicker
-          onImageSelected={handleImageSelected}
-          selectedImage={selectedImage}
-          onClearImage={handleClearImage}
+    <View style={styles.container}>
+      {/* Media Gallery - Full Screen */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading your creations...</Text>
+        </View>
+      ) : media && media.length > 0 ? (
+        <FlatList
+          data={media}
+          renderItem={renderMediaItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.galleryContainer}
+          showsVerticalScrollIndicator={false}
+          columnWrapperStyle={styles.row}
         />
-      </View>
-
-      {/* Generation Modes */}
-      {selectedImage && (
-        <View style={styles.section}>
-          <GenerationModes
-            selectedMode={generationMode}
-            onModeChange={setGenerationMode}
-            customPrompt={customPrompt}
-            onCustomPromptChange={setCustomPrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-          />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIcon}>
+            <Sparkles size={60} color="#666666" />
+          </View>
+          <Text style={styles.emptyText}>No creations yet</Text>
+          <Text style={styles.emptySubtext}>Upload a photo or take one with the camera to get started</Text>
         </View>
       )}
 
-      {/* Rotating Presets */}
-      {selectedImage && generationMode === 'presets' && (
-        <View style={styles.section}>
-          <RotatingPresets
-            selectedPreset={selectedPreset}
-            onPresetSelect={setSelectedPreset}
-            presets={presets}
-          />
-        </View>
-      )}
-
-      {/* Special Mode Selector */}
-      {selectedImage && ['emotion-mask', 'ghibli-reaction', 'neo-glitch'].includes(generationMode) && (
-        <View style={styles.section}>
-          <SpecialModeSelector
-            mode={generationMode}
-            selectedOption={selectedSpecialMode}
-            onOptionSelect={setSelectedSpecialMode}
-          />
-        </View>
-      )}
-
-      {/* Bottom Actions */}
-      <View style={styles.bottomActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => router.push('/profile')}
-        >
-          <Text style={styles.actionButtonText}>View Gallery</Text>
+      {/* Floating Footer */}
+      <View style={styles.floatingFooter}>
+        <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
+          <Plus size={24} color="#ffffff" />
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionButton, styles.logoutButton]}
-          onPress={handleLogout}
-        >
-          <Text style={styles.logoutText}>Logout</Text>
+        <TouchableOpacity style={styles.footerButton} onPress={handleCameraPress}>
+          <Camera size={24} color="#ffffff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
+          <User size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
-
-      {/* Bottom spacing */}
-      <View style={styles.bottomSpacing} />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -198,61 +202,120 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    paddingTop: 60,
+  
+  // Loading State
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
   },
-  welcomeText: {
-    fontSize: 18,
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  creditsText: {
-    fontSize: 14,
+  loadingText: {
+    fontSize: 16,
     color: '#cccccc',
+    textAlign: 'center',
   },
-  section: {
-    marginBottom: 20,
+
+  // Empty State
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
   },
-  sectionTitle: {
-    fontSize: 18,
+  emptyIcon: {
+    marginBottom: 24,
+  },
+  emptyText: {
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 12,
-    paddingHorizontal: 20,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  bottomActions: {
-    flexDirection: 'row',
+  emptySubtext: {
+    fontSize: 16,
+    color: '#cccccc',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+
+  // Gallery
+  galleryContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 100, // Space for floating footer
+  },
+  row: {
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    marginBottom: 16,
   },
-  actionButton: {
+
+  // Media Item
+  mediaItem: {
+    width: '48%',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  mediaImage: {
+    width: '100%',
+    aspectRatio: 1,
     backgroundColor: '#333333',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    flex: 1,
-    marginHorizontal: 4,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  actionButtonText: {
+  mediaImageContent: {
+    width: '100%',
+    height: '100%',
+  },
+  mediaImagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mediaInfo: {
+    padding: 12,
+    alignItems: 'center',
+  },
+  presetTag: {
+    fontSize: 12,
+    fontWeight: '600',
     color: '#ffffff',
-    fontSize: 14,
+    backgroundColor: '#333333',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 4,
   },
-  logoutButton: {
-    backgroundColor: 'transparent',
+  mediaDate: {
+    fontSize: 11,
+    color: '#cccccc',
+  },
+
+  // Floating Footer
+  floatingFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    paddingBottom: 40, // Account for safe area
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backdropFilter: 'blur(20px)',
+  },
+  footerButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#1a1a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ff4444',
-  },
-  logoutText: {
-    color: '#ff4444',
-    fontSize: 14,
-  },
-  bottomSpacing: {
-    height: 40,
+    borderColor: '#333333',
   },
 });
+

@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GenerationService, GenerationStatus, Preset } from '../services/generationService';
 import { StorageService, StoredMedia } from '../services/storageService';
+import { useCreditsStore } from './creditsStore';
+import { useUserStore } from './userStore';
+import { useMediaStore } from './mediaStore';
+import { useAuthStore } from './authStore';
+import { useErrorStore, errorHelpers } from './errorStore';
+import { useNotificationsStore, notificationHelpers } from './notificationsStore';
 
 interface GenerationJob {
   id: string;
@@ -57,6 +63,23 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     set({ currentJob: job, isGenerating: true });
 
     try {
+      // Get user from auth store
+      const { user } = useAuthStore.getState();
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      // Reserve credits using creditsStore
+      const creditCost = 2; // Standard cost for image generation
+      const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
+
+      if (!creditsReserved) {
+        const { error } = useCreditsStore.getState();
+        throw new Error(error || 'Insufficient credits');
+      }
+
+      console.log(`💰 Reserved ${creditCost} credits for generation`);
+
       // Call the generation API
       const response = await GenerationService.startGeneration({
         imageUri: job.imageUri,
@@ -64,7 +87,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         presetId: job.presetId,
         customPrompt: job.customPrompt,
         specialModeId: job.specialModeId,
-        userId: 'current_user_id', // TODO: Get from auth store
+        userId: user.id,
       });
 
       if (response.success && response.jobId) {
@@ -72,9 +95,30 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         const updatedJob = { ...job, id: response.jobId };
         set({ currentJob: updatedJob });
 
+        // Show generation started notification
+        useNotificationsStore.getState().addNotification(
+          notificationHelpers.info(
+            'Generation Started',
+            'Your image is being created. This may take a few moments.'
+          )
+        );
+
         // Start polling for status
         get().pollJobStatus(response.jobId);
       } else {
+        // Refund credits on generation failure
+        await useCreditsStore.getState().finalizeCredits('refund');
+        console.log('💰 Refunded credits due to generation failure');
+
+        // Use centralized error handling
+        useErrorStore.getState().setError(
+          errorHelpers.generation(
+            response.error || 'Generation failed to start',
+            { jobData },
+            () => get().startGeneration(jobData) // Retry action
+          )
+        );
+
         // Handle error
         const failedJob = {
           ...job,
@@ -89,10 +133,28 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       }
     } catch (error) {
       console.error('Generation error:', error);
+
+      // Refund credits on any error
+      try {
+        await useCreditsStore.getState().finalizeCredits('refund');
+        console.log('💰 Refunded credits due to error');
+      } catch (refundError) {
+        console.error('Failed to refund credits:', refundError);
+      }
+
+      // Use centralized error handling
+      useErrorStore.getState().setError(
+        errorHelpers.generation(
+          error instanceof Error ? error.message : 'Generation failed',
+          { jobData },
+          () => get().startGeneration(jobData) // Retry action
+        )
+      );
+
       const failedJob = {
         ...job,
         status: 'failed' as const,
-        error: 'Network error',
+        error: error instanceof Error ? error.message : 'Network error',
       };
       set({
         currentJob: failedJob,
@@ -141,46 +203,78 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         const { currentJob } = get();
 
         if (currentJob && currentJob.id === jobId) {
-          if (status.status === 'completed' || status.status === 'failed') {
-            // Job finished
-            let storedMedia: StoredMedia | undefined;
-
-            if (status.status === 'completed' && status.resultUrl) {
+            if (status.status === 'completed' || status.status === 'failed') {
+              // Finalize credits using creditsStore
               try {
-                // Download and save the result image
-                const filename = `generated_${jobId}.jpg`;
-                storedMedia = await StorageService.saveGeneratedImage(
-                  status.resultUrl,
-                  filename,
-                  jobId
-                );
+                const disposition = status.status === 'completed' ? 'commit' : 'refund';
+                await useCreditsStore.getState().finalizeCredits(disposition);
+                console.log(`💰 ${disposition === 'commit' ? 'Committed' : 'Refunded'} credits for generation ${status.status}`);
 
-                // Sync to cloud if enabled
-                if (storedMedia) {
-                  await StorageService.syncMediaToCloud(storedMedia);
+                // Refresh user balance after credit changes
+                await useUserStore.getState().loadUserProfile();
+
+                // Show appropriate notification
+                if (status.status === 'completed') {
+                  useNotificationsStore.getState().addNotification(
+                    notificationHelpers.generationComplete(currentJob.mode)
+                  );
+                } else {
+                  useErrorStore.getState().setError(
+                    errorHelpers.generation(
+                      status.error || 'Generation failed',
+                      { jobId, status }
+                    )
+                  );
                 }
-              } catch (error) {
-                console.error('Failed to save generated image:', error);
+              } catch (creditError) {
+                console.error('Failed to finalize credits:', creditError);
+                useErrorStore.getState().setError(
+                  errorHelpers.credits('Failed to finalize credits', creditError)
+                );
               }
-            }
 
-            const completedJob = {
-              ...currentJob,
-              status: status.status,
-              resultUrl: status.resultUrl,
-              error: status.error,
-              storedMedia,
-            };
+              // Job finished
+              let storedMedia: StoredMedia | undefined;
 
-            set({
-              currentJob: null,
-              isGenerating: false,
-              jobQueue: [...get().jobQueue, completedJob]
-            });
+              if (status.status === 'completed' && status.resultUrl) {
+                try {
+                  // Download and save the result image
+                  const filename = `generated_${jobId}.jpg`;
+                  storedMedia = await StorageService.saveGeneratedImage(
+                    status.resultUrl,
+                    filename,
+                    jobId
+                  );
 
-            // Save to history
-            get().saveJobHistory();
-          } else {
+                  // Sync to cloud if enabled
+                  if (storedMedia) {
+                    await StorageService.syncMediaToCloud(storedMedia);
+                  }
+
+                  // Update media store
+                  await useMediaStore.getState().syncWithLocalStorage();
+                } catch (error) {
+                  console.error('Failed to save generated image:', error);
+                }
+              }
+
+              const completedJob = {
+                ...currentJob,
+                status: status.status,
+                resultUrl: status.resultUrl,
+                error: status.error,
+                storedMedia,
+              };
+
+              set({
+                currentJob: null,
+                isGenerating: false,
+                jobQueue: [...get().jobQueue, completedJob]
+              });
+
+              // Save to history
+              get().saveJobHistory();
+            } else {
             // Still processing, update progress
             set({
               currentJob: {

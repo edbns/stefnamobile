@@ -81,9 +81,6 @@ export default function SpecialModeSelector({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
-        {modeData.icon} {modeData.title}
-      </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.optionsContainer}>
@@ -96,7 +93,7 @@ export default function SpecialModeSelector({
               ]}
               onPress={() => onOptionSelect(preset.id)}
             >
-              <Text style={styles.optionEmoji}>{getPresetEmoji(preset.id, mode)}</Text>
+              <Text style={styles.optionEmoji}>{getPresetEmoji(preset.id, mode as 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch')}</Text>
               <Text style={styles.optionLabel}>{preset.label}</Text>
               <Text style={styles.optionDescription}>{preset.description}</Text>
             </TouchableOpacity>
@@ -107,7 +104,7 @@ export default function SpecialModeSelector({
   );
 }
 
-function getPresetEmoji(presetId: string, mode: GenerationMode): string {
+function getPresetEmoji(presetId: string, mode: 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch'): string {
   const emojiMaps = {
     'emotion-mask': {
       emotion_mask_nostalgia_distance: '🌅',
@@ -131,19 +128,12 @@ function getPresetEmoji(presetId: string, mode: GenerationMode): string {
     },
   };
 
-  return emojiMaps[mode]?.[presetId] || '🎨';
+  return emojiMaps[mode]?.[presetId as keyof typeof emojiMaps[typeof mode]] || '🎨';
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   optionsContainer: {
     flexDirection: 'row',

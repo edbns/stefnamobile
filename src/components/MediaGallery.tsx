@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { StorageService, StoredMedia } from '../services/storageService';
-import { config } from '../config/environment';
+import { useMediaStore } from '../stores/mediaStore';
+import { useAuthStore } from '../stores/authStore';
 
 interface MediaGalleryProps {
   onMediaSelect?: (media: StoredMedia) => void;
@@ -23,50 +24,57 @@ export default function MediaGallery({
   showDeleteOption = false,
   maxItems,
 }: MediaGalleryProps) {
-  const [media, setMedia] = useState<StoredMedia[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    media: allMedia,
+    isLoading,
+    error,
+    deleteMedia,
+    loadUserMedia,
+    syncWithLocalStorage
+  } = useMediaStore();
+
+  const { user } = useAuthStore();
+
+  // Filter and sort media based on props
+  const media = React.useMemo(() => {
+    const sortedMedia = allMedia.sort((a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    return maxItems ? sortedMedia.slice(0, maxItems) : sortedMedia;
+  }, [allMedia, maxItems]);
+
+  const refreshing = false; // We'll use store loading state
 
   useEffect(() => {
-    loadMedia();
-  }, []);
-
-  const loadMedia = async () => {
-    try {
-      const storedMedia = await StorageService.getStoredMedia();
-      // Sort by creation date (newest first)
-      const sortedMedia = storedMedia.sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      setMedia(maxItems ? sortedMedia.slice(0, maxItems) : sortedMedia);
-    } catch (error) {
-      console.error('Load media error:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    // Load media when component mounts
+    loadUserMedia();
+  }, [loadUserMedia]);
 
   const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadMedia();
+    await loadUserMedia();
+    await syncWithLocalStorage();
   };
 
   const handleDeleteMedia = async (mediaItem: StoredMedia) => {
     Alert.alert(
       'Delete Image',
-      'Are you sure you want to delete this image?',
+      'Are you sure you want to delete this image? This will also delete it from your cloud account.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await StorageService.deleteMedia(mediaItem.id);
-              setMedia(prev => prev.filter(item => item.id !== mediaItem.id));
-            } catch (error) {
+            if (!user) {
+              Alert.alert('Error', 'User not authenticated');
+              return;
+            }
+
+            const success = await deleteMedia(mediaItem.id, mediaItem.cloudId);
+
+            if (success) {
+              Alert.alert('Success', 'Image deleted successfully');
+            } else {
               Alert.alert('Error', 'Failed to delete image');
             }
           },
@@ -132,7 +140,7 @@ export default function MediaGallery({
     </TouchableOpacity>
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
@@ -144,8 +152,7 @@ export default function MediaGallery({
   if (media.length === 0) {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🖼️</Text>
-        <Text style={styles.emptyTitle}>No images yet</Text>
+        <Text style={styles.emptyTitle}>No images</Text>
         <Text style={styles.emptySubtitle}>
           Generated images will appear here
         </Text>
@@ -161,7 +168,7 @@ export default function MediaGallery({
         keyExtractor={(item) => item.id}
         numColumns={3}
         showsVerticalScrollIndicator={false}
-        refreshing={refreshing}
+        refreshing={isLoading}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.gridContainer}
       />
@@ -189,10 +196,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 40,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,

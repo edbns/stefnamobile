@@ -85,7 +85,6 @@ export default function GenerationModes({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Choose Generation Mode</Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.modesContainer}>
@@ -116,7 +115,7 @@ export default function GenerationModes({
             value={customPrompt}
             onChangeText={onCustomPromptChange}
             placeholder={
-              selectedMode === 'custom'
+              selectedMode === 'custom-prompt'
                 ? "e.g., 'portrait with dramatic lighting, cinematic style'"
                 : "e.g., 'make it look like a movie poster, add dramatic effects'"
             }
@@ -144,13 +143,6 @@ export default function GenerationModes({
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 20,
   },
   modesContainer: {
     flexDirection: 'row',

@@ -29,10 +29,10 @@ export default function RotatingPresets({
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const daysSinceStartOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-    const currentWeek = Math.floor(daysSinceStartOfYear / 7) % 5;
+    const currentWeek = Math.floor(daysSinceStartOfYear / 7) % 4;
 
-    const startIndex = currentWeek * 5;
-    return presets.slice(startIndex, Math.min(startIndex + 5, presets.length));
+    const startIndex = currentWeek * 6;
+    return presets.slice(startIndex, Math.min(startIndex + 6, presets.length));
   };
 
   const currentPresets = getCurrentWeekPresets();
@@ -40,10 +40,9 @@ export default function RotatingPresets({
   if (!currentPresets || currentPresets.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>Choose a Style</Text>
-        <Text style={styles.subtitle}>Loading presets...</Text>
+        <Text style={styles.loadingText}>Loading presets...</Text>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>🔄</Text>
+          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </View>
     );
@@ -51,8 +50,6 @@ export default function RotatingPresets({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Choose a Style</Text>
-      <Text style={styles.subtitle}>Weekly rotating presets</Text>
 
       <ScrollView
         horizontal
@@ -122,19 +119,6 @@ function getPresetEmoji(category: string): string {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#cccccc',
-    textAlign: 'center',
-    marginBottom: 20,
   },
   presetsContainer: {
     paddingHorizontal: 10,
