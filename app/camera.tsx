@@ -102,7 +102,7 @@ export default function CameraScreen() {
               style={[styles.previewButton, styles.retakeButton]}
               onPress={retakePhoto}
             >
-              <Retake size={24} color="#ffffff" />
+              <Retake size={24} color="#000000" />
               <Text style={styles.previewButtonText}>Retake</Text>
             </TouchableOpacity>
 
@@ -110,7 +110,7 @@ export default function CameraScreen() {
               style={[styles.previewButton, styles.confirmButton]}
               onPress={confirmPhoto}
             >
-              <Check size={24} color="#ffffff" />
+              <Check size={24} color="#000000" />
               <Text style={styles.previewButtonText}>Use Photo</Text>
             </TouchableOpacity>
           </View>
@@ -131,6 +131,12 @@ export default function CameraScreen() {
           {/* Top Controls */}
           <View style={styles.topControls}>
             <TouchableOpacity
+              style={styles.flipButton}
+              onPress={toggleCameraFacing}
+            >
+              <RotateCcw size={24} color="#ffffff" />
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.controlButton}
               onPress={closeCamera}
             >
@@ -144,12 +150,6 @@ export default function CameraScreen() {
               style={styles.captureButton}
               onPress={takePicture}
             />
-            <TouchableOpacity
-              style={styles.flipButton}
-              onPress={toggleCameraFacing}
-            >
-              <RotateCcw size={24} color="#ffffff" />
-            </TouchableOpacity>
           </View>
         </View>
       </CameraView>
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   topControls: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 20,
   },
@@ -239,11 +239,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   previewBottomControls: {
-    flex: 1,
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingBottom: 40,
     paddingHorizontal: 20,
   },
   previewButton: {
@@ -252,16 +254,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: '#ffffff',
   },
   retakeButton: {
-    backgroundColor: 'rgba(255, 59, 48, 0.8)',
+    backgroundColor: '#ffffff',
   },
   confirmButton: {
-    backgroundColor: 'rgba(52, 199, 89, 0.8)',
+    backgroundColor: '#ffffff',
   },
   previewButtonText: {
-    color: '#ffffff',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,

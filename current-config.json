@@ -1,0 +1,70 @@
+
+{
+  name: [32m'StefnaMobile'[39m,
+  slug: [32m'stefnamobile'[39m,
+  version: [32m'1.0.0'[39m,
+  orientation: [32m'portrait'[39m,
+  icon: [32m'./assets/icon.png'[39m,
+  userInterfaceStyle: [32m'dark'[39m,
+  scheme: [32m'stefnamobile'[39m,
+  newArchEnabled: [33mtrue[39m,
+  plugins: [
+    [32m'expo-router'[39m
+  ],
+  description: [90mundefined[39m,
+  sdkVersion: [32m'53.0.0'[39m,
+  platforms: [
+    [32m'ios'[39m,
+    [32m'android'[39m,
+    [32m'web'[39m
+  ],
+  splash: {
+    image: [32m'./assets/splash-icon.png'[39m,
+    resizeMode: [32m'contain'[39m,
+    backgroundColor: [32m'#000000'[39m
+  },
+  ios: {
+    supportsTablet: [33mtrue[39m,
+    bundleIdentifier: [32m'com.stefnamobile.app'[39m,
+    infoPlist: {
+      NSCameraUsageDescription: [32m'This app uses the camera to take photos for AI generation.'[39m,
+      NSPhotoLibraryUsageDescription: [32m'This app accesses your photo library to upload images for AI generation.'[39m,
+      NSPhotoLibraryAddUsageDescription: [32m'This app saves generated images to your photo library.'[39m,
+      ITSAppUsesNonExemptEncryption: [33mfalse[39m
+    }
+  },
+  android: {
+    package: [32m'com.stefnamobile.app'[39m,
+    edgeToEdgeEnabled: [33mtrue[39m,
+    permissions: [
+      [32m'android.permission.CAMERA'[39m,
+      [32m'android.permission.READ_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.WRITE_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.ACCESS_MEDIA_LOCATION'[39m,
+      [32m'android.permission.CAMERA'[39m,
+      [32m'android.permission.READ_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.WRITE_EXTERNAL_STORAGE'[39m,
+      [32m'android.permission.ACCESS_MEDIA_LOCATION'[39m
+    ],
+    adaptiveIcon: {
+      foregroundImage: [32m'./assets/adaptive-icon.png'[39m,
+      backgroundColor: [32m'#000000'[39m
+    }
+  },
+  web: {
+    favicon: [32m'./assets/favicon.png'[39m
+  },
+  extra: {
+    router: {},
+    eas: {
+      projectId: [32m'20065ae5-0214-413d-8de7-7182c3467641'[39m
+    }
+  },
+  runtimeVersion: {
+    policy: [32m'appVersion'[39m
+  },
+  updates: {
+    url: [32m'https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641'[39m
+  }
+}
+

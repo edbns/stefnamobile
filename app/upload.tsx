@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { X, Upload as UploadIcon, Image as ImageIcon } from 'lucide-react-native';
+import { ArrowLeft, Upload as UploadIcon, Image as ImageIcon } from 'lucide-react-native';
 
 export default function UploadScreen() {
   const router = useRouter();
@@ -39,13 +39,13 @@ export default function UploadScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Select Image</Text>
+      {/* Floating Back Button */}
+      <View style={styles.floatingBackButton}>
         <TouchableOpacity
-          style={styles.closeButton}
+          style={styles.backButton}
           onPress={closeUpload}
         >
-          <X size={24} color="#ffffff" />
+          <ArrowLeft size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -82,30 +82,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  floatingBackButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1000,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  closeButton: {
+  backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#333333',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 100,
   },
   uploadOptions: {
     flex: 1,
