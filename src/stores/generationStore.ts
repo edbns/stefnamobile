@@ -197,105 +197,112 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   },
 
   pollJobStatus: async (jobId: string) => {
-    const poll = async () => {
-      try {
-        const status = await GenerationService.getGenerationStatus(jobId);
-        const { currentJob } = get();
+    try {
+      // Use adaptive polling from GenerationService
+      const status = await GenerationService.pollGenerationStatus(jobId);
+      const { currentJob } = get();
 
-        if (currentJob && currentJob.id === jobId) {
-            if (status.status === 'completed' || status.status === 'failed') {
-              // Finalize credits using creditsStore
-              try {
-                const disposition = status.status === 'completed' ? 'commit' : 'refund';
-                await useCreditsStore.getState().finalizeCredits(disposition);
-                console.log(`💰 ${disposition === 'commit' ? 'Committed' : 'Refunded'} credits for generation ${status.status}`);
+      if (currentJob && currentJob.id === jobId) {
+        if (status.status === 'completed' || status.status === 'failed') {
+          // Finalize credits using creditsStore
+          try {
+            const disposition = status.status === 'completed' ? 'commit' : 'refund';
+            await useCreditsStore.getState().finalizeCredits(disposition);
+            console.log(`💰 ${disposition === 'commit' ? 'Committed' : 'Refunded'} credits for generation ${status.status}`);
 
-                // Refresh user balance after credit changes
-                await useUserStore.getState().loadUserProfile();
+            // Refresh user balance after credit changes
+            await useUserStore.getState().loadUserProfile();
 
-                // Show appropriate notification
-                if (status.status === 'completed') {
-                  useNotificationsStore.getState().addNotification(
-                    notificationHelpers.generationComplete(currentJob.mode)
-                  );
-                } else {
-                  useErrorStore.getState().setError(
-                    errorHelpers.generation(
-                      status.error || 'Generation failed',
-                      { jobId, status }
-                    )
-                  );
-                }
-              } catch (creditError) {
-                console.error('Failed to finalize credits:', creditError);
-                useErrorStore.getState().setError(
-                  errorHelpers.credits('Failed to finalize credits', creditError)
-                );
-              }
-
-              // Job finished
-              let storedMedia: StoredMedia | undefined;
-
-              if (status.status === 'completed' && status.resultUrl) {
-                try {
-                  // Download and save the result image
-                  const filename = `generated_${jobId}.jpg`;
-                  storedMedia = await StorageService.saveGeneratedImage(
-                    status.resultUrl,
-                    filename,
-                    jobId
-                  );
-
-                  // Sync to cloud if enabled
-                  if (storedMedia) {
-                    await StorageService.syncMediaToCloud(storedMedia);
-                  }
-
-                  // Update media store
-                  await useMediaStore.getState().syncWithLocalStorage();
-                } catch (error) {
-                  console.error('Failed to save generated image:', error);
-                }
-              }
-
-              const completedJob = {
-                ...currentJob,
-                status: status.status,
-                resultUrl: status.resultUrl,
-                error: status.error,
-                storedMedia,
-              };
-
-              set({
-                currentJob: null,
-                isGenerating: false,
-                jobQueue: [...get().jobQueue, completedJob]
-              });
-
-              // Save to history
-              get().saveJobHistory();
+            // Show appropriate notification
+            if (status.status === 'completed') {
+              useNotificationsStore.getState().addNotification(
+                notificationHelpers.generationComplete(currentJob.mode)
+              );
             } else {
-            // Still processing, update progress
-            set({
-              currentJob: {
-                ...currentJob,
-                status: status.status,
-                progress: status.progress,
-              }
-            });
-
-            // Continue polling
-            setTimeout(poll, 2000);
+              useErrorStore.getState().setError(
+                errorHelpers.generation(
+                  status.error || 'Generation failed',
+                  { jobId, status }
+                )
+              );
+            }
+          } catch (creditError) {
+            console.error('Failed to finalize credits:', creditError);
+            useErrorStore.getState().setError(
+              errorHelpers.credits('Failed to finalize credits', creditError)
+            );
           }
-        }
-      } catch (error) {
-        console.error('Poll status error:', error);
-        // Stop polling on error
-      }
-    };
 
-    // Start polling
-    poll();
+          // Job finished
+          let storedMedia: StoredMedia | undefined;
+
+          if (status.status === 'completed' && status.resultUrl) {
+            try {
+              // Download and save the result image
+              const filename = `generated_${jobId}.jpg`;
+              storedMedia = await StorageService.saveGeneratedImage(
+                status.resultUrl,
+                filename,
+                jobId
+              );
+
+              // Sync to cloud if enabled
+              if (storedMedia) {
+                await StorageService.syncMediaToCloud(storedMedia);
+              }
+
+              // Update media store
+              await useMediaStore.getState().syncWithLocalStorage();
+            } catch (error) {
+              console.error('Failed to save generated image:', error);
+            }
+          }
+
+          const completedJob = {
+            ...currentJob,
+            status: status.status,
+            resultUrl: status.resultUrl,
+            error: status.error,
+            storedMedia,
+          };
+
+          set({
+            currentJob: null,
+            isGenerating: false,
+            jobQueue: [...get().jobQueue, completedJob]
+          });
+
+          // Save to history
+          get().saveJobHistory();
+        }
+      }
+    } catch (error) {
+      console.error('Poll status error:', error);
+      
+      // Handle polling error
+      const { currentJob } = get();
+      if (currentJob && currentJob.id === jobId) {
+        const failedJob = {
+          ...currentJob,
+          status: 'failed' as const,
+          error: error instanceof Error ? error.message : 'Polling failed',
+        };
+        
+        set({
+          currentJob: null,
+          isGenerating: false,
+          jobQueue: [...get().jobQueue, failedJob]
+        });
+        
+        // Refund credits on polling failure
+        try {
+          await useCreditsStore.getState().finalizeCredits('refund');
+          console.log('💰 Refunded credits due to polling failure');
+        } catch (refundError) {
+          console.error('Failed to refund credits:', refundError);
+        }
+      }
+    }
   },
 
   loadJobHistory: async () => {

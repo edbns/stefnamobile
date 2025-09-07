@@ -2,6 +2,8 @@
 // This mirrors the website's complete unified generation pipeline
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImageManipulator from 'expo-image-manipulator';
+import NetInfo from '@react-native-community/netinfo';
 import { config } from '../config/environment';
 
 // Import prompt enhancement utilities (need to copy from website)
@@ -72,6 +74,101 @@ export interface Preset {
 }
 
 export class GenerationService {
+  // Network detection
+  static async isOnline(): Promise<boolean> {
+    try {
+      const state = await NetInfo.fetch();
+      return state.isConnected ?? false;
+    } catch (error) {
+      console.error('Network check failed:', error);
+      return false;
+    }
+  }
+
+  static async waitForConnection(): Promise<void> {
+    return new Promise((resolve) => {
+      const unsubscribe = NetInfo.addEventListener(state => {
+        if (state.isConnected) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+  }
+
+  // Image compression and processing
+  private static async compressAndConvertImage(imageUri: string): Promise<string> {
+    try {
+      console.log('🖼️ [Mobile] Compressing image:', imageUri);
+      
+      // Compress image before base64 conversion
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [
+          { resize: { width: 1024, height: 1024 } }, // Resize to max 1024px
+          { compress: 0.8 } // 80% quality
+        ],
+        { 
+          compress: 0.8, 
+          format: ImageManipulator.SaveFormat.JPEG 
+        }
+      );
+      
+      console.log('✅ [Mobile] Image compressed successfully');
+      return await this.convertImageToBase64(compressedImage.uri);
+    } catch (error) {
+      console.error('❌ [Mobile] Compression failed, using original:', error);
+      return await this.convertImageToBase64(imageUri);
+    }
+  }
+
+  // Offline queue management
+  static async queueOfflineGeneration(request: GenerationRequest) {
+    try {
+      const offlineQueue = await AsyncStorage.getItem('offline_generation_queue');
+      const queue = offlineQueue ? JSON.parse(offlineQueue) : [];
+      
+      queue.push({
+        ...request,
+        timestamp: Date.now(),
+        status: 'queued'
+      });
+      
+      await AsyncStorage.setItem('offline_generation_queue', JSON.stringify(queue));
+      console.log('📱 [Mobile] Queued offline generation:', request.mode);
+    } catch (error) {
+      console.error('❌ [Mobile] Failed to queue offline generation:', error);
+    }
+  }
+
+  static async processOfflineQueue() {
+    try {
+      const offlineQueue = await AsyncStorage.getItem('offline_generation_queue');
+      if (!offlineQueue) return;
+      
+      const queue = JSON.parse(offlineQueue);
+      const processed = [];
+      
+      for (const item of queue) {
+        try {
+          if (item.status === 'queued') {
+            const result = await this.startOnlineGeneration(item);
+            processed.push({ ...item, status: 'completed', result });
+          } else {
+            processed.push(item);
+          }
+        } catch (error) {
+          processed.push({ ...item, status: 'failed', error: error.message });
+        }
+      }
+      
+      await AsyncStorage.setItem('offline_generation_queue', JSON.stringify(processed));
+      console.log('📱 [Mobile] Processed offline queue');
+    } catch (error) {
+      console.error('❌ [Mobile] Failed to process offline queue:', error);
+    }
+  }
+
   static async getPresets(): Promise<Preset[]> {
     try {
       const token = await AsyncStorage.getItem('auth_token');
@@ -104,8 +201,21 @@ export class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      // Convert image URI to base64 for upload
-      const base64Image = await this.convertImageToBase64(request.imageUri);
+      // Check network connection
+      const isOnline = await this.isOnline();
+      if (!isOnline) {
+        console.log('📱 [Mobile] Offline mode - queuing generation');
+        await this.queueOfflineGeneration(request);
+        return {
+          success: true,
+          jobId: `offline_${Date.now()}`,
+          estimatedTime: 0,
+          offline: true
+        };
+      }
+
+      // Compress and convert image URI to base64 for upload
+      const base64Image = await this.compressAndConvertImage(request.imageUri);
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -221,12 +331,174 @@ export class GenerationService {
       };
     } catch (error) {
       console.error('Start generation error:', error);
+      
+      // If network error, queue for offline processing
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        await this.queueOfflineGeneration(request);
+        return {
+          success: true,
+          jobId: `offline_${Date.now()}`,
+          estimatedTime: 0,
+          offline: true
+        };
+      }
+      
       return {
         success: false,
-        error: 'Network error. Please try again.'
+        error: this.getUserFriendlyErrorMessage(error.message)
       };
     }
   }
+
+  // Separate method for online generation (used by offline queue processor)
+  private static async startOnlineGeneration(request: GenerationRequest): Promise<GenerationResponse> {
+    const token = await AsyncStorage.getItem('auth_token');
+    if (!token) throw new Error('No auth token found');
+
+    // Compress and convert image URI to base64 for upload
+    const base64Image = await this.compressAndConvertImage(request.imageUri);
+
+    // Convert mobile mode names to website's expected format
+    const modeMap: Record<string, string> = {
+      'presets': 'presets',
+      'custom-prompt': 'custom-prompt',
+      'edit-photo': 'edit-photo',
+      'emotion-mask': 'emotion-mask',
+      'ghibli-reaction': 'ghibli-reaction',
+      'neo-glitch': 'neo-glitch',
+    };
+
+    // Apply complete prompt enhancement pipeline (matching website)
+    let processedPrompt = request.customPrompt || '';
+    let negativePrompt = '';
+
+    if (processedPrompt) {
+      // Step 1: Detect gender, animals, groups from original prompt
+      const detectedGender = detectGenderFromPrompt(processedPrompt);
+      const detectedAnimals = detectAnimalsFromPrompt(processedPrompt);
+      const detectedGroups = detectGroupsFromPrompt(processedPrompt);
+
+      console.log('🔍 [Mobile Prompt Enhancement] Detected:', {
+        gender: detectedGender,
+        animals: detectedAnimals,
+        groups: detectedGroups
+      });
+
+      // Step 2: Apply enhanced prompt engineering (matching website)
+      const { enhancedPrompt, negativePrompt: enhancedNegative } = enhancePromptForSpecificity(processedPrompt, {
+        preserveGender: true,
+        preserveAnimals: true,
+        preserveGroups: true,
+        originalGender: detectedGender,
+        originalAnimals: detectedAnimals,
+        originalGroups: detectedGroups,
+        context: request.mode
+      });
+
+      // Step 3: Apply advanced prompt enhancements
+      processedPrompt = applyAdvancedPromptEnhancements(enhancedPrompt);
+      negativePrompt = enhancedNegative;
+
+      console.log('✨ [Mobile Prompt Enhancement] Original:', processedPrompt);
+      console.log('✨ [Mobile Prompt Enhancement] Enhanced:', processedPrompt);
+      if (negativePrompt) {
+        console.log('✨ [Mobile Prompt Enhancement] Negative:', negativePrompt);
+      }
+    }
+
+    // Build complete payload matching website's unified-generate-background
+    const payload: any = {
+      mode: modeMap[request.mode] || request.mode,
+      prompt: processedPrompt,
+      sourceAssetId: base64Image, // Website expects base64 as sourceAssetId
+      userId: request.userId,
+      runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+
+      // Mode-specific parameters (matching website)
+      ...(request.presetId && { presetKey: request.presetId }),
+      ...(request.specialModeId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.specialModeId }),
+      ...(request.specialModeId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.specialModeId }),
+      ...(request.specialModeId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.specialModeId }),
+
+      // Prompt enhancement results
+      ...(negativePrompt && { negative_prompt: negativePrompt }),
+
+      // Mode-specific settings (matching website)
+      aspect_ratio: this.getAspectRatioForMode(request.mode),
+      image_prompt_strength: this.getImageStrengthForMode(request.mode),
+      guidance_scale: this.getGuidanceScaleForMode(request.mode),
+
+      // Quality settings
+      prompt_upsampling: true,
+      safety_tolerance: 3,
+      output_format: 'jpeg',
+
+      // IPA (Identity Preservation Analysis) settings
+      ipaThreshold: 0.8,
+      ipaRetries: 2,
+      ipaBlocking: false,
+    };
+
+    console.log('🚀 [Mobile Generation] Sending payload:', {
+      mode: payload.mode,
+      promptLength: payload.prompt?.length || 0,
+      hasSource: !!payload.sourceAssetId,
+      runId: payload.runId,
+    });
+
+    // Use the unified background endpoint (matching website)
+    const response = await fetch(`${config.API_BASE_URL}/unified-generate-background`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || 'Generation failed'
+      };
+    }
+
+    return {
+      success: true,
+      jobId: data.jobId,
+      estimatedTime: data.estimatedTime,
+    };
+  }
+
+  // User-friendly error messages
+  private static getUserFriendlyErrorMessage(error: string): string {
+    const friendlyMessages = {
+      'INSUFFICIENT_CREDITS': 'You need more credits to generate images. Credits reset daily.',
+      'NETWORK_ERROR': 'Please check your internet connection and try again.',
+      'IMAGE_TOO_LARGE': 'The image is too large. Please try a smaller image.',
+      'INVALID_IMAGE': 'The image format is not supported. Please try a different image.',
+      'GENERATION_TIMEOUT': 'Generation took too long. Please try again.',
+      'SERVER_ERROR': 'Our servers are busy. Please try again in a few minutes.',
+      'fetch': 'Please check your internet connection and try again.',
+      'network': 'Please check your internet connection and try again.'
+    };
+    
+    // Check for partial matches
+    for (const [key, message] of Object.entries(friendlyMessages)) {
+      if (error.toLowerCase().includes(key.toLowerCase())) {
+        return message;
+      }
+    }
+    
+    return 'Something went wrong. Please try again.';
+  }
+
+  // Adaptive polling configuration
+  private static pollInterval = 2000; // Start with 2 seconds
+  private static maxPollInterval = 30000; // Max 30 seconds
+  private static pollMultiplier = 1.5; // Increase by 50% each time
 
   static async getGenerationStatus(jobId: string): Promise<GenerationStatus> {
     try {
@@ -259,9 +531,48 @@ export class GenerationService {
       return {
         jobId,
         status: 'failed',
-        error: 'Network error. Please try again.',
+        error: this.getUserFriendlyErrorMessage(error.message),
       };
     }
+  }
+
+  // Adaptive polling with exponential backoff
+  static async pollGenerationStatus(jobId: string): Promise<GenerationStatus> {
+    let attempts = 0;
+    const maxAttempts = 20; // 5 minutes max
+    let currentPollInterval = this.pollInterval;
+    
+    console.log('🔄 [Mobile] Starting adaptive polling for job:', jobId);
+    
+    while (attempts < maxAttempts) {
+      try {
+        const status = await this.getGenerationStatus(jobId);
+        
+        if (status.status === 'completed' || status.status === 'failed') {
+          console.log('✅ [Mobile] Polling completed:', status.status);
+          return status;
+        }
+        
+        console.log(`🔄 [Mobile] Polling attempt ${attempts + 1}/${maxAttempts}, status: ${status.status}, next poll in ${currentPollInterval}ms`);
+        
+        // Wait with current interval
+        await new Promise(resolve => setTimeout(resolve, currentPollInterval));
+        
+        // Increase interval for next poll (adaptive backoff)
+        currentPollInterval = Math.min(currentPollInterval * this.pollMultiplier, this.maxPollInterval);
+        attempts++;
+      } catch (error) {
+        console.error('❌ [Mobile] Polling error:', error);
+        break;
+      }
+    }
+    
+    console.log('⏰ [Mobile] Polling timeout after', attempts, 'attempts');
+    return { 
+      jobId, 
+      status: 'failed', 
+      error: 'Generation took too long. Please try again.' 
+    };
   }
 
   static async getUserMedia(userId: string): Promise<any[]> {

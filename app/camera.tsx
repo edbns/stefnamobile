@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { X, RotateCcw, Check, RotateCcw as Retake } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -92,7 +92,7 @@ export default function CameraScreen() {
               style={styles.controlButton}
               onPress={closeCamera}
             >
-              <X size={24} color="#ffffff" />
+              <Feather name="x" size={24} color="#ffffff" />
             </TouchableOpacity>
           </View>
 
@@ -102,7 +102,7 @@ export default function CameraScreen() {
               style={[styles.previewButton, styles.retakeButton]}
               onPress={retakePhoto}
             >
-              <Retake size={24} color="#000000" />
+              <Feather name="rotate-ccw" size={24} color="#000000" />
               <Text style={styles.previewButtonText}>Retake</Text>
             </TouchableOpacity>
 
@@ -110,7 +110,7 @@ export default function CameraScreen() {
               style={[styles.previewButton, styles.confirmButton]}
               onPress={confirmPhoto}
             >
-              <Check size={24} color="#000000" />
+              <Feather name="check" size={24} color="#000000" />
               <Text style={styles.previewButtonText}>Use Photo</Text>
             </TouchableOpacity>
           </View>
@@ -134,13 +134,13 @@ export default function CameraScreen() {
               style={styles.flipButton}
               onPress={toggleCameraFacing}
             >
-              <RotateCcw size={24} color="#ffffff" />
+              <Feather name="rotate-ccw" size={24} color="#ffffff" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.controlButton}
               onPress={closeCamera}
             >
-              <X size={24} color="#ffffff" />
+              <Feather name="x" size={24} color="#ffffff" />
             </TouchableOpacity>
           </View>
 

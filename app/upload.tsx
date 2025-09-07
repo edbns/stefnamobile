@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { ArrowLeft, Upload as UploadIcon, Image as ImageIcon } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 export default function UploadScreen() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function UploadScreen() {
           style={styles.backButton}
           onPress={closeUpload}
         >
-          <ArrowLeft size={24} color="#ffffff" />
+          <Feather name="arrow-left" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -56,7 +56,7 @@ export default function UploadScreen() {
             onPress={pickImage}
           >
             <View style={styles.iconContainer}>
-              <ImageIcon size={48} color="#ffffff" />
+              <Feather name="image" size={48} color="#ffffff" />
             </View>
             <Text style={styles.optionTitle}>From Gallery</Text>
             <Text style={styles.optionSubtitle}>Choose from your photos</Text>

@@ -9,6 +9,11 @@ export default function Layout() {
 
   useEffect(() => {
     initialize();
+    // Initialize network monitoring
+    
+    // Cleanup on unmount
+    return () => {
+    };
   }, [initialize]);
 
   return (

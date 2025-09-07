@@ -7,19 +7,18 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 export default function HelpCenterScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      {/* Header with Back Button */}
-      <View style={styles.header}>
+      {/* Floating Back Button */}
+      <View style={styles.floatingBackButton}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <ArrowLeft size={24} color="#ffffff" />
+          <Feather name="arrow-left" size={24} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help Center</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -111,25 +110,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  floatingBackButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1000,
   },
   backButton: {
-    padding: 8,
-    marginRight: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#ffffff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 100,
   },
   section: {
     marginBottom: 24,

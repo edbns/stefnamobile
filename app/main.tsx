@@ -11,13 +11,13 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
-import { Camera, Plus, User, Sparkles } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function MainScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { media, loading, loadUserMedia, deleteMedia } = useMediaStore();
+  const { media, isLoading, loadUserMedia, deleteMedia } = useMediaStore();
 
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -140,7 +140,7 @@ export default function MainScreen() {
             />
           ) : (
             <View style={styles.mediaImagePlaceholder}>
-              <Sparkles size={24} color="#666666" />
+              <Feather name="heart" size={24} color="#666666" />
             </View>
           )}
         </View>
@@ -157,7 +157,7 @@ export default function MainScreen() {
   return (
     <View style={styles.container}>
       {/* Media Gallery - Full Screen */}
-      {loading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Loading your creations...</Text>
         </View>
@@ -174,9 +174,9 @@ export default function MainScreen() {
       ) : (
         <View style={styles.emptyContainer}>
           <View style={styles.emptyIcon}>
-            <Sparkles size={60} color="#666666" />
+            <Feather name="image" size={60} color="#666666" />
           </View>
-          <Text style={styles.emptyText}>No creations yet</Text>
+          <Text style={styles.emptyText}>No Media</Text>
           <Text style={styles.emptySubtext}>Upload a photo or take one with the camera to get started</Text>
         </View>
       )}
@@ -184,13 +184,13 @@ export default function MainScreen() {
       {/* Floating Footer */}
       <View style={styles.floatingFooter}>
         <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
-          <Plus size={24} color="#ffffff" />
+          <Feather name="plus" size={24} color="#ffffff" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={handleCameraPress}>
-          <Camera size={24} color="#ffffff" />
+          <Feather name="camera" size={24} color="#ffffff" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-          <User size={24} color="#ffffff" />
+          <Feather name="user" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -304,18 +304,16 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 40,
     paddingBottom: 40, // Account for safe area
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    backdropFilter: 'blur(20px)',
+    backgroundColor: '#1a1a1a',
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
   },
   footerButton: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#333333',
   },
 });
-
