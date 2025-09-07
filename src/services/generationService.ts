@@ -6,9 +6,10 @@ import { config } from '../config/environment';
 
 export interface GenerationRequest {
   imageUri: string;
-  mode: 'presets' | 'custom' | 'edit';
+  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch' | 'storytime';
   presetId?: string;
   customPrompt?: string;
+  specialModeId?: string;
   userId: string;
 }
 
@@ -79,6 +80,7 @@ export class GenerationService {
         mode: request.mode,
         presetId: request.presetId,
         customPrompt: request.customPrompt,
+        specialModeId: request.specialModeId,
         userId: request.userId,
       };
 

@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
-export type GenerationMode = 'presets' | 'custom' | 'edit';
+export type GenerationMode = 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch' | 'storytime';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
@@ -39,6 +39,45 @@ export default function GenerationModes({
     onModeChange(mode);
   };
 
+  const getModeIcon = (mode: GenerationMode): string => {
+    const icons = {
+      presets: '🎨',
+      custom: '✨',
+      edit: '🎭',
+      emotionmask: '😊',
+      ghiblireact: '🎌',
+      neotokyoglitch: '🌆',
+      storytime: '📖',
+    };
+    return icons[mode] || '🎨';
+  };
+
+  const getModeTitle = (mode: GenerationMode): string => {
+    const titles = {
+      presets: 'Presets',
+      custom: 'Custom',
+      edit: 'Edit',
+      emotionmask: 'Emotion Mask',
+      ghiblireact: 'Ghibli React',
+      neotokyoglitch: 'Neo Tokyo',
+      storytime: 'Story Time',
+    };
+    return titles[mode] || mode;
+  };
+
+  const getModeDescription = (mode: GenerationMode): string => {
+    const descriptions = {
+      presets: 'Curated styles',
+      custom: 'Your own prompt',
+      edit: 'Transform image',
+      emotionmask: 'Add emotions',
+      ghiblireact: 'Anime style',
+      neotokyoglitch: 'Cyberpunk effects',
+      storytime: 'AI storytelling',
+    };
+    return descriptions[mode] || 'Generate image';
+  };
+
   const handleGenerate = () => {
     if ((selectedMode === 'custom' || selectedMode === 'edit') && !customPrompt.trim()) {
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
@@ -51,43 +90,24 @@ export default function GenerationModes({
     <View style={styles.container}>
       <Text style={styles.title}>Choose Generation Mode</Text>
 
-      <View style={styles.modesContainer}>
-        <TouchableOpacity
-          style={[
-            styles.modeButton,
-            selectedMode === 'presets' && styles.modeButtonSelected,
-          ]}
-          onPress={() => handleModePress('presets')}
-        >
-          <Text style={styles.modeIcon}>🎨</Text>
-          <Text style={styles.modeTitle}>Presets</Text>
-          <Text style={styles.modeDescription}>Auto-generate with curated styles</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.modeButton,
-            selectedMode === 'custom' && styles.modeButtonSelected,
-          ]}
-          onPress={() => handleModePress('custom')}
-        >
-          <Text style={styles.modeIcon}>✨</Text>
-          <Text style={styles.modeTitle}>Custom</Text>
-          <Text style={styles.modeDescription}>Create with your own prompt</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.modeButton,
-            selectedMode === 'edit' && styles.modeButtonSelected,
-          ]}
-          onPress={() => handleModePress('edit')}
-        >
-          <Text style={styles.modeIcon}>🎭</Text>
-          <Text style={styles.modeTitle}>Edit</Text>
-          <Text style={styles.modeDescription}>Transform existing image</Text>
-        </TouchableOpacity>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={styles.modesContainer}>
+          {(['presets', 'custom', 'edit', 'emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'] as GenerationMode[]).map((mode) => (
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.modeButton,
+                selectedMode === mode && styles.modeButtonSelected,
+              ]}
+              onPress={() => handleModePress(mode)}
+            >
+              <Text style={styles.modeIcon}>{getModeIcon(mode)}</Text>
+              <Text style={styles.modeTitle}>{getModeTitle(mode)}</Text>
+              <Text style={styles.modeDescription}>{getModeDescription(mode)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
 
       {(selectedMode === 'custom' || selectedMode === 'edit') && showPromptInput && (
         <View style={styles.promptContainer}>
@@ -137,17 +157,17 @@ const styles = StyleSheet.create({
   },
   modesContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   modeButton: {
-    flex: 1,
+    width: 120,
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 4,
+    padding: 12,
+    marginHorizontal: 6,
     alignItems: 'center',
-    minHeight: 120,
+    minHeight: 100,
   },
   modeButtonSelected: {
     backgroundColor: '#007AFF',

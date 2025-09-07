@@ -6,6 +6,7 @@ import { useGenerationStore } from '../src/stores/generationStore';
 import CameraPicker from '../src/components/CameraPicker';
 import GenerationModes, { GenerationMode } from '../src/components/GenerationModes';
 import RotatingPresets from '../src/components/RotatingPresets';
+import SpecialModeSelector from '../src/components/SpecialModeSelector';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function MainScreen() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
+  const [selectedSpecialMode, setSelectedSpecialMode] = useState<string | null>(null);
 
   // Load presets on mount
   useEffect(() => {
@@ -78,6 +80,7 @@ export default function MainScreen() {
       return;
     }
 
+    // Validation based on mode
     if (generationMode === 'presets' && !selectedPreset) {
       Alert.alert('Error', 'Please select a preset style');
       return;
@@ -88,17 +91,26 @@ export default function MainScreen() {
       return;
     }
 
+    // Special modes validation
+    const specialModes = ['emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'];
+    if (specialModes.includes(generationMode) && !selectedSpecialMode) {
+      Alert.alert('Error', `Please select an option for ${generationMode}`);
+      return;
+    }
+
     // Start the generation process
     await startGeneration({
       imageUri: selectedImage,
       mode: generationMode,
       presetId: selectedPreset || undefined,
       customPrompt: customPrompt.trim() || undefined,
+      specialModeId: selectedSpecialMode || undefined,
     });
 
     // Clear the form after starting generation
     setCustomPrompt('');
     setSelectedPreset(null);
+    setSelectedSpecialMode(null);
   };
 
   return (
@@ -143,6 +155,17 @@ export default function MainScreen() {
             selectedPreset={selectedPreset}
             onPresetSelect={setSelectedPreset}
             presets={presets}
+          />
+        </View>
+      )}
+
+      {/* Special Mode Selector */}
+      {selectedImage && ['emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'].includes(generationMode) && (
+        <View style={styles.section}>
+          <SpecialModeSelector
+            mode={generationMode}
+            selectedOption={selectedSpecialMode}
+            onOptionSelect={setSelectedSpecialMode}
           />
         </View>
       )}

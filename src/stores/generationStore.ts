@@ -6,9 +6,10 @@ import { StorageService, StoredMedia } from '../services/storageService';
 interface GenerationJob {
   id: string;
   imageUri: string;
-  mode: 'presets' | 'custom' | 'edit';
+  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch' | 'storytime';
   presetId?: string;
   customPrompt?: string;
+  specialModeId?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress?: number;
   resultUrl?: string;
@@ -30,7 +31,7 @@ interface GenerationState {
   presets: Preset[];
 
   // Actions
-  startGeneration: (job: Omit<GenerationJob, 'id' | 'status' | 'createdAt'>) => Promise<void>;
+  startGeneration: (job: Omit<GenerationJob, 'id' | 'status' | 'createdAt' | 'storedMedia'>) => Promise<void>;
   cancelGeneration: () => void;
   clearCompletedJobs: () => void;
   loadPresets: () => Promise<void>;
@@ -62,6 +63,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         mode: job.mode,
         presetId: job.presetId,
         customPrompt: job.customPrompt,
+        specialModeId: job.specialModeId,
         userId: 'current_user_id', // TODO: Get from auth store
       });
 
