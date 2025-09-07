@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
-export type GenerationMode = 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch' | 'storytime';
+export type GenerationMode = 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
@@ -47,7 +47,6 @@ export default function GenerationModes({
       emotionmask: '😊',
       ghiblireact: '🎌',
       neotokyoglitch: '🌆',
-      storytime: '📖',
     };
     return icons[mode] || '🎨';
   };
@@ -60,7 +59,6 @@ export default function GenerationModes({
       emotionmask: 'Emotion Mask',
       ghiblireact: 'Ghibli React',
       neotokyoglitch: 'Neo Tokyo',
-      storytime: 'Story Time',
     };
     return titles[mode] || mode;
   };
@@ -73,7 +71,6 @@ export default function GenerationModes({
       emotionmask: 'Add emotions',
       ghiblireact: 'Anime style',
       neotokyoglitch: 'Cyberpunk effects',
-      storytime: 'AI storytelling',
     };
     return descriptions[mode] || 'Generate image';
   };
@@ -92,7 +89,7 @@ export default function GenerationModes({
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.modesContainer}>
-          {(['presets', 'custom', 'edit', 'emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'] as GenerationMode[]).map((mode) => (
+          {(['presets', 'custom', 'edit', 'emotionmask', 'ghiblireact', 'neotokyoglitch'] as GenerationMode[]).map((mode) => (
             <TouchableOpacity
               key={mode}
               style={[

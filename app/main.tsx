@@ -92,7 +92,7 @@ export default function MainScreen() {
     }
 
     // Special modes validation
-    const specialModes = ['emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'];
+    const specialModes = ['emotionmask', 'ghiblireact', 'neotokyoglitch'];
     if (specialModes.includes(generationMode) && !selectedSpecialMode) {
       Alert.alert('Error', `Please select an option for ${generationMode}`);
       return;
@@ -160,7 +160,7 @@ export default function MainScreen() {
       )}
 
       {/* Special Mode Selector */}
-      {selectedImage && ['emotionmask', 'ghiblireact', 'neotokyoglitch', 'storytime'].includes(generationMode) && (
+      {selectedImage && ['emotionmask', 'ghiblireact', 'neotokyoglitch'].includes(generationMode) && (
         <View style={styles.section}>
           <SpecialModeSelector
             mode={generationMode}

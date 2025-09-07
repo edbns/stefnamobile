@@ -8,29 +8,28 @@ import {
 } from 'react-native';
 import { GenerationMode } from './GenerationModes';
 
-// Simplified presets for mobile - in production these would come from API
+// Correct presets from website files
 const EMOTION_MASK_PRESETS = [
-  { id: 'nostalgia_distance', label: 'Nostalgic', description: 'Soft memory lens' },
-  { id: 'joy_sadness', label: 'Bittersweet', description: 'Smile through tears' },
-  { id: 'strength_vuln', label: 'Resilient', description: 'Stoic but soft' },
-  { id: 'peace_fear', label: 'Calm', description: 'Peace over chaos' },
-  { id: 'confidence_loneliness', label: 'Bold', description: 'Confident but alone' },
+  { id: 'emotion_mask_nostalgia_distance', label: 'Nostalgia + Distance', description: 'Soft memory lens' },
+  { id: 'emotion_mask_joy_sadness', label: 'Joy + Sadness', description: 'Smile-through-tears' },
+  { id: 'emotion_mask_conf_loneliness', label: 'Confidence + Loneliness', description: 'Bold but alone' },
+  { id: 'emotion_mask_peace_fear', label: 'Peace + Fear', description: 'Calm over chaos' },
+  { id: 'emotion_mask_strength_vuln', label: 'Strength + Vulnerability', description: 'Stoic but soft' },
 ];
 
 const GHIBLI_PRESETS = [
-  { id: 'joyful', label: 'Joyful', description: 'Happy & bright' },
-  { id: 'curious', label: 'Curious', description: 'Wide-eyed wonder' },
-  { id: 'determined', label: 'Determined', description: 'Focused gaze' },
-  { id: 'gentle', label: 'Gentle', description: 'Soft & kind' },
-  { id: 'mysterious', label: 'Mysterious', description: 'Enigmatic look' },
+  { id: 'ghibli_tears', label: 'Tears', description: 'Delicate tears' },
+  { id: 'ghibli_shock', label: 'Shock', description: 'Wide-eyed surprise' },
+  { id: 'ghibli_sparkle', label: 'Sparkle', description: 'Magical sparkles' },
+  { id: 'ghibli_sadness', label: 'Sadness', description: 'Melancholic emotion' },
+  { id: 'ghibli_love', label: 'Love', description: 'Romantic expression' },
 ];
 
 const NEO_TOKYO_PRESETS = [
-  { id: 'cyberpunk', label: 'Cyberpunk', description: 'Neon & chrome' },
-  { id: 'glitch', label: 'Glitch', description: 'Digital distortion' },
-  { id: 'hacker', label: 'Hacker', description: 'Tech aesthetic' },
-  { id: 'synthwave', label: 'Synthwave', description: 'Retro-futuristic' },
-  { id: 'matrix', label: 'Matrix', description: 'Code overlay' },
+  { id: 'neo_tokyo_base', label: 'Base', description: 'Cyberpunk portrait' },
+  { id: 'neo_tokyo_visor', label: 'Glitch Visor', description: 'Holographic visor' },
+  { id: 'neo_tokyo_tattoos', label: 'Tech Tattoos', description: 'Neon tattoos' },
+  { id: 'neo_tokyo_scanlines', label: 'Scanline FX', description: 'CRT effects' },
 ];
 
 const STORY_TIME_PRESETS = [
@@ -72,12 +71,6 @@ export default function SpecialModeSelector({
           presets: NEO_TOKYO_PRESETS,
           icon: '🌆',
         };
-      case 'storytime':
-        return {
-          title: 'Choose Theme',
-          presets: STORY_TIME_PRESETS,
-          icon: '📖',
-        };
       default:
         return null;
     }
@@ -117,32 +110,24 @@ export default function SpecialModeSelector({
 function getPresetEmoji(presetId: string, mode: GenerationMode): string {
   const emojiMaps = {
     emotionmask: {
-      nostalgia_distance: '🌅',
-      joy_sadness: '😊',
-      strength_vuln: '💪',
-      peace_fear: '🕊️',
-      confidence_loneliness: '🌟',
+      emotion_mask_nostalgia_distance: '🌅',
+      emotion_mask_joy_sadness: '😊',
+      emotion_mask_conf_loneliness: '🌟',
+      emotion_mask_peace_fear: '🕊️',
+      emotion_mask_strength_vuln: '💪',
     },
     ghiblireact: {
-      joyful: '😄',
-      curious: '🤔',
-      determined: '💪',
-      gentle: '😊',
-      mysterious: '😏',
+      ghibli_tears: '😢',
+      ghibli_shock: '😱',
+      ghibli_sparkle: '✨',
+      ghibli_sadness: '😢',
+      ghibli_love: '💕',
     },
     neotokyoglitch: {
-      cyberpunk: '🤖',
-      glitch: '💻',
-      hacker: '👨‍💻',
-      synthwave: '🌃',
-      matrix: '🟢',
-    },
-    storytime: {
-      adventure: '🗺️',
-      fantasy: '🧙‍♂️',
-      mystery: '🔍',
-      romance: '💕',
-      comedy: '😂',
+      neo_tokyo_base: '🤖',
+      neo_tokyo_visor: '🥽',
+      neo_tokyo_tattoos: '🐉',
+      neo_tokyo_scanlines: '📺',
     },
   };
 

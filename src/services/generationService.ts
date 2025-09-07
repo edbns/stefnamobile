@@ -6,7 +6,7 @@ import { config } from '../config/environment';
 
 export interface GenerationRequest {
   imageUri: string;
-  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch' | 'storytime';
+  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch';
   presetId?: string;
   customPrompt?: string;
   specialModeId?: string;
