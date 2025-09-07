@@ -6,7 +6,7 @@ import { config } from '../config/environment';
 
 export interface GenerationRequest {
   imageUri: string;
-  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch';
+  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
   presetId?: string;
   customPrompt?: string;
   specialModeId?: string;
@@ -75,9 +75,19 @@ export class GenerationService {
       // Convert image URI to base64 for upload
       const base64Image = await this.convertImageToBase64(request.imageUri);
 
+      // Convert mobile mode names to website's expected format
+      const modeMap: Record<string, string> = {
+        'presets': 'presets',
+        'custom-prompt': 'custom-prompt',
+        'edit-photo': 'edit-photo',
+        'emotion-mask': 'emotion-mask',
+        'ghibli-reaction': 'ghibli-reaction',
+        'neo-glitch': 'neo-glitch',
+      };
+
       const payload = {
         image: base64Image,
-        mode: request.mode,
+        mode: modeMap[request.mode] || request.mode,
         presetId: request.presetId,
         customPrompt: request.customPrompt,
         specialModeId: request.specialModeId,

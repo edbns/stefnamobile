@@ -53,19 +53,19 @@ export default function SpecialModeSelector({
 }: SpecialModeSelectorProps) {
   const getModeData = () => {
     switch (mode) {
-      case 'emotionmask':
+      case 'emotion-mask':
         return {
           title: 'Choose Emotion',
           presets: EMOTION_MASK_PRESETS,
           icon: '😊',
         };
-      case 'ghiblireact':
+      case 'ghibli-reaction':
         return {
           title: 'Choose Expression',
           presets: GHIBLI_PRESETS,
           icon: '🎌',
         };
-      case 'neotokyoglitch':
+      case 'neo-glitch':
         return {
           title: 'Choose Style',
           presets: NEO_TOKYO_PRESETS,
@@ -109,21 +109,21 @@ export default function SpecialModeSelector({
 
 function getPresetEmoji(presetId: string, mode: GenerationMode): string {
   const emojiMaps = {
-    emotionmask: {
+    'emotion-mask': {
       emotion_mask_nostalgia_distance: '🌅',
       emotion_mask_joy_sadness: '😊',
       emotion_mask_conf_loneliness: '🌟',
       emotion_mask_peace_fear: '🕊️',
       emotion_mask_strength_vuln: '💪',
     },
-    ghiblireact: {
+    'ghibli-reaction': {
       ghibli_tears: '😢',
       ghibli_shock: '😱',
       ghibli_sparkle: '✨',
       ghibli_sadness: '😢',
       ghibli_love: '💕',
     },
-    neotokyoglitch: {
+    'neo-glitch': {
       neo_tokyo_base: '🤖',
       neo_tokyo_visor: '🥽',
       neo_tokyo_tattoos: '🐉',

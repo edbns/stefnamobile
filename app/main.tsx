@@ -86,13 +86,13 @@ export default function MainScreen() {
       return;
     }
 
-    if ((generationMode === 'custom' || generationMode === 'edit') && !customPrompt.trim()) {
+    if ((generationMode === 'custom-prompt' || generationMode === 'edit-photo') && !customPrompt.trim()) {
       Alert.alert('Error', 'Please enter a prompt');
       return;
     }
 
     // Special modes validation
-    const specialModes = ['emotionmask', 'ghiblireact', 'neotokyoglitch'];
+    const specialModes = ['emotion-mask', 'ghibli-reaction', 'neo-glitch'];
     if (specialModes.includes(generationMode) && !selectedSpecialMode) {
       Alert.alert('Error', `Please select an option for ${generationMode}`);
       return;
@@ -160,7 +160,7 @@ export default function MainScreen() {
       )}
 
       {/* Special Mode Selector */}
-      {selectedImage && ['emotionmask', 'ghiblireact', 'neotokyoglitch'].includes(generationMode) && (
+      {selectedImage && ['emotion-mask', 'ghibli-reaction', 'neo-glitch'].includes(generationMode) && (
         <View style={styles.section}>
           <SpecialModeSelector
             mode={generationMode}

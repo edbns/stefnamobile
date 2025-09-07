@@ -6,7 +6,7 @@ import { StorageService, StoredMedia } from '../services/storageService';
 interface GenerationJob {
   id: string;
   imageUri: string;
-  mode: 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch';
+  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
   presetId?: string;
   customPrompt?: string;
   specialModeId?: string;

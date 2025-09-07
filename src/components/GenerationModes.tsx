@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 
-export type GenerationMode = 'presets' | 'custom' | 'edit' | 'emotionmask' | 'ghiblireact' | 'neotokyoglitch';
+export type GenerationMode = 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
@@ -31,7 +31,7 @@ export default function GenerationModes({
   const [showPromptInput, setShowPromptInput] = useState(false);
 
   const handleModePress = (mode: GenerationMode) => {
-    if (mode === 'custom' || mode === 'edit') {
+    if (mode === 'custom-prompt' || mode === 'edit-photo') {
       setShowPromptInput(true);
     } else {
       setShowPromptInput(false);
@@ -42,11 +42,11 @@ export default function GenerationModes({
   const getModeIcon = (mode: GenerationMode): string => {
     const icons = {
       presets: '🎨',
-      custom: '✨',
-      edit: '🎭',
-      emotionmask: '😊',
-      ghiblireact: '🎌',
-      neotokyoglitch: '🌆',
+      'custom-prompt': '✨',
+      'edit-photo': '🎭',
+      'emotion-mask': '😊',
+      'ghibli-reaction': '🎌',
+      'neo-glitch': '🌆',
     };
     return icons[mode] || '🎨';
   };
@@ -54,11 +54,11 @@ export default function GenerationModes({
   const getModeTitle = (mode: GenerationMode): string => {
     const titles = {
       presets: 'Presets',
-      custom: 'Custom',
-      edit: 'Edit',
-      emotionmask: 'Emotion Mask',
-      ghiblireact: 'Ghibli React',
-      neotokyoglitch: 'Neo Tokyo',
+      'custom-prompt': 'Custom',
+      'edit-photo': 'Edit',
+      'emotion-mask': 'Emotion Mask',
+      'ghibli-reaction': 'Ghibli React',
+      'neo-glitch': 'Neo Tokyo',
     };
     return titles[mode] || mode;
   };
@@ -66,17 +66,17 @@ export default function GenerationModes({
   const getModeDescription = (mode: GenerationMode): string => {
     const descriptions = {
       presets: 'Curated styles',
-      custom: 'Your own prompt',
-      edit: 'Transform image',
-      emotionmask: 'Add emotions',
-      ghiblireact: 'Anime style',
-      neotokyoglitch: 'Cyberpunk effects',
+      'custom-prompt': 'Your own prompt',
+      'edit-photo': 'Transform image',
+      'emotion-mask': 'Add emotions',
+      'ghibli-reaction': 'Anime style',
+      'neo-glitch': 'Cyberpunk effects',
     };
     return descriptions[mode] || 'Generate image';
   };
 
   const handleGenerate = () => {
-    if ((selectedMode === 'custom' || selectedMode === 'edit') && !customPrompt.trim()) {
+    if ((selectedMode === 'custom-prompt' || selectedMode === 'edit-photo') && !customPrompt.trim()) {
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
       return;
     }
@@ -89,7 +89,7 @@ export default function GenerationModes({
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.modesContainer}>
-          {(['presets', 'custom', 'edit', 'emotionmask', 'ghiblireact', 'neotokyoglitch'] as GenerationMode[]).map((mode) => (
+          {(['presets', 'custom-prompt', 'edit-photo', 'emotion-mask', 'ghibli-reaction', 'neo-glitch'] as GenerationMode[]).map((mode) => (
             <TouchableOpacity
               key={mode}
               style={[
@@ -106,10 +106,10 @@ export default function GenerationModes({
         </View>
       </ScrollView>
 
-      {(selectedMode === 'custom' || selectedMode === 'edit') && showPromptInput && (
+      {(selectedMode === 'custom-prompt' || selectedMode === 'edit-photo') && showPromptInput && (
         <View style={styles.promptContainer}>
           <Text style={styles.promptLabel}>
-            {selectedMode === 'custom' ? 'Describe your vision:' : 'How to transform this image:'}
+            {selectedMode === 'custom-prompt' ? 'Describe your vision:' : 'How to transform this image:'}
           </Text>
           <TextInput
             style={styles.promptInput}
