@@ -2,7 +2,7 @@
   "expo": {
     "name": "StefnaMobile",
     "slug": "stefnamobile",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -53,7 +53,9 @@
         "projectId": "20065ae5-0214-413d-8de7-7182c3467641"
       }
     },
-    "runtimeVersion": "1.0.1",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "updates": {
       "url": "https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641"
     }
