@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "bump": "npm version patch && git add . && git commit -m 'bump version' && git push"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.1.2",
