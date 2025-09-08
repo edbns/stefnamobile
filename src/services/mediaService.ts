@@ -2,6 +2,7 @@
 // NO STATE - Just makes HTTP requests and returns raw data
 
 import { config } from '../config/environment';
+import { Alert } from 'react-native';
 
 export interface DeleteMediaRequest {
   mediaId: string;
@@ -59,27 +60,49 @@ export const mediaService = {
 
   // Get user's media from cloud
   async getUserMedia(token: string, type?: 'photo' | 'video'): Promise<UserMediaResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/getUserMedia`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/getUserMedia`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const data = await response.json();
+      // Check response status first
+      if (!response.ok) {
+        const textResponse = await response.text();
+        console.error('API request failed:', response.status, textResponse);
+        return {
+          media: [],
+          error: `API request failed with status ${response.status}`,
+        };
+      }
 
-    if (!response.ok) {
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('Non-JSON response received:', textResponse);
+        return {
+          media: [],
+          error: 'Server returned non-JSON response. Check authentication.',
+        };
+      }
+
+      const data = await response.json();
+
+      // Backend returns { success: true, items: [...], total: count, hasMore: boolean }
+      // Transform to expected format { media: [...] }
+      return {
+        media: data.items || [],
+      };
+    } catch (error) {
+      console.error('Load user media error:', error);
       return {
         media: [],
-        error: data.error || 'Failed to fetch user media',
+        error: error.message,
       };
     }
-
-    // Backend returns { success: true, items: [...], total: count, hasMore: boolean }
-    // Transform to expected format { media: [...] }
-    return {
-      media: data.items || [],
-    };
   },
 };

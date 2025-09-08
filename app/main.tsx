@@ -177,20 +177,20 @@ export default function MainScreen() {
             <Feather name="image" size={60} color="#666666" />
           </View>
           <Text style={styles.emptyText}>No Media</Text>
-          <Text style={styles.emptySubtext}>Upload a photo or take one with the camera to get started</Text>
+          <Text style={styles.emptySubtext}>Upload a photo or take one to get started</Text>
         </View>
       )}
 
       {/* Floating Footer */}
       <View style={styles.floatingFooter}>
         <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
-          <Feather name="plus" size={24} color="#ffffff" />
+          <Feather name="plus" size={24} color="#000000" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={handleCameraPress}>
-          <Feather name="camera" size={24} color="#ffffff" />
+          <Feather name="camera" size={24} color="#000000" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-          <Feather name="user" size={24} color="#ffffff" />
+          <Feather name="user" size={24} color="#000000" />
         </TouchableOpacity>
       </View>
     </View>
@@ -295,23 +295,31 @@ const styles = StyleSheet.create({
   // Floating Footer
   floatingFooter: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 20,
+    left: 30,
+    right: 30,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 40,
-    paddingBottom: 40, // Account for safe area
+    paddingVertical: 12, // Reduced from 20
+    paddingHorizontal: 20, // Reduced from 40
     backgroundColor: '#1a1a1a',
-    borderTopWidth: 1,
-    borderTopColor: '#333333',
+    borderRadius: 25, // Reduced from 30
+    borderWidth: 1,
+    borderColor: '#333333',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2, // Reduced shadow
+    },
+    shadowOpacity: 0.2, // Reduced opacity
+    shadowRadius: 4, // Reduced radius
+    elevation: 4, // Reduced elevation
   },
   footerButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50, // Reduced from 60
+    height: 50, // Reduced from 60
+    borderRadius: 25, // Reduced from 30
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',

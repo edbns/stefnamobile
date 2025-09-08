@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,26 +6,180 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  TextInput,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
-import { 
-  ArrowLeft, 
-  User, 
-  HelpCircle, 
-  Shield, 
-  FileText, 
-  Users, 
-  LogOut,
-  Settings,
-  Coins,
-  Mail,
-  Trash2
-} from 'lucide-react-native';
+import { useCreditsStore } from '../src/stores/creditsStore';
+import { Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { balance } = useCreditsStore();
+  
+  // State for invite friends dropdown
+  const [showInviteDropdown, setShowInviteDropdown] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  
+  // State for change email dropdown
+  const [showChangeEmailDropdown, setShowChangeEmailDropdown] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+  
+  // State for legal dropdown
+  const [showLegalDropdown, setShowLegalDropdown] = useState(false);
+  
+  // State for referral stats
+  const [referralStats, setReferralStats] = useState({
+    invites: 0,
+    tokensEarned: 0,
+    referralCode: user?.id || ''
+  });
+
+  // Load referral stats on mount
+  useEffect(() => {
+    loadReferralStats();
+  }, []);
+
+  const loadReferralStats = async () => {
+    try {
+      // This would normally fetch from your API
+      // For now, using mock data
+      setReferralStats({
+        invites: 0,
+        tokensEarned: 0,
+        referralCode: user?.id || 'your-id'
+      });
+    } catch (error) {
+      console.error('Failed to load referral stats:', error);
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    if (!newEmail.trim()) {
+      Alert.alert('Error', 'Please enter a new email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    // Check if new email is different from current email
+    if (newEmail.toLowerCase() === user?.email?.toLowerCase()) {
+      Alert.alert('Error', 'New email must be different from current email');
+      return;
+    }
+
+    setIsChangingEmail(true);
+
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://stefna.xyz/.netlify/functions'}/change-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newEmail: newEmail.trim() })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', 'Email updated successfully!');
+        setNewEmail('');
+        setShowChangeEmailDropdown(false);
+        // Update user in auth store
+        // Note: In a real app, you'd refresh the user data from the server
+      } else {
+        Alert.alert('Error', data.error || 'Failed to update email');
+      }
+    } catch (error) {
+      console.error('Email change error:', error);
+      Alert.alert('Error', 'Failed to update email. Please try again.');
+    } finally {
+      setIsChangingEmail(false);
+    }
+  };
+
+  const handleSendInvite = async () => {
+    if (!inviteEmail.trim()) {
+      setInviteError('Please enter an email address');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail)) {
+      setInviteError('Please enter a valid email address');
+      return;
+    }
+
+    setIsSendingInvite(true);
+    setInviteError('');
+    setInviteSuccess('');
+
+    try {
+      // This would normally send to your API
+      // For now, simulate success
+      setTimeout(() => {
+        setInviteSuccess('Invitation sent successfully!');
+        setInviteEmail('');
+        setIsSendingInvite(false);
+        
+        // Update stats optimistically
+        setReferralStats(prev => ({
+          ...prev,
+          invites: prev.invites + 1
+        }));
+      }, 1000);
+    } catch (error) {
+      setInviteError('Failed to send invitation. Please try again.');
+      setIsSendingInvite(false);
+    }
+  };
+
+  const copyReferralLink = async () => {
+    const referralLink = `https://stefna.xyz?ref=${referralStats.referralCode}`;
+    try {
+      await Share.share({
+        message: `Join me on Stefna! Use my referral link to get +25 credits: ${referralLink}`,
+        url: referralLink,
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
+    }
+  };
+
+  const navigateToHelpCenter = () => {
+    router.push('/help-center');
+  };
+
+  const navigateToPrivacy = () => {
+    router.push('/privacy');
+  };
+
+  const navigateToCommunityGuidelines = () => {
+    router.push('/community-guidelines');
+  };
+
+  const navigateToTerms = () => {
+    router.push('/terms');
+  };
 
   const handleDeleteAccount = async () => {
     Alert.alert(
@@ -61,181 +215,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const showHelpCenter = () => {
-    Alert.alert(
-      'Stefna Help Center',
-      `Welcome to Stefna — your AI-powered creative studio. Whether you're here to glitch your face into neon chaos, cry anime tears, or turn a simple photo into art, you're in the right place.
-
-Below are answers to your most common questions.
-
-How do I use Stefna?
-
-Upload a photo
-Use a clear, well-lit image with a visible face.
-You must be logged in to generate.
-
-Pick a mode
-Each mode transforms your image differently — from subtle edits to full glitch chaos.
-New modes drop regularly. No spoilers.
-
-Tap generate
-Your creation will appear in your gallery shortly.
-You can save, share, or delete any result.
-
-How do credits work?
-
-You get 30 free credits daily (reset every 24h).
-Most generations cost 2 credits.
-No payment needed — it's free.
-If you run out, come back tomorrow.
-
-How does referral work?
-
-Invite a friend using your referral link.
-They get +25 credits, you get +50 credits once they generate.
-Win-win.
-
-Why does the AI sometimes get it wrong?
-
-AI can be powerful, weird, and unpredictable.
-It may:
-Bend reality
-Change expressions
-Confuse genders, ages, or backgrounds
-That's part of the fun — and the art. If anything feels wrong, just regenerate or try another mode.
-
-Can I delete my photos?
-
-Yes. Tap the trash icon on any photo in your gallery to remove it from Stefna and the cloud.
-
-Is my data private?
-
-Your uploads are private by default.
-You can choose to share to the public feed.
-You control what stays or goes.
-
-Need help or want to report something?
-
-Email us at hello@stefna.xyz and we'll handle it.
-We don't use bots — real humans reply.`,
-      [{ text: 'Got it', style: 'default' }]
-    );
-  };
-
-  const showTokenCount = () => {
-    Alert.alert(
-      'Token Count',
-      `You have 30 free credits daily (reset every 24h).
-
-Most generations cost 2 credits.
-
-No payment needed — it's free.
-
-If you run out, come back tomorrow.`,
-      [{ text: 'Got it', style: 'default' }]
-    );
-  };
-
-  const showInviteFriends = () => {
-    Alert.alert(
-      'Invite Friends',
-      `Share Stefna with your friends and earn credits!
-
-How it works:
-• Invite a friend using your referral link
-• They get +25 credits when they sign up
-• You get +50 credits once they generate their first image
-• Win-win for everyone!
-
-Your referral link:
-https://stefna.xyz?ref=${user?.id || 'your-id'}
-
-Share this link with friends to start earning credits!`,
-      [{ text: 'Got it', style: 'default' }]
-    );
-  };
-
-  const showDrafts = () => {
-    Alert.alert(
-      'Drafts',
-      `Your saved drafts will appear here.
-
-Drafts are automatically saved when you:
-• Start creating an image but don't finish
-• Navigate away from the generation screen
-• Close the app while generating
-
-You can continue working on your drafts anytime.`,
-      [{ text: 'Got it', style: 'default' }]
-    );
-  };
-
-  const showChangeEmail = () => {
-    Alert.prompt(
-      'Change Email',
-      'Enter your new email address:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Change',
-          onPress: (newEmail) => {
-            if (newEmail && newEmail.trim()) {
-              Alert.alert(
-                'Email Change Requested',
-                'We\'ll send a verification email to your new address. Please check your inbox and follow the instructions.',
-                [{ text: 'OK', style: 'default' }]
-              );
-            }
-          }
-        }
-      ],
-      'plain-text',
-      user?.email || ''
-    );
-  };
-
-  const showCommunityGuidelines = () => {
-    Alert.alert(
-      'Community Guidelines',
-      `Welcome to Stefna. We're building a creative space powered by AI, imagination, and a touch of chaos. Here's how we keep it safe and inspiring for everyone.
-
-1. Be Respectful
-This is a shared space. Respect others' creativity, privacy, and presence. Don't use Stefna to mock, harass, impersonate, or target anyone — directly or indirectly.
-
-2. Keep It Appropriate
-Stefna isn't for adult content, hate speech, violence, or anything that crosses legal or ethical boundaries. If you're unsure, don't post it.
-
-3. Use Your Own Content
-Only upload photos you have the right to use. Do not upload images of other people without their clear permission. No stolen content, no impersonation.
-
-4. Expect AI Weirdness
-Our AI sometimes gets things wrong. It might glitch, change genders, misread faces, or invent something surreal. That's part of the fun — but remember: not everything it generates is accurate or flattering.
-
-5. Protect the Mystery
-We love cryptic captions and artistic ambiguity. But don't use mystery as a cover for harmful behavior. Suspicious or abusive behavior will not be tolerated.
-
-6. Reporting Content
-We don't yet have automatic moderation. If you see something harmful, dangerous, or inappropriate, email us directly at hello@stefna.xyz . We'll take it seriously and review promptly.
-
-7. No Spam or Self-Promo
-Please don't use Stefna as a platform to sell, recruit, or spam. This includes links, affiliate drops, and aggressive promotion. Share your creativity, not your pitch.
-
-8. You Are Responsible
-By using Stefna, you agree that you're responsible for the content you upload, share, and create. We're not liable for what users generate — but we will take action when guidelines are violated.
-
-Final Note
-Stefna is meant to be a safe, strange, beautiful place for creative expression. We built this platform with care. Help us protect the experience — for yourself and for everyone else.
-
-If you have questions, concerns, or want to report a user or post:
-Contact us at hello@stefna.xyz`,
-      [{ text: 'Got it', style: 'default' }]
-    );
-  };
-
   const handleLogout = async () => {
     Alert.alert(
       'Log Out',
@@ -256,126 +235,275 @@ Contact us at hello@stefna.xyz`,
 
   const settingsItems = [
     {
-      icon: Coins,
-      title: 'Token Count',
-      subtitle: 'View your credits and usage',
-      onPress: () => showTokenCount(),
+      iconName: 'dollar-sign' as const,
+      title: 'Tokens',
+      subtitle: '',
+      onPress: undefined, // Non-clickable - just display
+      showCount: true, // Special flag to show count on the right
     },
     {
-      icon: Users,
+      iconName: 'users' as const,
       title: 'Invite Friends',
-      subtitle: 'Share Stefna and earn credits',
-      onPress: () => showInviteFriends(),
+      subtitle: '',
+      onPress: () => setShowInviteDropdown(!showInviteDropdown),
+      hasDropdown: true,
     },
     {
-      icon: FileText,
-      title: 'Drafts',
-      subtitle: 'View your saved drafts',
-      onPress: () => showDrafts(),
-    },
-    {
-      icon: Mail,
+      iconName: 'mail' as const,
       title: 'Change Email',
-      subtitle: 'Update your email address',
-      onPress: () => showChangeEmail(),
-    },
-    {
-      icon: User,
-      title: 'Profile Settings',
-      subtitle: 'Login details, personal information',
-      onPress: () => Alert.alert('Profile Settings', 'Profile settings coming soon'),
-    },
-    {
-      icon: HelpCircle,
-      title: 'Help Center',
       subtitle: '',
-      onPress: () => showHelpCenter(),
+      onPress: () => setShowChangeEmailDropdown(!showChangeEmailDropdown),
+      hasDropdown: true,
     },
     {
-      icon: Shield,
-      title: 'Privacy Policy',
-      subtitle: '',
-      onPress: () => Alert.alert('Privacy Policy', 'Privacy policy coming soon'),
-    },
-    {
-      icon: FileText,
-      title: 'Terms of Service',
-      subtitle: '',
-      onPress: () => Alert.alert('Terms of Service', 'Terms of service coming soon'),
-    },
-    {
-      icon: Users,
+      iconName: 'users' as const,
       title: 'Community Guidelines',
       subtitle: '',
-      onPress: () => showCommunityGuidelines(),
+      onPress: navigateToCommunityGuidelines,
     },
     {
-      icon: Settings,
-      title: 'Version',
-      subtitle: '1.0.0',
-      onPress: undefined, // Non-clickable
+      iconName: 'help-circle' as const,
+      title: 'Help Center',
+      subtitle: '',
+      onPress: navigateToHelpCenter,
+    },
+    {
+      iconName: 'file-text' as const,
+      title: 'Legal',
+      subtitle: '',
+      onPress: () => setShowLegalDropdown(!showLegalDropdown),
+      hasDropdown: true,
     },
   ];
 
   return (
     <View style={styles.container}>
-      {/* User Info */}
-      <View style={styles.userInfo}>
-        <View style={styles.avatar}>
-          <User size={32} color="#ffffff" />
-        </View>
-        <View style={styles.userDetails}>
-          <Text style={styles.userEmail}>{user?.email || 'No email'}</Text>
-          </View>
-        </View>
-
       {/* Settings List */}
       <ScrollView style={styles.settingsList} showsVerticalScrollIndicator={false}>
-        {settingsItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.settingItem}
-            onPress={item.onPress}
-            disabled={!item.onPress}
-          >
-            <View style={styles.settingIcon}>
-              <item.icon size={20} color="#ffffff" />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>{item.title}</Text>
-              {item.subtitle && (
-                <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
-              )}
+        {/* User Info */}
+        <View style={styles.userInfo}>
+          <View style={styles.avatar}>
+            <Feather name="user" size={20} color="#ffffff" />
+          </View>
+          <View style={styles.userDetails}>
+            <Text style={styles.userEmail}>{user?.email || 'No email'}</Text>
+          </View>
         </View>
-            {item.onPress && (
-              <ArrowLeft size={16} color="#ffffff" style={styles.settingArrow} />
+        {settingsItems.map((item, index) => (
+          <View key={index}>
+            <TouchableOpacity
+              style={styles.settingItem}
+              onPress={item.onPress}
+              disabled={!item.onPress}
+            >
+              <View style={styles.settingIcon}>
+                <Feather name={item.iconName} size={20} color="#ffffff" />
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>{item.title}</Text>
+                {item.subtitle && (
+                  <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
+                )}
+              </View>
+              {item.showCount ? (
+                <View style={styles.countContainer}>
+                  <Text style={styles.countText}>{balance}</Text>
+                </View>
+              ) : item.onPress ? (
+                <View style={styles.settingArrow}>
+                  {item.hasDropdown ? (
+                    (item.title === 'Invite Friends' ? showInviteDropdown : 
+                     item.title === 'Change Email' ? showChangeEmailDropdown : 
+                     item.title === 'Legal' ? showLegalDropdown : false) ? 
+                    <Feather name="chevron-up" size={16} color="#ffffff" /> : 
+                    <Feather name="chevron-down" size={16} color="#ffffff" />
+                  ) : (
+                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                  )}
+                </View>
+              ) : null}
+            </TouchableOpacity>
+
+            {/* Invite Friends Dropdown */}
+            {item.hasDropdown && item.title === 'Invite Friends' && showInviteDropdown && (
+              <View style={styles.inviteDropdown}>
+                {/* Benefits Info */}
+                <View style={styles.benefitsContainer}>
+                  <View style={styles.benefitCard}>
+                    <Text style={styles.benefitTitle}>You Get</Text>
+                    <Text style={styles.benefitText}>+50 credits after friend's first media</Text>
+                  </View>
+                  <View style={styles.benefitCard}>
+                    <Text style={styles.benefitTitle}>Friend Gets</Text>
+                    <Text style={styles.benefitText}>+25 credits on signup</Text>
+                  </View>
+                </View>
+
+                {/* Email Form */}
+                <View style={styles.emailForm}>
+                  <Text style={styles.formLabel}>Friend's Email</Text>
+                  <View style={styles.emailInputContainer}>
+                    <TextInput
+                      style={styles.emailInput}
+                      value={inviteEmail}
+                      onChangeText={setInviteEmail}
+                      placeholder="Enter friend's email address"
+                      placeholderTextColor="#666666"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      editable={!isSendingInvite}
+                    />
+                    <TouchableOpacity
+                      style={[styles.sendButton, (!inviteEmail.trim() || isSendingInvite) && styles.sendButtonDisabled]}
+                      onPress={handleSendInvite}
+                      disabled={!inviteEmail.trim() || isSendingInvite}
+                    >
+                      <Text style={styles.sendButtonText}>
+                        {isSendingInvite ? 'Sending...' : 'Send Invite'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {inviteError && (
+                    <View style={styles.errorContainer}>
+                      <Text style={styles.errorText}>{inviteError}</Text>
+                    </View>
+                  )}
+
+                  {inviteSuccess && (
+                    <View style={styles.successContainer}>
+                      <Text style={styles.successText}>{inviteSuccess}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Referral Link */}
+                <View style={styles.referralSection}>
+                  <Text style={styles.referralLabel}>Your Referral Link</Text>
+                  <View style={styles.referralLinkContainer}>
+                    <Text style={styles.referralLink}>
+                      https://stefna.xyz?ref={referralStats.referralCode}
+                    </Text>
+                    <TouchableOpacity onPress={copyReferralLink} style={styles.copyButton}>
+                      <Feather name="share" size={16} color="#ffffff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Stats */}
+                <View style={styles.statsContainer}>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>{referralStats.invites}</Text>
+                    <Text style={styles.statLabel}>Friends Invited</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statNumber}>{referralStats.tokensEarned}</Text>
+                    <Text style={styles.statLabel}>Credits Earned</Text>
+                  </View>
+                </View>
+              </View>
             )}
-          </TouchableOpacity>
+
+            {/* Change Email Dropdown */}
+            {item.hasDropdown && item.title === 'Change Email' && showChangeEmailDropdown && (
+              <View style={styles.inviteDropdown}>
+                {/* Current Email Display */}
+                <View style={styles.emailForm}>
+                  <Text style={styles.formLabel}>Current Email</Text>
+                  <Text style={styles.currentEmailDisplay}>{user?.email}</Text>
+                  
+                  <Text style={styles.formLabel}>New Email</Text>
+                  <View style={styles.emailInputContainer}>
+                    <TextInput
+                      style={styles.emailInput}
+                      value={newEmail}
+                      onChangeText={setNewEmail}
+                      placeholder="Enter new email address"
+                      placeholderTextColor="#666666"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      editable={!isChangingEmail}
+                    />
+                    <TouchableOpacity
+                      style={[styles.sendButton, (!newEmail.trim() || isChangingEmail) && styles.sendButtonDisabled]}
+                      onPress={handleChangeEmail}
+                      disabled={!newEmail.trim() || isChangingEmail}
+                    >
+                      <Text style={styles.sendButtonText}>
+                        {isChangingEmail ? 'Updating...' : 'Update Email'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Legal Dropdown */}
+            {item.hasDropdown && item.title === 'Legal' && showLegalDropdown && (
+              <View style={styles.inviteDropdown}>
+                <View style={styles.legalContainer}>
+                  <TouchableOpacity 
+                    style={styles.legalItem}
+                    onPress={navigateToTerms}
+                  >
+                    <View style={styles.legalIcon}>
+                      <Feather name="file-text" size={20} color="#ffffff" />
+                    </View>
+                    <View style={styles.legalContent}>
+                      <Text style={styles.legalTitle}>Terms of Service</Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.legalItem}
+                    onPress={navigateToPrivacy}
+                  >
+                    <View style={styles.legalIcon}>
+                      <Feather name="shield" size={20} color="#ffffff" />
+                    </View>
+                    <View style={styles.legalContent}>
+                      <Text style={styles.legalTitle}>Privacy Policy</Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          </View>
         ))}
 
         {/* Log Out Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <View style={styles.logoutIcon}>
-            <LogOut size={20} color="#ffffff" />
-        </View>
+            <Feather name="log-out" size={20} color="#ffffff" />
+          </View>
           <View style={styles.logoutContent}>
             <Text style={styles.logoutText}>Log Out</Text>
-        </View>
-          <ArrowLeft size={16} color="#ffffff" style={styles.logoutArrow} />
+          </View>
+          <Feather name="chevron-right" size={16} color="#ffffff" />
         </TouchableOpacity>
 
         {/* Delete Account Button */}
         <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
           <View style={styles.deleteIcon}>
-            <Trash2 size={20} color="#ff4444" />
+            <Feather name="trash-2" size={20} color="#ff4444" />
           </View>
           <View style={styles.deleteContent}>
             <Text style={styles.deleteText}>Delete Account</Text>
           </View>
-          <ArrowLeft size={16} color="#ff4444" style={styles.deleteArrow} />
+          <Feather name="chevron-right" size={16} color="#ff4444" />
         </TouchableOpacity>
       </ScrollView>
-      </View>
+
+      {/* Floating Back Button */}
+      <TouchableOpacity 
+        style={styles.floatingBackButton} 
+        onPress={() => router.back()}
+      >
+        <Feather name="arrow-left" size={24} color="#ffffff" />
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -390,17 +518,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 80,
-    paddingBottom: 24,
+    paddingVertical: 16,
     backgroundColor: '#1a1a1a',
     marginHorizontal: 20,
-    marginBottom: 24,
+    marginTop: 20,
+    marginBottom: 20,
     borderRadius: 16,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
@@ -419,20 +555,29 @@ const styles = StyleSheet.create({
   settingsList: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 80, // Add top padding to avoid back button
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
@@ -452,7 +597,189 @@ const styles = StyleSheet.create({
     color: '#cccccc',
   },
   settingArrow: {
-    transform: [{ rotate: '180deg' }],
+    marginLeft: 8,
+  },
+  countContainer: {
+    marginLeft: 12,
+    alignItems: 'flex-end',
+  },
+  countText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+
+  // Invite Friends Dropdown
+  inviteDropdown: {
+    backgroundColor: '#1a1a1a',
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 12,
+    padding: 16,
+  },
+  benefitsContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  benefitCard: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  benefitTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  benefitText: {
+    fontSize: 12,
+    color: '#cccccc',
+    textAlign: 'center',
+  },
+  emailForm: {
+    marginBottom: 16,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  currentEmailDisplay: {
+    fontSize: 16,
+    color: '#cccccc',
+    backgroundColor: '#2a2a2a',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  legalContainer: {
+    paddingVertical: 8,
+  },
+  legalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  legalIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  legalContent: {
+    flex: 1,
+  },
+  legalTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#ffffff',
+  },
+  emailInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  emailInput: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#444444',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: '#ffffff',
+    fontSize: 16,
+    marginRight: 8,
+  },
+  sendButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#666666',
+  },
+  sendButtonText: {
+    color: '#000000',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  errorContainer: {
+    backgroundColor: '#ff4444',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  errorText: {
+    color: '#ffffff',
+    fontSize: 12,
+  },
+  successContainer: {
+    backgroundColor: '#00aa00',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  successText: {
+    color: '#ffffff',
+    fontSize: 12,
+  },
+  referralSection: {
+    marginBottom: 16,
+  },
+  referralLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  referralLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2a2a2a',
+    padding: 12,
+    borderRadius: 8,
+  },
+  referralLink: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 12,
+  },
+  copyButton: {
+    padding: 8,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#2a2a2a',
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#cccccc',
   },
 
   // Log Out Button
@@ -460,16 +787,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 16,
-    marginBottom: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 16,
+    marginTop: 20,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   logoutIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
@@ -483,24 +818,28 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#ffffff',
   },
-  logoutArrow: {
-    transform: [{ rotate: '180deg' }],
-  },
-
   // Delete Account Button
   deleteButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderRadius: 16,
     marginBottom: 40,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   deleteIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
@@ -514,7 +853,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#ff4444',
   },
-  deleteArrow: {
-    transform: [{ rotate: '180deg' }],
+
+  // Floating Back Button
+  floatingBackButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'transparent', // Fully transparent background
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 1000, // Ensure it's above other content
   },
 });

@@ -8,18 +8,12 @@ export default function SplashScreen() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
   useEffect(() => {
-    if (!isLoading) {
-      const timer = setTimeout(() => {
-        if (isAuthenticated) {
-          router.replace('/main');
-        } else {
-          router.replace('/auth');
-        }
-      }, 2000); // Show splash for 2 seconds
+    const timer = setTimeout(() => {
+      router.replace('/welcome');
+    }, 2000); // Show splash for 2 seconds
 
-      return () => clearTimeout(timer);
-    }
-  }, [isAuthenticated, isLoading, router]);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <View style={styles.container}>

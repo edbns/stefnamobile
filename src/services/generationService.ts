@@ -50,8 +50,10 @@ export interface GenerationRequest {
 export interface GenerationResponse {
   success: boolean;
   jobId?: string;
+  runId?: string;
   estimatedTime?: number;
   error?: string;
+  offline?: boolean;
 }
 
 export interface GenerationStatus {
@@ -327,6 +329,7 @@ export class GenerationService {
       return {
         success: true,
         jobId: data.jobId,
+        runId: data.runId,
         estimatedTime: data.estimatedTime,
       };
     } catch (error) {

@@ -1,78 +1,81 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { ArrowUp } from 'lucide-react-native';
+import PresetsService, { DatabasePreset } from '../services/presetsService';
 
-export type GenerationMode = 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
+export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
   onModeChange: (mode: GenerationMode) => void;
+  onGenerate: (presetId?: string) => void;
   customPrompt: string;
-  onCustomPromptChange: (prompt: string) => void;
-  onGenerate: () => void;
-  isGenerating?: boolean;
+  onCustomPromptChange: (text: string) => void;
+  isGenerating: boolean;
 }
 
 export default function GenerationModes({
   selectedMode,
   onModeChange,
+  onGenerate,
   customPrompt,
   onCustomPromptChange,
-  onGenerate,
-  isGenerating = false,
+  isGenerating,
 }: GenerationModesProps) {
   const [showPromptInput, setShowPromptInput] = useState(false);
+  const [availablePresets, setAvailablePresets] = useState<DatabasePreset[]>([]);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [presetsError, setPresetsError] = useState<string | null>(null);
+
+  // Load presets from database on mount
+  useEffect(() => {
+    const fetchPresets = async () => {
+      try {
+        setPresetsLoading(true);
+        setPresetsError(null);
+
+        const presetsService = PresetsService.getInstance();
+        const response = await presetsService.getAvailablePresets();
+
+        if (response.success && response.data) {
+          setAvailablePresets(response.data.presets);
+          console.log('🎨 [GenerationModes] Loaded', response.data.presets.length, 'presets for week', response.data.currentWeek);
+        } else {
+          throw new Error(response.error || 'Failed to load presets');
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        setPresetsError(errorMessage);
+        console.error('❌ [GenerationModes] Failed to load presets:', errorMessage);
+      } finally {
+        setPresetsLoading(false);
+      }
+    };
+
+    fetchPresets();
+  }, []);
 
   const handleModePress = (mode: GenerationMode) => {
+    onModeChange(mode);
+    
+    // Show prompt input for custom and edit modes
     if (mode === 'custom-prompt' || mode === 'edit-photo') {
       setShowPromptInput(true);
     } else {
       setShowPromptInput(false);
     }
-    onModeChange(mode);
-  };
-
-  const getModeIcon = (mode: GenerationMode): string => {
-    const icons = {
-      presets: '🎨',
-      'custom-prompt': '✨',
-      'edit-photo': '🎭',
-      'emotion-mask': '😊',
-      'ghibli-reaction': '🎌',
-      'neo-glitch': '🌆',
-    };
-    return icons[mode] || '🎨';
   };
 
   const getModeTitle = (mode: GenerationMode): string => {
-    const titles = {
-      presets: 'Presets',
+    const titles: Record<GenerationMode, string> = {
       'custom-prompt': 'Custom',
-      'edit-photo': 'Edit',
+      'edit-photo': 'Studio',
+      'presets': 'Presets',
       'emotion-mask': 'Emotion Mask',
-      'ghibli-reaction': 'Ghibli React',
-      'neo-glitch': 'Neo Tokyo',
+      'ghibli-reaction': 'Ghibli Reaction',
+      'neo-glitch': 'Neo Tokyo Glitch',
     };
     return titles[mode] || mode;
-  };
-
-  const getModeDescription = (mode: GenerationMode): string => {
-    const descriptions = {
-      presets: 'Curated styles',
-      'custom-prompt': 'Your own prompt',
-      'edit-photo': 'Transform image',
-      'emotion-mask': 'Add emotions',
-      'ghibli-reaction': 'Anime style',
-      'neo-glitch': 'Cyberpunk effects',
-    };
-    return descriptions[mode] || 'Generate image';
   };
 
   const handleGenerate = () => {
@@ -83,12 +86,31 @@ export default function GenerationModes({
     onGenerate();
   };
 
+  const handlePresetClick = (presetId: string) => {
+    console.log('Preset clicked:', presetId);
+    // Auto-run generation immediately when preset is clicked
+    onGenerate(presetId);
+  };
+
+  // Get current week's presets from database
+  const getCurrentWeekPresets = (): DatabasePreset[] => {
+    return availablePresets.filter(preset => preset.isActive);
+  };
+
+  // Define modes in website order: Custom, Edit (Studio), Presets, Emotion Mask, Ghibli React, Neo Tokyo
+  const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'emotion-mask', 'ghibli-reaction', 'neo-glitch'];
+  
+  // Split into two rows of 3 modes each
+  const firstRow = modes.slice(0, 3);
+  const secondRow = modes.slice(3, 6);
+
   return (
     <View style={styles.container}>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.modesContainer}>
-          {(['presets', 'custom-prompt', 'edit-photo', 'emotion-mask', 'ghibli-reaction', 'neo-glitch'] as GenerationMode[]).map((mode) => (
+      {/* Mode Selection - 2 rows of 3 modes each */}
+      <View style={styles.modesGrid}>
+        {/* First Row */}
+        <View style={styles.modesRow}>
+          {firstRow.map((mode) => (
             <TouchableOpacity
               key={mode}
               style={[
@@ -97,45 +119,213 @@ export default function GenerationModes({
               ]}
               onPress={() => handleModePress(mode)}
             >
-              <Text style={styles.modeIcon}>{getModeIcon(mode)}</Text>
               <Text style={styles.modeTitle}>{getModeTitle(mode)}</Text>
-              <Text style={styles.modeDescription}>{getModeDescription(mode)}</Text>
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
 
+        {/* Options appear full width under first row */}
       {(selectedMode === 'custom-prompt' || selectedMode === 'edit-photo') && showPromptInput && (
         <View style={styles.promptContainer}>
-          <Text style={styles.promptLabel}>
-            {selectedMode === 'custom-prompt' ? 'Describe your vision:' : 'How to transform this image:'}
-          </Text>
+            <View style={styles.promptInputWrapper}>
           <TextInput
             style={styles.promptInput}
             value={customPrompt}
             onChangeText={onCustomPromptChange}
             placeholder={
               selectedMode === 'custom-prompt'
-                ? "e.g., 'portrait with dramatic lighting, cinematic style'"
-                : "e.g., 'make it look like a movie poster, add dramatic effects'"
+                    ? "Type something weird. We'll make it art ... tap ✨ for a little magic."
+                    : "Change something, add something — your call ... tap ✨ for a little magic."
             }
             placeholderTextColor="#666"
             multiline
             numberOfLines={3}
             textAlignVertical="top"
           />
+              
+              {/* Magic Wand Button - Inside text input */}
+              <TouchableOpacity
+                style={styles.magicWandButton}
+                onPress={() => {
+                  Alert.alert('Magic Wand', 'Magic wand enhancement coming soon!');
+                }}
+                disabled={!customPrompt.trim() || isGenerating}
+              >
+                <Text style={styles.magicWandIcon}>✨</Text>
+              </TouchableOpacity>
+              
+              {/* Generate Button - Inside text input, white background */}
+              <TouchableOpacity
+                style={[
+                  styles.generateIconButton,
+                  (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
+                ]}
+                onPress={handleGenerate}
+                disabled={!customPrompt.trim() || isGenerating}
+              >
+                {isGenerating ? (
+                  <View style={styles.spinner} />
+                ) : (
+                  <ArrowUp size={16} color="#000000" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        
+        {selectedMode === 'presets' && (
+          <View style={styles.presetContainer}>
+            {presetsLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text style={styles.loadingText}>Loading presets...</Text>
+              </View>
+            ) : presetsError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Failed to load presets</Text>
+                <Text style={styles.errorSubtext}>{presetsError}</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton} 
+                  onPress={() => {
+                    setPresetsError(null);
+                    // Trigger reload by clearing presets and letting useEffect run again
+                    setAvailablePresets([]);
+                  }}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.presetGrid}>
+                {(() => {
+                  const currentPresets = getCurrentWeekPresets();
+                  const firstRow = currentPresets.slice(0, 3);
+                  const secondRow = currentPresets.slice(3, 5);
+                  
+                  return (
+                    <>
+                      <View style={styles.presetRow}>
+                        {firstRow.map((preset) => (
+                          <TouchableOpacity 
+                            key={preset.id} 
+                            style={styles.presetButton} 
+                            onPress={() => handlePresetClick(preset.key)}
+                          >
+                            <Text style={styles.presetText}>{preset.label}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                      <View style={styles.presetRow}>
+                        {secondRow.map((preset) => (
+                          <TouchableOpacity 
+                            key={preset.id} 
+                            style={styles.presetButton} 
+                            onPress={() => handlePresetClick(preset.key)}
+                          >
+                            <Text style={styles.presetText}>{preset.label}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  );
+                })()}
+              </View>
+            )}
         </View>
       )}
 
+        {/* Second Row */}
+        <View style={styles.modesRow}>
+          {secondRow.map((mode) => (
       <TouchableOpacity
-        style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]}
-        onPress={handleGenerate}
-        disabled={isGenerating}
-      >
-        <Text style={styles.generateButtonText}>
-          {isGenerating ? 'Generating...' : 'Generate'}
-        </Text>
+              key={mode}
+              style={[
+                styles.modeButton,
+                selectedMode === mode && styles.modeButtonSelected,
+              ]}
+              onPress={() => handleModePress(mode)}
+            >
+              <Text style={styles.modeTitle}>{getModeTitle(mode)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
+        {/* Options appear full width under second row */}
+        {selectedMode === 'emotion-mask' && (
+          <View style={styles.presetContainer}>
+            <View style={styles.presetGrid}>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_nostalgia_distance')}>
+                  <Text style={styles.presetText}>Nostalgia + Distance</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_joy_sadness')}>
+                  <Text style={styles.presetText}>Joy + Sadness</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_conf_loneliness')}>
+                  <Text style={styles.presetText}>Confidence + Loneliness</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_peace_fear')}>
+                  <Text style={styles.presetText}>Peace + Fear</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_strength_vuln')}>
+                  <Text style={styles.presetText}>Strength + Vulnerability</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {selectedMode === 'ghibli-reaction' && (
+          <View style={styles.presetContainer}>
+            <View style={styles.presetGrid}>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('ghibli_tears')}>
+                  <Text style={styles.presetText}>Tears</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('ghibli_shock')}>
+                  <Text style={styles.presetText}>Shock</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('ghibli_sparkle')}>
+                  <Text style={styles.presetText}>Sparkle</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('ghibli_sadness')}>
+                  <Text style={styles.presetText}>Sadness</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('ghibli_love')}>
+                  <Text style={styles.presetText}>Love</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {selectedMode === 'neo-glitch' && (
+          <View style={styles.presetContainer}>
+            <View style={styles.presetGrid}>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('neo_tokyo_base')}>
+                  <Text style={styles.presetText}>Base</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('neo_tokyo_visor')}>
+                  <Text style={styles.presetText}>Glitch Visor</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('neo_tokyo_tattoos')}>
+                  <Text style={styles.presetText}>Tech Tattoos</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('neo_tokyo_scanlines')}>
+                  <Text style={styles.presetText}>Scanline FX</Text>
       </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
@@ -144,72 +334,159 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
-  modesContainer: {
+  modesGrid: {
+    marginBottom: 16,
+  },
+  modesRow: {
     flexDirection: 'row',
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   modeButton: {
-    width: 120,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
     padding: 12,
-    marginHorizontal: 6,
-    alignItems: 'center',
-    minHeight: 100,
+    marginHorizontal: 4,
+    minHeight: 50,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   modeButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  modeIcon: {
-    fontSize: 24,
-    marginBottom: 8,
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
   },
   modeTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#000000',
+    textAlign: 'center',
+  },
+  promptContainer: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  promptInputWrapper: {
+    position: 'relative',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    minHeight: 100,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  promptInput: {
+    backgroundColor: 'transparent',
+    padding: 20,
+    paddingRight: 80,
+    fontSize: 14,
     color: '#ffffff',
+    minHeight: 100,
+  },
+  magicWandButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  magicWandIcon: {
+    fontSize: 18,
+    color: '#ffffff',
+    opacity: 0.7,
+  },
+  generateIconButton: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  generateIconButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.6,
+  },
+  spinner: {
+    width: 16,
+    height: 16,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderTopColor: 'transparent',
+    borderRadius: 8,
+  },
+  presetContainer: {
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  presetGrid: {
+    flexDirection: 'column',
+  },
+  presetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  presetButton: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    minHeight: 40,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  presetText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#ffffff',
+    marginLeft: 8,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ff4444',
+    textAlign: 'center',
     marginBottom: 4,
   },
-  modeDescription: {
+  errorSubtext: {
     fontSize: 12,
     color: '#cccccc',
     textAlign: 'center',
-    lineHeight: 16,
+    marginBottom: 16,
   },
-  promptContainer: {
-    marginBottom: 20,
-  },
-  promptLabel: {
-    fontSize: 16,
-    color: '#ffffff',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  promptInput: {
-    backgroundColor: '#1a1a1a',
+  retryButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-    color: '#ffffff',
-    minHeight: 80,
-    textAlignVertical: 'top',
   },
-  generateButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  generateButtonDisabled: {
-    opacity: 0.6,
-  },
-  generateButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000000',
   },
 });

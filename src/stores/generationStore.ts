@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GenerationService, GenerationStatus, Preset } from '../services/generationService';
+import { GenerationService, GenerationStatus, GenerationResponse, Preset } from '../services/generationService';
 import { StorageService, StoredMedia } from '../services/storageService';
 import { useCreditsStore } from './creditsStore';
 import { useUserStore } from './userStore';
@@ -37,7 +37,7 @@ interface GenerationState {
   presets: Preset[];
 
   // Actions
-  startGeneration: (job: Omit<GenerationJob, 'id' | 'status' | 'createdAt' | 'storedMedia'>) => Promise<void>;
+  startGeneration: (job: Omit<GenerationJob, 'id' | 'status' | 'createdAt' | 'storedMedia'>) => Promise<GenerationResponse>;
   cancelGeneration: () => void;
   clearCompletedJobs: () => void;
   loadPresets: () => Promise<void>;
@@ -105,6 +105,9 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
 
         // Start polling for status
         get().pollJobStatus(response.jobId);
+        
+        // Return the response for navigation
+        return response;
       } else {
         // Refund credits on generation failure
         await useCreditsStore.getState().finalizeCredits('refund');
@@ -115,7 +118,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
           errorHelpers.generation(
             response.error || 'Generation failed to start',
             { jobData },
-            () => get().startGeneration(jobData) // Retry action
+            async () => { await get().startGeneration(jobData); } // Retry action
           )
         );
 
@@ -130,6 +133,12 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
           isGenerating: false,
           jobQueue: [...get().jobQueue, failedJob]
         });
+        
+        // Return error response
+        return {
+          success: false,
+          error: response.error || 'Generation failed'
+        };
       }
     } catch (error) {
       console.error('Generation error:', error);
@@ -147,7 +156,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         errorHelpers.generation(
           error instanceof Error ? error.message : 'Generation failed',
           { jobData },
-          () => get().startGeneration(jobData) // Retry action
+          async () => { await get().startGeneration(jobData); } // Retry action
         )
       );
 
@@ -161,6 +170,12 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         isGenerating: false,
         jobQueue: [...get().jobQueue, failedJob]
       });
+      
+      // Return error response
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Network error'
+      };
     }
   },
 

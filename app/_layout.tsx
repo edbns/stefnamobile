@@ -21,13 +21,7 @@ export default function Layout() {
       <StatusBar style="light" backgroundColor="#000000" />
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: '#000000',
-          },
-          headerTintColor: '#ffffff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
+          headerShown: false,
           contentStyle: {
             backgroundColor: '#000000',
           },
@@ -37,28 +31,48 @@ export default function Layout() {
           name="index"
           options={{
             title: 'Stefna',
-            headerShown: false,
           }}
         />
         <Stack.Screen
           name="auth"
           options={{
             title: 'Sign In',
-            headerShown: false,
           }}
         />
         <Stack.Screen
           name="main"
           options={{
             title: 'Generate',
-            headerShown: false,
           }}
         />
         <Stack.Screen
           name="profile"
           options={{
             title: 'Profile',
-            headerShown: true,
+          }}
+        />
+        <Stack.Screen
+          name="community-guidelines"
+          options={{
+            title: 'Community Guidelines',
+          }}
+        />
+        <Stack.Screen
+          name="help-center"
+          options={{
+            title: 'Help Center',
+          }}
+        />
+        <Stack.Screen
+          name="privacy"
+          options={{
+            title: 'Privacy Policy',
+          }}
+        />
+        <Stack.Screen
+          name="terms"
+          options={{
+            title: 'Terms of Service',
           }}
         />
       </Stack>

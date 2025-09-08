@@ -4,9 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useGenerationStore } from '../src/stores/generationStore';
 import GenerationModes, { GenerationMode } from '../src/components/GenerationModes';
-import RotatingPresets from '../src/components/RotatingPresets';
-import SpecialModeSelector from '../src/components/SpecialModeSelector';
-import { ArrowLeft, X } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 export default function GenerateScreen() {
   const router = useRouter();
@@ -21,16 +19,14 @@ export default function GenerateScreen() {
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
-  const [selectedSpecialMode, setSelectedSpecialMode] = useState<string | null>(null);
 
   // Load presets on mount
   useEffect(() => {
     loadPresets();
   }, [loadPresets]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (presetId?: string) => {
     if (!selectedImage) {
       Alert.alert('Error', 'No image selected');
       return;
@@ -42,34 +38,27 @@ export default function GenerateScreen() {
     }
 
     // Validation based on mode
-    if (generationMode === 'presets' && !selectedPreset) {
-      Alert.alert('Error', 'Please select a preset style');
-      return;
-    }
-
     if ((generationMode === 'custom-prompt' || generationMode === 'edit-photo') && !customPrompt.trim()) {
       Alert.alert('Error', 'Please enter a prompt');
       return;
     }
 
-    // Special modes validation
-    const specialModes = ['emotion-mask', 'ghibli-reaction', 'neo-glitch'];
-    if (specialModes.includes(generationMode) && !selectedSpecialMode) {
-      Alert.alert('Error', `Please select an option for ${generationMode}`);
-      return;
-    }
-
     // Start the generation process
-    await startGeneration({
+    const result = await startGeneration({
       imageUri: selectedImage,
       mode: generationMode,
-      presetId: selectedPreset || undefined,
+      presetId: presetId || undefined,
       customPrompt: customPrompt.trim() || undefined,
-      specialModeId: selectedSpecialMode || undefined,
     });
 
-    // Navigate back to main screen
-    router.replace('/main');
+    // Navigate to generation progress screen with job details
+    router.push({
+      pathname: '/generation-progress',
+      params: {
+        jobId: result.jobId,
+        runId: result.runId
+      }
+    });
   };
 
   const handleBack = () => {
@@ -89,10 +78,12 @@ export default function GenerateScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Close Button - Top Right */}
-      <TouchableOpacity style={styles.closeButton} onPress={handleBack}>
-        <X size={24} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Floating Back Button */}
+      <View style={styles.floatingBackButton}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Feather name="arrow-left" size={24} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Selected Image Preview */}
@@ -101,35 +92,15 @@ export default function GenerateScreen() {
         </View>
 
         {/* Generation Modes */}
-        <View style={styles.section}>
-          <GenerationModes
-            selectedMode={generationMode}
-            onModeChange={setGenerationMode}
-            customPrompt={customPrompt}
-            onCustomPromptChange={setCustomPrompt}
-            onGenerate={handleGenerate}
-            isGenerating={isGenerating}
-          />
-        </View>
-
-        {/* Rotating Presets */}
-        {selectedImage && generationMode === 'presets' && (
+        {selectedImage && (
           <View style={styles.section}>
-            <RotatingPresets
-              selectedPreset={selectedPreset}
-              onPresetSelect={setSelectedPreset}
-              presets={presets}
-            />
-          </View>
-        )}
-
-        {/* Special Mode Selector */}
-        {selectedImage && ['emotion-mask', 'ghibli-reaction', 'neo-glitch'].includes(generationMode) && (
-          <View style={styles.section}>
-            <SpecialModeSelector
-              mode={generationMode}
-              selectedOption={selectedSpecialMode}
-              onOptionSelect={setSelectedSpecialMode}
+            <GenerationModes
+              selectedMode={generationMode}
+              onModeChange={setGenerationMode}
+              onGenerate={handleGenerate}
+              customPrompt={customPrompt}
+              onCustomPromptChange={setCustomPrompt}
+              isGenerating={isGenerating}
             />
           </View>
         )}
@@ -146,32 +117,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  closeButton: {
+  floatingBackButton: {
     position: 'absolute',
-    top: 60,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333333',
+    top: 20,
+    left: 20,
+    zIndex: 1000,
+  },
+  backButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   scrollView: {
     flex: 1,
+    paddingTop: 100,
   },
   imageContainer: {
     marginHorizontal: 20,
     marginBottom: 20,
-    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
   },
   selectedImage: {
     width: '100%',
-    aspectRatio: 1,
-    resizeMode: 'cover',
+    resizeMode: 'contain',
   },
   section: {
     marginBottom: 20,

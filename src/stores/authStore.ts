@@ -112,6 +112,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
 
+      // Development bypass - auto-login with test account
+      if (__DEV__) {
+        console.log('🔧 Development mode: Auto-logging in with test account');
+        const testUser: User = {
+          id: 'test-user-123',
+          email: 'test@stefna.dev',
+          credits: 100,
+        };
+        const testToken = 'test-token-123';
+
+        // Store test data
+        await AsyncStorage.setItem('auth_token', testToken);
+        await AsyncStorage.setItem('user_profile', JSON.stringify(testUser));
+
+        set({
+          user: testUser,
+          token: testToken,
+          isAuthenticated: true,
+          isLoading: false
+        });
+
+        console.log('✅ Test account logged in successfully');
+        return;
+      }
+
       const [userString, token] = await AsyncStorage.multiGet(['user_profile', 'auth_token']);
 
       if (userString[1] && token[1]) {
