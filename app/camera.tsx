@@ -1,33 +1,52 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { Feather } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const router = useRouter();
   const cameraRef = useRef(null);
-  const [facing, setFacing] = useState('back');
+  const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
 
-  if (!permission) {
-    return <View />;
-  }
+  // Request permission on mount if not granted
+  useEffect(() => {
+    if (permission && !permission.granted && !hasRequestedPermission) {
+      setHasRequestedPermission(true);
+      requestPermission();
+    }
+  }, [permission, requestPermission, hasRequestedPermission]);
 
-  if (!permission.granted) {
+  // Show loading while checking permissions or requesting
+  if (!permission || (!permission.granted && hasRequestedPermission)) {
     return (
       <View style={styles.container}>
-        <Text style={styles.permissionText}>
-          Camera permission is required to take photos
-        </Text>
-        <TouchableOpacity
-          style={styles.permissionButton}
-          onPress={requestPermission}
-        >
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
-        </TouchableOpacity>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>
+            {!permission ? 'Loading camera...' : 'Requesting camera permission...'}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // If permission denied, show error and go back
+  if (permission && !permission.granted && hasRequestedPermission) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Camera permission denied</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -131,12 +150,6 @@ export default function CameraScreen() {
           {/* Top Controls */}
           <View style={styles.topControls}>
             <TouchableOpacity
-              style={styles.flipButton}
-              onPress={toggleCameraFacing}
-            >
-              <Feather name="rotate-ccw" size={24} color="#ffffff" />
-            </TouchableOpacity>
-            <TouchableOpacity
               style={styles.controlButton}
               onPress={closeCamera}
             >
@@ -144,12 +157,19 @@ export default function CameraScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Bottom Controls */}
+          {/* Bottom Controls - centered shutter with flip on the right */}
           <View style={styles.bottomControls}>
+            <View style={styles.spacer} />
             <TouchableOpacity
               style={styles.captureButton}
               onPress={takePicture}
             />
+            <TouchableOpacity
+              style={styles.flipButton}
+              onPress={toggleCameraFacing}
+            >
+              <Feather name="refresh-ccw" size={22} color="#000000" />
+            </TouchableOpacity>
           </View>
         </View>
       </CameraView>
@@ -171,7 +191,7 @@ const styles = StyleSheet.create({
   },
   topControls: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingTop: 60,
     paddingHorizontal: 20,
   },
@@ -184,10 +204,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bottomControls: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingBottom: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   captureButton: {
     width: 80,
@@ -196,29 +220,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderWidth: 4,
     borderColor: '#cccccc',
-    marginBottom: 20,
+    marginHorizontal: 30,
   },
   flipButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  permissionText: {
+  spacer: {
+    width: 50,
+    height: 50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  loadingText: {
     fontSize: 16,
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 20,
   },
-  permissionButton: {
+  backButton: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  permissionButtonText: {
+  backButtonText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
@@ -269,3 +303,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+

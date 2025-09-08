@@ -11,6 +11,10 @@ interface MediaItem extends StoredMedia {
   cloudId?: string;
   isUploading?: boolean;
   uploadProgress?: number;
+  // Optional fields from backend to support grouping
+  type?: string; // 'presets' | 'custom_prompt' | 'emotion_mask' | 'ghibli_reaction' | 'neo_glitch' | 'edit'
+  prompt?: string;
+  presetKey?: string;
 }
 
 interface MediaState {
@@ -51,6 +55,71 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
+      // Development bypass - load test media
+      if (__DEV__) {
+        console.log('🔧 Development mode: Loading test media');
+        const testMedia: MediaItem[] = [
+          {
+            id: 'test-media-1',
+            localUri: 'https://picsum.photos/400/400?random=1',
+            cloudUrl: 'https://picsum.photos/400/400?random=1',
+            filename: 'test_image_1.jpg',
+            createdAt: new Date(Date.now() - 86400000), // 1 day ago
+            synced: true,
+            prompt: 'neo tokyo glitch aesthetic',
+          },
+          {
+            id: 'test-media-2',
+            localUri: 'https://picsum.photos/400/400?random=2',
+            cloudUrl: 'https://picsum.photos/400/400?random=2',
+            filename: 'test_image_2.jpg',
+            createdAt: new Date(Date.now() - 172800000), // 2 days ago
+            synced: true,
+            prompt: 'custom portrait studio lighting',
+          },
+          {
+            id: 'test-media-3',
+            localUri: 'https://picsum.photos/400/400?random=3',
+            cloudUrl: 'https://picsum.photos/400/400?random=3',
+            filename: 'test_image_3.jpg',
+            createdAt: new Date(Date.now() - 259200000), // 3 days ago
+            synced: true,
+            prompt: 'emotion mask ghibli style',
+          },
+          {
+            id: 'test-media-4',
+            localUri: 'https://picsum.photos/400/400?random=4',
+            cloudUrl: 'https://picsum.photos/400/400?random=4',
+            filename: 'test_image_4.jpg',
+            createdAt: new Date(Date.now() - 345600000), // 4 days ago
+            synced: true,
+            prompt: 'abstract digital art',
+          },
+          {
+            id: 'test-media-5',
+            localUri: 'https://picsum.photos/400/400?random=5',
+            cloudUrl: 'https://picsum.photos/400/400?random=5',
+            filename: 'test_image_5.jpg',
+            createdAt: new Date(Date.now() - 432000000), // 5 days ago
+            synced: true,
+            prompt: 'studio edit professional',
+          },
+          {
+            id: 'test-media-6',
+            localUri: 'https://picsum.photos/400/400?random=6',
+            cloudUrl: 'https://picsum.photos/400/400?random=6',
+            filename: 'test_image_6.jpg',
+            createdAt: new Date(Date.now() - 518400000), // 6 days ago
+            synced: true,
+            prompt: 'ghibli reaction anime style',
+          },
+        ];
+
+        set({ media: testMedia, isLoading: false });
+        console.log('✅ Test media loaded successfully');
+        return;
+      }
+
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Not authenticated');
@@ -60,15 +129,18 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
       if (!response.error) {
         // Transform cloud media to local format and merge with local storage
-        const cloudMedia: MediaItem[] = (response.media || []).map(item => ({
+        const cloudMedia: MediaItem[] = (response.media || []).map((item: any) => ({
           id: item.id || `cloud_${Date.now()}_${Math.random()}`,
-          localUri: item.url || '',
-          cloudUrl: item.url,
+          localUri: item.url || item.finalUrl || '',
+          cloudUrl: item.url || item.finalUrl,
           cloudId: item.id,
           filename: `cloud_${item.id}.jpg`,
-          createdAt: new Date(item.timestamp || Date.now()),
+          createdAt: new Date(item.timestamp || item.createdAt || Date.now()),
           synced: true,
-          generationJobId: item.id,
+          generationJobId: item.runId || item.id,
+          type: item.type,
+          prompt: item.prompt,
+          presetKey: item.presetKey,
         }));
 
         // Load local media

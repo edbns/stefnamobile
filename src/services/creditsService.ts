@@ -48,7 +48,7 @@ export const creditsService = {
       request_id: request.request_id,
     };
 
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/credits-reserve`, {
+    const response = await fetch(config.apiUrl('credits-reserve'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -92,7 +92,7 @@ export const creditsService = {
       disposition: request.disposition,
     };
 
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/credits-finalize`, {
+    const response = await fetch(config.apiUrl('credits-finalize'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

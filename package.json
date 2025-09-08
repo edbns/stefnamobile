@@ -10,10 +10,16 @@
     "bump": "npm version patch && git add . && git commit -m 'bump version' && git push"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
     "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-community/netinfo": "11.4.1",
     "expo": "~53.0.22",
     "expo-camera": "^16.1.11",
+    "expo-constants": "~17.1.7",
+    "expo-dev-client": "~5.2.4",
     "expo-file-system": "^18.1.11",
+    "expo-font": "~13.3.2",
+    "expo-image-manipulator": "~13.1.7",
     "expo-image-picker": "^16.1.4",
     "expo-linking": "^7.1.7",
     "expo-media-library": "^17.1.7",
@@ -21,6 +27,7 @@
     "expo-router": "^5.1.4",
     "expo-sharing": "^13.1.5",
     "expo-status-bar": "~2.2.3",
+    "expo-updates": "~0.28.17",
     "lucide-react-native": "^0.542.0",
     "react": "19.0.0",
     "react-dom": "^19.0.0",
@@ -30,18 +37,12 @@
     "react-native-screens": "~4.11.1",
     "react-native-svg": "15.11.2",
     "react-native-web": "^0.20.0",
-    "zustand": "^5.0.8",
-    "expo-constants": "~17.1.7",
-    "expo-updates": "~0.28.17",
-    "expo-dev-client": "~5.2.4",
-    "expo-image-manipulator": "~13.1.7",
-    "@react-native-community/netinfo": "11.4.1",
-    "@expo/vector-icons": "^14.1.0",
-    "expo-font": "~13.3.2"
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "eas-cli": "^16.18.0",
     "typescript": "~5.8.3"
   },
   "private": true
