@@ -1,0 +1,23 @@
+name: EAS Update on main
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install EAS CLI
+        run: npm i -g eas-cli
+      - name: Install deps
+        run: npm ci
+      - name: Publish OTA update to production
+        env:
+          EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
+          EAS_NO_VCS: 1
+        run: npx eas update --auto --branch production --message "Auto OTA from main"
