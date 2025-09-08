@@ -180,6 +180,9 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
   deleteMedia: async (mediaId: string, cloudId?: string): Promise<boolean> => {
     try {
+      if (config.READ_ONLY) {
+        return false;
+      }
       set({ error: null });
 
       const token = await AsyncStorage.getItem('auth_token');
@@ -222,6 +225,9 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
   uploadToCloudinary: async (imageUri: string, folder?: string): Promise<CloudinaryUploadResult | null> => {
     try {
+      if (config.READ_ONLY) {
+        return null;
+      }
       set({ error: null });
 
       const token = await AsyncStorage.getItem('auth_token');

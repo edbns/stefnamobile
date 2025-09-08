@@ -52,6 +52,9 @@ export const settingsService = {
     token: string,
     updates: Partial<UserSettings>
   ): Promise<UserSettingsResponse> {
+    if (config.READ_ONLY) {
+      return { settings: { media_upload_agreed: false, share_to_feed: false }, error: 'READ_ONLY_MODE' };
+    }
     const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/user-settings`, {
       method: 'POST',
       headers: {
