@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'rea
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const columnWidth = width / 3;
+const columnWidth = width / 2;
 
 // Grid images must be bundled with the app. Place your 7 images in assets/welcome/
 // Rename files to match below or adjust paths accordingly.
@@ -18,6 +18,7 @@ const backgroundImages = [
   require('../assets/w8.jpg'),
   require('../assets/w9.jpg'),
 ];
+  require("../assets/w10.jpg"),
 
 export default function WelcomeScreen() {
   const router = useRouter();
