@@ -51,9 +51,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         return true;
       } else {
-        // Use centralized error handling
+        console.error('❌ [Mobile Auth] Login failed:', result.error);
+        
+        // Use centralized error handling with better error messages
+        const errorMessage = result.error === 'Invalid OTP' 
+          ? 'Invalid code. Please check your email and try again.'
+          : result.error || 'Login failed';
+          
         useErrorStore.getState().setError(
-          errorHelpers.auth(result.error || 'Login failed')
+          errorHelpers.auth(errorMessage)
         );
         set({ isLoading: false });
         return false;

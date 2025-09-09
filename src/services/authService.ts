@@ -17,12 +17,18 @@ export interface AuthResponse {
 export class AuthService {
   static async requestOTP(email: string): Promise<AuthResponse> {
     try {
+      console.log('📧 [Mobile Auth] Requesting OTP for:', email);
+      
       const response = await fetch(config.apiUrl('request-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'StefnaMobile/1.0.3',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ 
+          email,
+          platform: 'mobile' // Explicitly specify platform
+        }),
       });
 
       const data = await response.json();
@@ -48,15 +54,46 @@ export class AuthService {
 
   static async verifyOTP(email: string, otp: string): Promise<AuthResponse> {
     try {
+      console.log('🔐 [Mobile Auth] Verifying OTP:', { 
+        email, 
+        otpLength: otp.length,
+        url: config.apiUrl('verify-otp') 
+      });
+
       const response = await fetch(config.apiUrl('verify-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'User-Agent': 'StefnaMobile/1.0.3', // Identify as mobile app
         },
-        body: JSON.stringify({ email, code: otp }),
+        body: JSON.stringify({ 
+          email, 
+          code: otp,
+          platform: 'mobile' // Explicitly specify platform
+        }),
       });
 
+      console.log('📡 [Mobile Auth] Response status:', response.status);
+      console.log('📡 [Mobile Auth] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('❌ Non-JSON response from verify-otp:', textResponse);
+        return {
+          success: false,
+          error: 'Server error. Please try again.'
+        };
+      }
+
       const data = await response.json();
+      console.log('📊 [Mobile Auth] Response data:', { 
+        success: data.success || !!data.token,
+        hasToken: !!data.token,
+        hasUser: !!data.user,
+        error: data.error 
+      });
 
       if (!response.ok) {
         return {
@@ -71,7 +108,7 @@ export class AuthService {
         token: data.token,
       };
     } catch (error) {
-      console.error('Verify OTP error:', error);
+      console.error('❌ [Mobile Auth] Verify OTP error:', error);
       return {
         success: false,
         error: 'Network error. Please try again.'
