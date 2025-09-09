@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 
@@ -12,12 +12,28 @@ export default function VerifyScreen() {
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (countdown > 0) timer = setTimeout(() => setCountdown(countdown - 1), 1000);
     return () => clearTimeout(timer);
   }, [countdown]);
+
+  // Handle keyboard visibility to fix overlap issues
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
 
   const handleVerify = async () => {
     if (otp.length !== 6) return;
@@ -32,8 +48,12 @@ export default function VerifyScreen() {
   }, [otp]);
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.content}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <View style={[styles.content, keyboardVisible && styles.contentWithKeyboard]}>
         <Text style={styles.title}>Enter Login Code</Text>
         <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
         <Text style={styles.infoPill}>Login code sent to your email</Text>
@@ -66,6 +86,7 @@ export default function VerifyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  contentWithKeyboard: { justifyContent: 'flex-start', paddingTop: 100 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
   infoPill: { alignSelf: 'center', color: '#bbb', backgroundColor: '#1a1a1a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 16, fontSize: 12 },
