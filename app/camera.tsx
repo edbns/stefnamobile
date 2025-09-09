@@ -64,33 +64,35 @@ export default function CameraScreen() {
         }
       }
 
-      if (!cameraRef.current || !isCameraReady || isCapturing) {
-        console.error('Camera not ready or already capturing');
-        Alert.alert('Error', 'Camera is not ready. Please wait a moment and try again.');
-        return;
-      }
-
-      console.log('Taking picture...');
-      setIsCapturing(true);
-      
-      // Use the correct method for expo-camera v16+
-      if (!cameraRef.current) {
-        throw new Error('Camera ref not available');
-      }
-      
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
-        skipProcessing: false, // Changed to false for better compatibility
+      console.log('Taking picture...', { 
+        cameraReady: isCameraReady, 
+        capturing: isCapturing, 
+        hasRef: !!cameraRef.current 
       });
+      
+      setIsCapturing(true);
 
-      if (!photo?.uri) {
-        throw new Error('No photo URI returned');
+      // Try CameraView capture with better error handling
+      if (cameraRef.current && isCameraReady) {
+        console.log('Attempting CameraView capture...');
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.8,
+          base64: false,
+          skipProcessing: false,
+        });
+
+        if (photo?.uri) {
+          console.log('✅ CameraView photo taken:', photo.uri);
+          setCapturedPhoto(photo);
+          setShowPreview(true);
+          return; // Success - exit early
+        } else {
+          throw new Error('CameraView returned no URI');
+        }
+      } else {
+        // Camera not ready, throw error to trigger fallback
+        throw new Error('Camera not ready or ref unavailable');
       }
-
-      console.log('Photo taken:', photo.uri);
-      setCapturedPhoto(photo);
-      setShowPreview(true);
     } catch (error) {
       console.error('Camera error:', error);
       // Fallback to ImagePicker camera if CameraView fails
@@ -101,8 +103,10 @@ export default function CameraScreen() {
           return;
         }
         const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: false,
           quality: 0.8,
-          base64: false,
+          allowsMultipleSelection: false,
         });
         if (!result.canceled && result.assets && result.assets.length > 0) {
           const asset = result.assets[0];

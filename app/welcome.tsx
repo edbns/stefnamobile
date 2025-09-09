@@ -3,10 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'rea
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const columnWidth = width / 2;
+const columnWidth = (width - 6) / 3; // 3 columns with 2px margin each
 
-// Grid images must be bundled with the app. Place your 7 images in assets/welcome/
-// Rename files to match below or adjust paths accordingly.
+// Grid images - 9 images for 3x3 grid
 const backgroundImages = [
   require('../assets/w1.jpg'),
   require('../assets/w2.jpg'),
@@ -17,7 +16,6 @@ const backgroundImages = [
   require('../assets/w7.jpg'),
   require('../assets/w8.jpg'),
   require('../assets/w9.jpg'),
-  require('../assets/w10.jpg'),
 ];
 
 export default function WelcomeScreen() {
@@ -35,7 +33,7 @@ export default function WelcomeScreen() {
           const src = Image.resolveAssetSource(image);
           const aspect = src && src.width && src.height ? src.width / src.height : 1;
           return (
-            <View key={index} style={[styles.imageContainer, { width: columnWidth }]}> 
+            <View key={index} style={styles.imageContainer}> 
               <Image
                 source={image}
                 style={[styles.backgroundImage, { aspectRatio: aspect }]}
@@ -86,7 +84,8 @@ const styles = StyleSheet.create({
   imageContainer: {
     margin: 1,
     overflow: 'hidden',
-    borderRadius: 12,
+    borderRadius: 8, // Slightly smaller radius for tighter grid
+    width: columnWidth,
   },
   backgroundImage: {
     width: '100%',
