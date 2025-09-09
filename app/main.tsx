@@ -202,10 +202,10 @@ export default function MainScreen() {
               </View>
             );
           }}
-          renderSectionHeader={({ section: { title } }) => (
+          renderSectionHeader={({ section }) => (
             <View style={styles.sectionHeaderContainer}>
-              <Text style={styles.sectionHeader}>{title}</Text>
-              <Text style={styles.sectionCount}>({section.data.length})</Text>
+              <Text style={styles.sectionHeader}>{section.title}</Text>
+              <Text style={styles.sectionCount}>({section.data?.length || 0})</Text>
             </View>
           )}
           contentContainerStyle={styles.galleryContainer}
