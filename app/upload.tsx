@@ -40,12 +40,9 @@ export default function UploadScreen() {
   return (
     <View style={styles.container}>
       {/* Floating Back Button */}
-      <View style={styles.floatingBackButton}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={closeUpload}
-        >
-          <Feather name="arrow-left" size={24} color="#ffffff" />
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={closeUpload}>
+          <Feather name="arrow-left" size={20} color="#000000" />
         </TouchableOpacity>
       </View>
 
@@ -82,28 +79,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  floatingBackButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   content: {
     flex: 1,
     paddingHorizontal: 20,

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { Feather } from '@expo/vector-icons';
@@ -71,7 +72,11 @@ export default function CameraScreen() {
 
       console.log('Taking picture...');
       setIsCapturing(true);
-      const photo = await (cameraRef.current as any).takePictureAsync({
+      const cameraAny: any = cameraRef.current as any;
+      if (typeof cameraAny?.takePictureAsync !== 'function') {
+        throw new Error('CAMERA_METHOD_UNAVAILABLE');
+      }
+      const photo = await cameraAny.takePictureAsync({
         quality: 0.8,
         base64: false,
         skipProcessing: true,
@@ -86,7 +91,30 @@ export default function CameraScreen() {
       setShowPreview(true);
     } catch (error) {
       console.error('Camera error:', error);
-      Alert.alert('Error', 'Failed to take picture. Please try again.');
+      // Fallback to ImagePicker camera if CameraView fails
+      try {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+          return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+          quality: 0.8,
+          base64: false,
+        });
+        if (!result.canceled && result.assets && result.assets.length > 0) {
+          const asset = result.assets[0];
+          if (asset?.uri) {
+            setCapturedPhoto({ uri: asset.uri });
+            setShowPreview(true);
+            return;
+          }
+        }
+        Alert.alert('Error', 'Failed to take picture. Please try again.');
+      } catch (pickerError) {
+        console.error('Picker fallback error:', pickerError);
+        Alert.alert('Error', 'Failed to take picture. Please try again.');
+      }
     } finally {
       setIsCapturing(false);
     }
@@ -163,6 +191,7 @@ export default function CameraScreen() {
         ref={cameraRef}
         style={styles.camera}
         facing={facing}
+        key={facing}
         onCameraReady={() => setIsCameraReady(true)}
       >
         {/* Camera Controls Overlay */}

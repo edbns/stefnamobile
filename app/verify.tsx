@@ -34,7 +34,7 @@ export default function VerifyScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.content}>
-        <Text style={styles.title}>Enter your code</Text>
+        <Text style={styles.title}>Enter Login Code</Text>
         <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
         <Text style={styles.infoPill}>Login code sent to your email</Text>
 
@@ -42,7 +42,7 @@ export default function VerifyScreen() {
           style={styles.input}
           value={otp}
           onChangeText={setOtp}
-          placeholder="000000"
+          placeholder="Enter 6-digit code"
           placeholderTextColor="#666"
           keyboardType="numeric"
           maxLength={6}

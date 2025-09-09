@@ -15,9 +15,9 @@ export default function PrivacyScreen() {
   return (
     <View style={styles.container}>
       {/* Floating Back Button */}
-      <View style={styles.floatingBackButton}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Feather name="arrow-left" size={24} color="#ffffff" />
+      <View style={styles.headerRow}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.iconBackButton}>
+          <Feather name="arrow-left" size={20} color="#000000" />
         </TouchableOpacity>
       </View>
 
@@ -134,20 +134,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  floatingBackButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
   content: {
     flex: 1,
     paddingHorizontal: 20,
