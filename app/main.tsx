@@ -189,10 +189,9 @@ export default function MainScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
-          renderItem={({ item, index, section }) => {
+          renderItem={({ item, index }) => {
             // Calculate if this item should be on the left or right in 2-column layout
-            const itemIndex = section.data.indexOf(item);
-            const isLeft = itemIndex % 2 === 0;
+            const isLeft = index % 2 === 0;
             return (
               <View style={[
                 styles.sectionItemWrapper, 
