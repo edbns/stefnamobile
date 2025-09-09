@@ -19,7 +19,6 @@ const backgroundImages = [
   require('../assets/w9.jpg'),
   require('../assets/w10.jpg'),
 ];
-  require("../assets/w10.jpg"),
 
 export default function WelcomeScreen() {
   const router = useRouter();
