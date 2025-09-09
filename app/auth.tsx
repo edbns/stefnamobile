@@ -20,10 +20,7 @@ export default function AuthScreen() {
   const { login, isAuthenticated, isLoading, error } = useAuthStore();
 
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
   const [isRequestingOTP, setIsRequestingOTP] = useState(false);
-  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
-  const [showOTPInput, setShowOTPInput] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
   useEffect(() => {
@@ -51,57 +48,17 @@ export default function AuthScreen() {
     }
 
     setIsRequestingOTP(true);
+    // Navigate immediately to match website UX; send OTP in background
+    router.replace({ pathname: '/verify', params: { email } });
     try {
-      const response = await AuthService.requestOTP(email);
-
-      if (response.success) {
-        setShowOTPInput(true);
-        setCountdown(60); // 60 second countdown
-        Alert.alert('Success', 'Login code sent to your email. Please check your inbox.');
-      } else {
-        Alert.alert('Error', response.error || 'Failed to send login code');
-      }
+      await AuthService.requestOTP(email);
+      setCountdown(60);
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
+      // Silent fail; user can go Back to Email or wait and try again
     } finally {
       setIsRequestingOTP(false);
     }
   };
-
-  const handleVerifyOTP = async () => {
-    if (!otp.trim()) {
-      Alert.alert('Error', 'Please enter the login code');
-      return;
-    }
-
-    if (otp.length !== 6) {
-      Alert.alert('Error', 'Login code must be 6 digits');
-      return;
-    }
-
-    setIsVerifyingOTP(true);
-    try {
-      const success = await login(email, otp);
-
-      if (success) {
-        // Navigate to main screen
-        router.replace('/main');
-      } else {
-        Alert.alert('Error', 'Invalid login code');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
-    } finally {
-      setIsVerifyingOTP(false);
-    }
-  };
-
-  // Auto-verify when OTP is complete (6 digits)
-  useEffect(() => {
-    if (otp.length === 6 && !isVerifyingOTP) {
-      handleVerifyOTP();
-    }
-  }, [otp]);
 
   const handleResendOTP = () => {
     if (countdown === 0) {
@@ -125,12 +82,7 @@ export default function AuthScreen() {
         </View>
         
         <Text style={styles.title}>Sign in to Stefna</Text>
-        <Text style={styles.subtitle}>
-          {!showOTPInput 
-            ? 'Enter your email to receive a login code'
-            : 'Enter the 6-digit code sent to your email'
-          }
-        </Text>
+        <Text style={styles.subtitle}>Enter your email to receive a login code</Text>
 
         <View style={styles.inputContainer}>
           <TextInput
@@ -142,59 +94,19 @@ export default function AuthScreen() {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
-            editable={!showOTPInput}
           />
 
-          {!showOTPInput ? (
-            <TouchableOpacity
-              style={[styles.button, isRequestingOTP && styles.buttonDisabled]}
-              onPress={handleRequestOTP}
-              disabled={isRequestingOTP}
-            >
-              {isRequestingOTP ? (
-                <ActivityIndicator color="#000" />
-              ) : (
-                <Text style={styles.buttonText}>Get Login Code</Text>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <>
-              <TextInput
-                style={styles.input}
-                value={otp}
-                onChangeText={setOtp}
-                placeholder="000000"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-                maxLength={6}
-                autoFocus
-              />
-
-              <TouchableOpacity
-                style={[styles.button, isVerifyingOTP && styles.buttonDisabled]}
-                onPress={handleVerifyOTP}
-                disabled={isVerifyingOTP || otp.length !== 6}
-              >
-                {isVerifyingOTP ? (
-                  <ActivityIndicator color="#000" />
-                ) : (
-                  <Text style={[styles.buttonText, otp.length !== 6 && styles.buttonTextDisabled]}>
-                    {otp.length === 6 ? 'Verifying...' : 'Enter 6-digit code'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.resendButton, countdown > 0 && styles.resendButtonDisabled]}
-                onPress={handleResendOTP}
-                disabled={countdown > 0}
-              >
-                <Text style={[styles.resendText, countdown > 0 && styles.resendTextDisabled]}>
-                  {countdown > 0 ? `Resend OTP in ${countdown}s` : 'Resend OTP'}
-                </Text>
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity
+            style={[styles.button, isRequestingOTP && styles.buttonDisabled]}
+            onPress={handleRequestOTP}
+            disabled={isRequestingOTP}
+          >
+            {isRequestingOTP ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>Get Login Code</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
       </View>

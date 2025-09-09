@@ -96,6 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           'You have been successfully logged out.'
         )
       );
+      // Note: navigation handled by global guard in _layout via isAuthenticated
     } catch (error) {
       console.error('Logout error:', error);
 
@@ -112,89 +113,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
 
-      // Development bypass - auto-login with test account
-      if (__DEV__) {
-        console.log('🔧 Development mode: Auto-logging in with test account');
-        const testUser: User = {
-          id: 'test-user-123',
-          email: 'test@stefna.dev',
-          credits: 100,
-        };
-        const testToken = 'test-token-123';
-
-        // Store test data
-        await AsyncStorage.setItem('auth_token', testToken);
-        await AsyncStorage.setItem('user_profile', JSON.stringify(testUser));
-
-        set({
-          user: testUser,
-          token: testToken,
-          isAuthenticated: true,
-          isLoading: false
-        });
-
-        console.log('✅ Test account logged in successfully');
-        return;
-      }
+      // Note: Removed development auto-login to enforce proper auth gating
 
       const [userString, token] = await AsyncStorage.multiGet(['user_profile', 'auth_token']);
 
       if (userString[1] && token[1]) {
         const user = JSON.parse(userString[1]);
 
-        // Validate token with whoami
-        try {
-          const whoamiResult = await userService.whoami(token[1]);
-          if (whoamiResult.ok && whoamiResult.user) {
-            set({
-              user,
-              token: token[1],
-              isAuthenticated: true,
-              isLoading: false
-            });
-
-            // Show welcome back notification
-            useNotificationsStore.getState().addNotification(
-              notificationHelpers.info(
-                'Welcome back!',
-                'Session restored successfully.'
-              )
-            );
-          } else {
-            // Token invalid, clear stored data
-            await AsyncStorage.multiRemove(['auth_token', 'user_profile']);
-
-            set({
-              user: null,
-              token: null,
-              isAuthenticated: false,
-              isLoading: false
-            });
-
-            // Show session expired notification
-            useNotificationsStore.getState().addNotification(
-              notificationHelpers.warning(
-                'Session Expired',
-                'Please log in again to continue.'
-              )
-            );
-          }
-        } catch (error) {
-          // Token validation failed, clear stored data
-          await AsyncStorage.multiRemove(['auth_token', 'user_profile']);
-
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false
-          });
-
-          // Use centralized error handling
-          useErrorStore.getState().setError(
-            errorHelpers.auth('Session validation failed', error)
-          );
-        }
+        // Persisted session: trust for 30 days unless explicitly invalidated
+        set({
+          user,
+          token: token[1],
+          isAuthenticated: true,
+          isLoading: false
+        });
       } else {
         set({
           user: null,

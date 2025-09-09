@@ -1,5 +1,6 @@
 // src/services/presetsService.ts
 // Mobile app presets service - connects to database, no fallbacks
+import { config } from '../config/environment';
 
 export interface DatabasePreset {
   id: string;
@@ -53,7 +54,7 @@ class PresetsService {
       console.log('🎨 [PresetsService] Fetching available presets from database');
 
       // Use the same endpoint as the website
-      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
+      const response = await fetch(config.apiUrl('get-presets'), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -126,7 +127,7 @@ class PresetsService {
     try {
       console.log('🔍 [Presets] Getting current week presets');
       
-      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
+      const response = await fetch(config.apiUrl('get-presets'), {
         method: 'GET'
       });
 
@@ -180,7 +181,7 @@ class PresetsService {
     try {
       console.log('🔍 [Presets] Getting all presets');
       
-      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
+      const response = await fetch(config.apiUrl('get-presets'), {
         method: 'GET'
       });
 

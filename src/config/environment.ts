@@ -3,12 +3,12 @@
 
 const ENV = {
   development: {
-    API_BASE_URL: 'http://localhost:8888/.netlify/functions',
-    // Add your local development Netlify Functions URL here
+    // Use EXPO_PUBLIC_API_URL when provided; otherwise default to staging URL
+    // Avoid localhost for device builds (causes Invalid URL on device)
+    API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://stefna.netlify.app',
   },
   production: {
-    API_BASE_URL: 'https://stefna.xyz/.netlify/functions',
-    // Production Netlify site URL
+    API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://stefna.xyz',
   },
 };
 
@@ -18,6 +18,9 @@ const currentEnv = isDevelopment ? ENV.development : ENV.production;
 
 export const config = {
   API_BASE_URL: currentEnv.API_BASE_URL,
+  apiUrl: (fn: string) => `${currentEnv.API_BASE_URL}/.netlify/functions/${fn}`,
+  // Keep production read-only until parity; allow writes in development
+  READ_ONLY: !isDevelopment,
 
   // App configuration
   APP_NAME: 'StefnaMobile',

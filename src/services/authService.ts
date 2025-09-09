@@ -17,7 +17,7 @@ export interface AuthResponse {
 export class AuthService {
   static async requestOTP(email: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/request-otp`, {
+      const response = await fetch(config.apiUrl('request-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export class AuthService {
 
   static async verifyOTP(email: string, otp: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/verify-otp`, {
+      const response = await fetch(config.apiUrl('verify-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export class AuthService {
 
   static async refreshUser(token: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/get-user`, {
+      const response = await fetch(config.apiUrl('whoami'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -82,27 +82,14 @@ export default function MainScreen() {
 
       console.log('Launching image picker...');
 
-      // Try the simplest possible configuration
-      let result;
-      try {
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.All,
-          allowsEditing: false,
-          quality: 0.8,
-          allowsMultipleSelection: false,
-          base64: false,
-        });
-        console.log('Image picker succeeded with MediaTypeOptions.All');
-      } catch (error) {
-        console.log('MediaTypeOptions.All failed, trying alternative approach');
-        // Fallback to basic configuration
-        result = await ImagePicker.launchImageLibraryAsync({
-          allowsEditing: false,
-          quality: 0.8,
-          base64: false,
-        });
-        console.log('Image picker succeeded with basic config');
-      }
+      // Prefer images only and avoid editing UI (can crash on some OEMs)
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+        allowsMultipleSelection: false,
+        base64: false,
+      });
 
       console.log('Image picker result:', result);
 

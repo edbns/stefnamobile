@@ -179,7 +179,7 @@ export class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      const response = await fetch(`${config.API_BASE_URL}/get-presets`, {
+      const response = await fetch(config.apiUrl('get-presets'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -453,7 +453,7 @@ export class GenerationService {
     });
 
     // Use the unified background endpoint (matching website)
-    const response = await fetch(`${config.API_BASE_URL}/unified-generate-background`, {
+    const response = await fetch(config.apiUrl('unified-generate-background'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -586,7 +586,7 @@ export class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      const response = await fetch(`${config.API_BASE_URL}/get-user-media?userId=${userId}`, {
+      const response = await fetch(config.apiUrl(`getUserMedia?userId=${encodeURIComponent(userId)}`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -28,7 +28,7 @@ export const mediaService = {
     token: string,
     request: DeleteMediaRequest
   ): Promise<DeleteMediaResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/delete-media`, {
+    const response = await fetch(config.apiUrl('delete-media'), {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -61,7 +61,7 @@ export const mediaService = {
   // Get user's media from cloud
   async getUserMedia(token: string, type?: 'photo' | 'video'): Promise<UserMediaResponse> {
     try {
-      const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/getUserMedia`, {
+      const response = await fetch(config.apiUrl('getUserMedia'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

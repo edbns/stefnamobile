@@ -37,7 +37,7 @@ export interface UserProfileResponse {
 export const userService = {
   // Fetch user profile data from API
   async fetchUserProfile(token: string): Promise<UserProfileResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/get-user-profile`, {
+    const response = await fetch(config.apiUrl('get-user-profile'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -56,7 +56,10 @@ export const userService = {
 
   // Update user profile via API
   async updateProfile(token: string, updates: Partial<UserProfile>): Promise<UserProfileResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/update-profile`, {
+    if (config.READ_ONLY) {
+      throw new Error('READ_ONLY_MODE');
+    }
+    const response = await fetch(config.apiUrl('update-profile'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -76,7 +79,7 @@ export const userService = {
 
   // Validate user identity (whoami)
   async whoami(token: string): Promise<{ ok: boolean; user?: UserProfile }> {
-    const response = await fetch(`${config.API_BASE_URL}/whoami`, {
+    const response = await fetch(config.apiUrl('whoami'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

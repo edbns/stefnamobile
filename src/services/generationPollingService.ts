@@ -59,7 +59,7 @@ class GenerationPollingService {
         console.log(`🔍 [GenerationPolling] Poll attempt ${attempts}/${maxAttempts} for job ${jobId}`);
 
         // Poll the same endpoint as the website
-        const { config } = require('../config/environment');
+        const { config } = await import('../config/environment');
         const response = await fetch(config.apiUrl(`getMediaByRunId?runId=${encodeURIComponent(runId)}`), {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }

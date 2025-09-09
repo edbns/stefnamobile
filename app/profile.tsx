@@ -88,7 +88,8 @@ export default function ProfileScreen() {
         throw new Error('Not authenticated');
       }
 
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'https://stefna.xyz/.netlify/functions'}/change-email`, {
+      const { config } = await import('../src/config/environment');
+      const response = await fetch(config.apiUrl('change-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,19 +135,24 @@ export default function ProfileScreen() {
     setInviteSuccess('');
 
     try {
-      // This would normally send to your API
-      // For now, simulate success
-      setTimeout(() => {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('Not authenticated');
+
+      const { referralService } = await import('../src/services/referralService');
+      const resp = await referralService.sendReferralInvite(token, {
+        to: inviteEmail.trim(),
+        referrerEmail: user?.email || ''
+      });
+
+      if (resp.ok) {
         setInviteSuccess('Invitation sent successfully!');
         setInviteEmail('');
-        setIsSendingInvite(false);
-        
         // Update stats optimistically
-        setReferralStats(prev => ({
-          ...prev,
-          invites: prev.invites + 1
-        }));
-      }, 1000);
+        setReferralStats(prev => ({ ...prev, invites: prev.invites + 1 }));
+      } else {
+        setInviteError(resp.error || 'Failed to send invitation. Please try again.');
+      }
+      setIsSendingInvite(false);
     } catch (error) {
       setInviteError('Failed to send invitation. Please try again.');
       setIsSendingInvite(false);
@@ -200,11 +206,21 @@ export default function ProfileScreen() {
                   text: 'Delete Forever',
                   style: 'destructive',
                   onPress: async () => {
-                    Alert.alert(
-                      'Account Deletion Requested',
-                      'Your account deletion request has been submitted. You will receive an email confirmation shortly.',
-                      [{ text: 'OK', onPress: () => router.replace('/auth') }]
-                    );
+                    try {
+                      const token = await AsyncStorage.getItem('auth_token');
+                      const { config } = await import('../src/config/environment');
+                      await fetch(config.apiUrl('delete-account'), {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                      });
+                      Alert.alert(
+                        'Account Deletion Requested',
+                        'Your account deletion request has been submitted. You will receive an email confirmation shortly.',
+                        [{ text: 'OK', onPress: () => router.replace('/auth') }]
+                      );
+                    } catch (e) {
+                      Alert.alert('Error', 'Failed to request account deletion.');
+                    }
                   },
                 },
               ]
@@ -280,14 +296,9 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       {/* Settings List */}
       <ScrollView style={styles.settingsList} showsVerticalScrollIndicator={false}>
-        {/* User Info */}
-        <View style={styles.userInfo}>
-          <View style={styles.avatar}>
-            <Feather name="user" size={20} color="#ffffff" />
-          </View>
-          <View style={styles.userDetails}>
-            <Text style={styles.userEmail}>{user?.email || 'No email'}</Text>
-          </View>
+        {/* Greeting Only */}
+        <View style={styles.greetingBox}>
+          <Text style={styles.greetingText}>Hello!</Text>
         </View>
         {settingsItems.map((item, index) => (
           <View key={index}>
@@ -497,12 +508,11 @@ export default function ProfileScreen() {
       </ScrollView>
 
       {/* Floating Back Button */}
-      <TouchableOpacity 
-        style={styles.floatingBackButton} 
-        onPress={() => router.back()}
-      >
-        <Feather name="arrow-left" size={24} color="#ffffff" />
-      </TouchableOpacity>
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => router.back()}>
+          <Feather name="arrow-left" size={20} color="#000000" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -514,9 +524,7 @@ const styles = StyleSheet.create({
   },
 
   // User Info
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  greetingBox: {
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#1a1a1a',
@@ -525,29 +533,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 16,
     shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#333333',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
   },
-  userDetails: {
-    flex: 1,
-  },
-  userEmail: {
-    fontSize: 18,
-    fontWeight: '600',
+  greetingText: {
+    fontSize: 20,
+    fontWeight: '700',
     color: '#ffffff',
   },
 
@@ -855,24 +849,6 @@ const styles = StyleSheet.create({
   },
 
   // Floating Back Button
-  floatingBackButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'transparent', // Fully transparent background
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 1000, // Ensure it's above other content
-  },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
 });
