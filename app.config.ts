@@ -62,7 +62,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     policy: 'appVersion'
   },
   updates: {
-    url: 'https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641'
+    url: 'https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641',
+    // Always check for updates on app launch so JS-only changes apply without rebuilds
+    checkAutomatically: 'ON_LOAD'
   }
 });
 
