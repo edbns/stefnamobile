@@ -103,12 +103,11 @@ export class GenerationService {
     try {
       console.log('🖼️ [Mobile] Compressing image:', imageUri);
       
-      // Compress image before base64 conversion
+      // Compress image before base64 conversion (fixed: removed invalid compress action)
       const compressedImage = await ImageManipulator.manipulateAsync(
         imageUri,
         [
-          { resize: { width: 1024, height: 1024 } }, // Resize to max 1024px
-          { compress: 0.8 } // 80% quality
+          { resize: { width: 1024, height: 1024 } } // Resize to max 1024px
         ],
         { 
           compress: 0.8, 
