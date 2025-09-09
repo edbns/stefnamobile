@@ -58,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     }
   },
   // Use fixed runtime version for stable fingerprinting
-  runtimeVersion: '1.0.0',
+  runtimeVersion: '1.0.3',
   updates: {
     url: 'https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641',
     // Always check for updates on app launch so JS-only changes apply without rebuilds
