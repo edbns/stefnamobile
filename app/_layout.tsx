@@ -12,35 +12,51 @@ export default function Layout() {
 
   useEffect(() => {
     initialize();
-    // Force immediate update check and reload
-    (async () => {
+    
+    // Check for updates on app launch (safer approach)
+    const checkForUpdates = async () => {
       try {
-        console.log('🔄 FORCE UPDATE CHECK - Starting...');
-        console.log('📱 Current update info:', await Updates.getCurrentUpdateAsync());
+        // Only check for updates if we're not in development mode
+        if (__DEV__) {
+          console.log('🔧 Development mode - skipping update check');
+          return;
+        }
+
+        console.log('🔄 Checking for updates...');
+        
+        // Get current update info safely
+        const currentUpdate = await Updates.getCurrentUpdateAsync();
+        console.log('📱 Current update info:', {
+          updateId: currentUpdate?.updateId,
+          channel: currentUpdate?.channel,
+          runtimeVersion: currentUpdate?.runtimeVersion
+        });
         
         const update = await Updates.checkForUpdateAsync();
-        console.log('📡 Update check result:', JSON.stringify(update, null, 2));
+        console.log('📡 Update check result:', {
+          isAvailable: update.isAvailable,
+          manifest: update.manifest ? 'Present' : 'None'
+        });
         
         if (update.isAvailable) {
-          console.log('📥 Update available! Fetching immediately...');
+          console.log('📥 Update available! Fetching...');
           const fetchResult = await Updates.fetchUpdateAsync();
-          console.log('📦 Fetch result:', JSON.stringify(fetchResult, null, 2));
-          console.log('🔄 RELOADING APP NOW...');
+          console.log('📦 Fetch completed, restarting app...');
           await Updates.reloadAsync();
         } else {
-          console.log('❌ NO UPDATE AVAILABLE - This is the problem!');
-          console.log('🔍 Debug info - Runtime version:', Updates.runtimeVersion);
-          console.log('🔍 Debug info - Update URL:', Updates.updateUrl);
+          console.log('✅ App is up to date');
         }
       } catch (error) {
-        console.error('❌ UPDATE CHECK COMPLETELY FAILED:', error);
-        console.error('❌ Error details:', JSON.stringify(error, null, 2));
+        console.error('❌ Update check failed:', error.message || error);
+        // Don't crash the app if update check fails
       }
-    })();
-    // Initialize network monitoring
+    };
+
+    // Check for updates after a short delay to avoid blocking app startup
+    const updateTimeout = setTimeout(checkForUpdates, 2000);
     
-    // Cleanup on unmount
     return () => {
+      clearTimeout(updateTimeout);
     };
   }, [initialize]);
 
