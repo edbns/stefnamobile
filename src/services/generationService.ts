@@ -446,6 +446,7 @@ export class GenerationService {
       promptLength: payload.prompt?.length || 0,
       hasSource: !!payload.sourceAssetId,
       runId: payload.runId,
+      url: config.apiUrl('unified-generate-background')
     });
 
     // Use the unified background endpoint (matching website)
@@ -460,9 +461,16 @@ export class GenerationService {
 
     // Check if response is JSON before parsing
     const contentType = response.headers.get('content-type');
+    console.log('📡 [Mobile Generation] Response status:', response.status);
+    console.log('📡 [Mobile Generation] Content-Type:', contentType);
+    
     if (!contentType || !contentType.includes('application/json')) {
       const textResponse = await response.text();
-      console.error('❌ Non-JSON response from generation API:', textResponse);
+      console.error('❌ Non-JSON response from generation API:', {
+        status: response.status,
+        contentType,
+        responseStart: textResponse.substring(0, 500)
+      });
       return {
         success: false,
         error: response.ok ? 'Server returned non-JSON response' : `Server error (${response.status}): ${textResponse.substring(0, 200)}`

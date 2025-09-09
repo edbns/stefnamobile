@@ -1,58 +1,24 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { CameraView, useCameraPermissions, CameraType } from 'expo-camera';
 import { Feather } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const router = useRouter();
-  const cameraRef = useRef<CameraView | null>(null);
-  const [facing, setFacing] = useState<CameraType>('back');
-  const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState<{ uri: string } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
-  const [isCameraReady, setIsCameraReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
-  // Request permission on mount if not granted
+  // Auto-launch camera picker when component mounts
   useEffect(() => {
-    if (permission && !permission.granted && !hasRequestedPermission) {
-      setHasRequestedPermission(true);
-      requestPermission();
-    }
-  }, [permission, requestPermission, hasRequestedPermission]);
+    // Small delay to allow component to mount properly
+    const timer = setTimeout(() => {
+      takePicture();
+    }, 500);
 
-  // Show loading while checking permissions or requesting
-  if (!permission || (!permission.granted && hasRequestedPermission)) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>
-            {!permission ? 'Loading camera...' : 'Requesting camera permission...'}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // If permission denied, show error and go back
-  if (permission && !permission.granted && hasRequestedPermission) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Camera permission denied</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
+    return () => clearTimeout(timer);
+  }, []);
 
   const takePicture = async () => {
     if (isCapturing) {
@@ -61,30 +27,29 @@ export default function CameraScreen() {
     }
 
     try {
-      if (!permission?.granted) {
-        await requestPermission();
-        if (!permission?.granted) {
-          Alert.alert('Permission needed', 'Please allow camera access to take photos.');
-          return;
-        }
-      }
-
-      console.log('📸 Taking picture - using reliable ImagePicker method');
+      console.log('📸 Opening camera - using ImagePicker only');
       setIsCapturing(true);
 
-      // Use ImagePicker camera directly (most reliable method)
+      // Request camera permissions
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+        Alert.alert(
+          'Camera Permission Required', 
+          'Please allow camera access to take photos.',
+          [
+            { text: 'Cancel', onPress: () => router.back() },
+            { text: 'Try Upload Instead', onPress: () => router.replace('/main') }
+          ]
+        );
         return;
       }
 
+      // Launch camera directly
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: false,
-        base64: false,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -97,19 +62,18 @@ export default function CameraScreen() {
         }
       }
       
-      console.log('📱 User cancelled camera or no image returned');
+      // User cancelled or no image - go back
+      console.log('📱 User cancelled camera');
+      router.back();
 
     } catch (error) {
       console.error('❌ Camera error:', error);
       Alert.alert(
         'Camera Error', 
-        'Unable to access camera. Please check permissions in device settings.',
+        'Unable to access camera. Please try the upload option instead.',
         [
-          { text: 'OK', style: 'default' },
-          { 
-            text: 'Try Upload Instead', 
-            onPress: () => router.replace('/main')
-          }
+          { text: 'OK', onPress: () => router.back() },
+          { text: 'Try Upload', onPress: () => router.replace('/main') }
         ]
       );
     } finally {
@@ -131,11 +95,11 @@ export default function CameraScreen() {
     console.log('Retaking photo...');
     setCapturedPhoto(null);
     setShowPreview(false);
+    // Launch camera again after brief delay
+    setTimeout(() => takePicture(), 300);
   };
 
-  const toggleCameraFacing = () => {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  };
+  // Removed toggleCameraFacing - no longer needed without CameraView
 
   const closeCamera = () => {
     router.back();
@@ -182,43 +146,41 @@ export default function CameraScreen() {
     );
   }
 
+  // Show loading screen while launching camera
+  if (!showPreview) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Opening Camera...</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Show preview after photo is taken
   return (
     <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={styles.camera}
-        facing={facing}
-        key={facing}
-        onCameraReady={() => setIsCameraReady(true)}
-      >
-        {/* Camera Controls Overlay */}
-        <View style={styles.overlay}>
-          {/* Top Controls */}
-          <View style={styles.topControls}>
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={closeCamera}
-            >
-              <Feather name="x" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Bottom Controls - centered shutter with flip on the right */}
-          <View style={styles.bottomControls}>
-            <View style={styles.spacer} />
-            <TouchableOpacity
-              style={styles.captureButton}
-              onPress={takePicture}
-            />
-            <TouchableOpacity
-              style={styles.flipButton}
-              onPress={toggleCameraFacing}
-            >
-              <Feather name="refresh-ccw" size={22} color="#000000" />
-            </TouchableOpacity>
-          </View>
+      <View style={styles.previewContainer}>
+        {capturedPhoto && (
+          <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
+        )}
+        
+        <View style={styles.previewControls}>
+          <TouchableOpacity style={styles.retakeButton} onPress={retakePhoto}>
+            <Text style={styles.retakeText}>Retake</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.confirmButton} onPress={confirmPhoto}>
+            <Text style={styles.confirmText}>Use Photo</Text>
+          </TouchableOpacity>
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 }
@@ -228,125 +190,62 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  camera: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  topControls: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bottomControls: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#ffffff',
-    borderWidth: 4,
-    borderColor: '#cccccc',
-    marginHorizontal: 30,
-  },
-  flipButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  spacer: {
-    width: 50,
-    height: 50,
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000000',
+    padding: 20,
   },
   loadingText: {
-    fontSize: 16,
     color: '#ffffff',
-    textAlign: 'center',
+    fontSize: 18,
     marginBottom: 20,
   },
   backButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#333333',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   backButtonText: {
-    color: '#000000',
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
   },
-  // Preview styles
+  previewContainer: {
+    flex: 1,
+  },
   previewImage: {
     flex: 1,
     resizeMode: 'contain',
   },
-  previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'transparent',
-  },
-  previewTopControls: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingTop: 60,
-    paddingHorizontal: 20,
-  },
-  previewBottomControls: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    right: 0,
+  previewControls: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  previewButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   retakeButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#333333',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 12,
+  },
+  retakeText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   confirmButton: {
     backgroundColor: '#ffffff',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 12,
   },
-  previewButtonText: {
+  confirmText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
   },
 });
 

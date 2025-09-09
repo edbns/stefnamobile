@@ -1,3 +1,4 @@
+
 import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
@@ -48,8 +49,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
-    'expo-font',
-    'expo-camera'
+    'expo-font'
   ],
   extra: {
     router: {},
