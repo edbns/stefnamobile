@@ -8,15 +8,15 @@ const columnWidth = width / 3;
 // Grid images must be bundled with the app. Place your 7 images in assets/welcome/
 // Rename files to match below or adjust paths accordingly.
 const backgroundImages = [
-  require('../assets/welcome/w1.jpg'),
-  require('../assets/welcome/w2.jpg'),
-  require('../assets/welcome/w3.jpg'),
-  require('../assets/welcome/w4.jpg'),
-  require('../assets/welcome/w5.jpg'),
-  require('../assets/welcome/w6.jpg'),
-  require('../assets/welcome/w7.jpg'),
-  require('../assets/welcome/w8.jpg'),
-  require('../assets/welcome/w9.jpg'),
+  require('../assets/w1.jpg'),
+  require('../assets/w2.jpg'),
+  require('../assets/w3.jpg'),
+  require('../assets/w4.jpg'),
+  require('../assets/w5.jpg'),
+  require('../assets/w6.jpg'),
+  require('../assets/w7.jpg'),
+  require('../assets/w8.jpg'),
+  require('../assets/w9.jpg'),
 ];
 
 export default function WelcomeScreen() {
