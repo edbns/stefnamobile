@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
-const columnWidth = (width - 6) / 3; // 3 columns with 2px margin each
+const { width, height } = Dimensions.get('window');
+const columnWidth = width / 3; // True 3 columns, no margins for fullscreen
 
 // Grid images - 9 images for 3x3 grid
 const backgroundImages = [
@@ -30,13 +30,12 @@ export default function WelcomeScreen() {
       {/* Background Image Grid */}
       <View style={styles.imageGrid}>
         {backgroundImages.map((image, index) => {
-          const src = Image.resolveAssetSource(image);
-          const aspect = src && src.width && src.height ? src.width / src.height : 1;
+          const rowHeight = height / 3; // Each row takes 1/3 of screen height
           return (
-            <View key={index} style={styles.imageContainer}> 
+            <View key={index} style={[styles.imageContainer, { height: rowHeight }]}> 
               <Image
                 source={image}
-                style={[styles.backgroundImage, { aspectRatio: aspect }]}
+                style={styles.backgroundImage}
               />
             </View>
           );
@@ -90,11 +89,11 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: columnWidth,
-    // No margin, border radius, or overflow for fullscreen effect
+    // Fullscreen effect - no margins or borders
   },
   backgroundImage: {
     width: '100%',
-    height: undefined,
+    height: '100%',
     resizeMode: 'cover',
   },
   overlay: {
@@ -107,15 +106,13 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingTop: 60,
+    justifyContent: 'flex-end',
     paddingBottom: 40,
     paddingHorizontal: 20,
   },
   mainContent: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
