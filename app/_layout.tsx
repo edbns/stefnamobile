@@ -2,7 +2,6 @@ import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import * as Updates from 'expo-updates';
 import { useAuthStore } from '../src/stores/authStore';
 
 export default function Layout() {
@@ -13,51 +12,12 @@ export default function Layout() {
   useEffect(() => {
     initialize();
     
-    // Check for updates on app launch (safer approach)
-    const checkForUpdates = async () => {
-      try {
-        // Only check for updates if we're not in development mode
-        if (__DEV__) {
-          console.log('🔧 Development mode - skipping update check');
-          return;
-        }
-
-        console.log('🔄 Checking for updates...');
-        
-        // Get current update info safely
-        const currentUpdate = await Updates.getCurrentUpdateAsync();
-        console.log('📱 Current update info:', {
-          updateId: currentUpdate?.updateId,
-          channel: currentUpdate?.channel,
-          runtimeVersion: currentUpdate?.runtimeVersion
-        });
-        
-        const update = await Updates.checkForUpdateAsync();
-        console.log('📡 Update check result:', {
-          isAvailable: update.isAvailable,
-          manifest: update.manifest ? 'Present' : 'None'
-        });
-        
-        if (update.isAvailable) {
-          console.log('📥 Update available! Fetching...');
-          const fetchResult = await Updates.fetchUpdateAsync();
-          console.log('📦 Fetch completed, restarting app...');
-          await Updates.reloadAsync();
-        } else {
-          console.log('✅ App is up to date');
-        }
-      } catch (error) {
-        console.error('❌ Update check failed:', error.message || error);
-        // Don't crash the app if update check fails
-      }
-    };
-
-    // Check for updates after a short delay to avoid blocking app startup
-    const updateTimeout = setTimeout(checkForUpdates, 2000);
+    // Let Expo handle updates automatically via app.config.ts
+    // No manual update checking needed since we have:
+    // - checkAutomatically: 'ON_LOAD' in app.config.ts
+    // - Proper runtime version matching
+    console.log('🚀 App initialized - Expo will handle updates automatically');
     
-    return () => {
-      clearTimeout(updateTimeout);
-    };
   }, [initialize]);
 
   // Global auth guard: redirect unauthenticated users away from protected routes
