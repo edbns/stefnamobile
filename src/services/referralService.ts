@@ -40,7 +40,7 @@ export const referralService = {
     token: string,
     request: ProcessReferralRequest
   ): Promise<ProcessReferralResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/process-referral`, {
+    const response = await fetch(config.apiUrl('process-referral'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -75,7 +75,7 @@ export const referralService = {
     token: string,
     request: SendReferralInviteRequest
   ): Promise<SendReferralInviteResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/send-referral-invite-v2`, {
+    const response = await fetch(config.apiUrl('send-referral-invite-v2'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -104,7 +104,7 @@ export const referralService = {
 
   // Get referral stats
   async getReferralStats(token: string): Promise<ReferralStatsResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/get-referral-stats`, {
+    const response = await fetch(config.apiUrl('get-referral-stats'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

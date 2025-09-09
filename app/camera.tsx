@@ -6,12 +6,14 @@ import { Feather } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const router = useRouter();
-  const cameraRef = useRef(null);
+  const cameraRef = useRef<CameraView | null>(null);
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
-  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<{ uri: string } | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
+  const [isCameraReady, setIsCameraReady] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   // Request permission on mount if not granted
   useEffect(() => {
@@ -52,24 +54,41 @@ export default function CameraScreen() {
   }
 
   const takePicture = async () => {
-    if (cameraRef.current) {
-      try {
-        console.log('Taking picture...');
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-        });
-
-        console.log('Photo taken:', photo.uri);
-        setCapturedPhoto(photo);
-        setShowPreview(true);
-      } catch (error) {
-        console.error('Camera error:', error);
-        Alert.alert('Error', 'Failed to take picture. Please try again.');
+    try {
+      if (!permission?.granted) {
+        await requestPermission();
+        if (!permission?.granted) {
+          Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+          return;
+        }
       }
-    } else {
-      console.error('Camera ref is null');
-      Alert.alert('Error', 'Camera is not ready. Please try again.');
+
+      if (!cameraRef.current || !isCameraReady || isCapturing) {
+        console.error('Camera not ready or already capturing');
+        Alert.alert('Error', 'Camera is not ready. Please wait a moment and try again.');
+        return;
+      }
+
+      console.log('Taking picture...');
+      setIsCapturing(true);
+      const photo = await (cameraRef.current as any).takePictureAsync({
+        quality: 0.8,
+        base64: false,
+        skipProcessing: true,
+      });
+
+      if (!photo?.uri) {
+        throw new Error('No photo URI returned');
+      }
+
+      console.log('Photo taken:', photo.uri);
+      setCapturedPhoto(photo);
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Camera error:', error);
+      Alert.alert('Error', 'Failed to take picture. Please try again.');
+    } finally {
+      setIsCapturing(false);
     }
   };
 
@@ -144,6 +163,7 @@ export default function CameraScreen() {
         ref={cameraRef}
         style={styles.camera}
         facing={facing}
+        onCameraReady={() => setIsCameraReady(true)}
       >
         {/* Camera Controls Overlay */}
         <View style={styles.overlay}>

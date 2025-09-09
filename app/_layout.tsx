@@ -40,6 +40,12 @@ export default function Layout() {
           }}
         />
         <Stack.Screen
+          name="verify"
+          options={{
+            title: 'Verify',
+          }}
+        />
+        <Stack.Screen
           name="main"
           options={{
             title: 'Generate',

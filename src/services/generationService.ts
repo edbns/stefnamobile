@@ -79,6 +79,9 @@ export class GenerationService {
   // Network detection
   static async isOnline(): Promise<boolean> {
     try {
+      if (config.READ_ONLY) {
+        return { success: false, error: 'READ_ONLY_MODE' };
+      }
       const state = await NetInfo.fetch();
       return state.isConnected ?? false;
     } catch (error) {
@@ -308,7 +311,7 @@ export class GenerationService {
       });
 
       // Use the unified background endpoint (matching website)
-      const response = await fetch(`${config.API_BASE_URL}/unified-generate-background`, {
+      const response = await fetch(config.apiUrl('unified-generate-background'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -508,7 +511,7 @@ export class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      const response = await fetch(`${config.API_BASE_URL}/generation-status?jobId=${jobId}`, {
+      const response = await fetch(config.apiUrl(`getMediaByRunId?runId=${encodeURIComponent(jobId)}`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -609,7 +612,7 @@ export class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      const response = await fetch(`${config.API_BASE_URL}/get-user-credits`, {
+      const response = await fetch(config.apiUrl('get-user-profile'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -623,7 +626,7 @@ export class GenerationService {
         throw new Error(data.error || 'Failed to refresh credits');
       }
 
-      return data.credits || 0;
+      return data?.credits?.balance ?? 0;
     } catch (error) {
       console.error('Refresh credits error:', error);
       return 0;

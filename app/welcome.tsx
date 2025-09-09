@@ -1,44 +1,47 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const columnWidth = width / 3;
 
-// Your 7 generated photos from the website
+// Grid images must be bundled with the app. Place your 7 images in assets/welcome/
+// Rename files to match below or adjust paths accordingly.
 const backgroundImages = [
-  { uri: '/Sparckle .jpg' },
-  { uri: '/Love.jpg' },
-  { uri: '/Tropical Boost .jpg' },
-  { uri: '/Ghibli Shock .jpg' },
-  { uri: '/n1.webp' },
-  { uri: '/fEPl_JYGAuU_JRdHY3R5L.jpeg' },
-  { uri: '/owl.webp' },
-  // Add 2 more to fill the 3x3 grid (9 total)
-  { uri: '/Sparckle .jpg' },
-  { uri: '/Love.jpg' },
+  require('../assets/welcome/w1.jpg'),
+  require('../assets/welcome/w2.jpg'),
+  require('../assets/welcome/w3.jpg'),
+  require('../assets/welcome/w4.jpg'),
+  require('../assets/welcome/w5.jpg'),
+  require('../assets/welcome/w6.jpg'),
+  require('../assets/welcome/w7.jpg'),
+  require('../assets/welcome/w8.jpg'),
+  require('../assets/welcome/w9.jpg'),
 ];
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.replace('/main');
+    router.replace('/auth');
   };
 
   return (
     <View style={styles.container}>
       {/* Background Image Grid */}
       <View style={styles.imageGrid}>
-        {backgroundImages.map((image, index) => (
-          <View key={index} style={styles.imageContainer}>
-            <Image 
-              source={image} 
-              style={styles.backgroundImage}
-              onError={(error) => console.log('Image load error:', error.nativeEvent.error)}
-              onLoad={() => console.log('Image loaded:', image.uri)}
-            />
-          </View>
-        ))}
+        {backgroundImages.map((image, index) => {
+          const src = Image.resolveAssetSource(image);
+          const aspect = src && src.width && src.height ? src.width / src.height : 1;
+          return (
+            <View key={index} style={[styles.imageContainer, { width: columnWidth }]}> 
+              <Image
+                source={image}
+                style={[styles.backgroundImage, { aspectRatio: aspect }]}
+              />
+            </View>
+          );
+        })}
       </View>
 
       {/* Dark Overlay */}
@@ -80,12 +83,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   imageContainer: {
-    width: width / 3,
-    height: height / 3,
+    margin: 1,
+    overflow: 'hidden',
+    borderRadius: 12,
   },
   backgroundImage: {
     width: '100%',
-    height: '100%',
+    height: undefined,
     resizeMode: 'cover',
   },
   overlay: {

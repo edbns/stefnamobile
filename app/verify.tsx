@@ -36,6 +36,7 @@ export default function VerifyScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Enter your code</Text>
         <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
+        <Text style={styles.infoPill}>Login code sent to your email</Text>
 
         <TextInput
           style={styles.input}
@@ -52,7 +53,11 @@ export default function VerifyScreen() {
           {isVerifying ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Verify</Text>}
         </TouchableOpacity>
 
-        <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from previous screen'}</Text>
+        <TouchableOpacity onPress={() => router.replace({ pathname: '/auth', params: { email } })} style={styles.backToEmail}>
+          <Text style={styles.backToEmailText}>Back to Email</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -63,11 +68,14 @@ const styles = StyleSheet.create({
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
+  infoPill: { alignSelf: 'center', color: '#bbb', backgroundColor: '#1a1a1a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 16, fontSize: 12 },
   input: { backgroundColor: '#1a1a1a', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, color: '#fff', textAlign: 'center', letterSpacing: 8, marginBottom: 16, borderWidth: 1, borderColor: '#333' },
   button: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
-  resendHint: { marginTop: 16, color: '#888', textAlign: 'center' },
+  backToEmail: { marginTop: 12, alignItems: 'center' },
+  backToEmailText: { color: '#888', fontSize: 14 },
+  resendHint: { marginTop: 12, color: '#888', textAlign: 'center' },
 });
 
 

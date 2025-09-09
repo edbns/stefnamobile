@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   FlatList, 
   Alert, 
-  Image
+  Image,
+  SectionList
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
@@ -18,6 +19,7 @@ export default function MainScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { media, isLoading, loadUserMedia, deleteMedia } = useMediaStore();
+  const [sections, setSections] = useState<any[]>([]);
 
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -28,6 +30,28 @@ export default function MainScreen() {
       loadUserMedia();
     }
   }, [user?.id, loadUserMedia]);
+
+  // Group media by mode/type
+  useEffect(() => {
+    const labelFor = (item: any): string => {
+      const type = (item.type || '').toLowerCase();
+      if (type === 'neo_glitch' || item.prompt?.includes('neo') || item.prompt?.includes('glitch')) return 'Neo Tokyo Glitch';
+      if (type === 'emotion_mask' || item.prompt?.includes('emotion') || item.prompt?.includes('mask')) return 'Emotion Mask';
+      if (type === 'ghibli_reaction' || item.prompt?.includes('ghibli')) return 'Ghibli Reaction';
+      if (type === 'custom_prompt' || item.prompt?.includes('custom')) return 'Custom';
+      if (type === 'edit' || item.prompt?.includes('edit') || item.prompt?.includes('studio')) return 'Studio';
+      return 'Presets';
+    };
+
+    const groups: Record<string, any[]> = {};
+    for (const m of media || []) {
+      const key = labelFor(m);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(m);
+    }
+    const s = Object.keys(groups).map(title => ({ title, data: groups[title] }));
+    setSections(s);
+  }, [media]);
 
   const handleCameraPress = () => {
     router.push('/camera');
@@ -162,14 +186,18 @@ export default function MainScreen() {
           <Text style={styles.loadingText}>Loading your creations...</Text>
         </View>
       ) : media && media.length > 0 ? (
-        <FlatList
-          data={media}
-          renderItem={renderMediaItem}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          renderItem={({ item }) => (
+            <View style={styles.sectionItemWrapper}>{renderMediaItem({ item })}</View>
+          )}
+          renderSectionHeader={({ section: { title } }) => (
+            <Text style={styles.sectionHeader}>{title}</Text>
+          )}
           contentContainerStyle={styles.galleryContainer}
+          stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
-          columnWrapperStyle={styles.row}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -246,6 +274,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 100, // Space for floating footer
   },
+  sectionHeader: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  sectionItemWrapper: {
+    width: '48%',
+    marginBottom: 16,
+  },
   row: {
     justifyContent: 'space-between',
     marginBottom: 16,
@@ -253,7 +292,7 @@ const styles = StyleSheet.create({
 
   // Media Item
   mediaItem: {
-    width: '48%',
+    width: '100%',
     backgroundColor: '#1a1a1a',
     borderRadius: 12,
     overflow: 'hidden',

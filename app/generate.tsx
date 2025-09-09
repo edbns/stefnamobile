@@ -18,6 +18,7 @@ export default function GenerateScreen() {
   } = useGenerationStore();
 
   const [selectedImage] = useState(params.selectedImage as string);
+  const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
   const [customPrompt, setCustomPrompt] = useState('');
 
@@ -25,6 +26,19 @@ export default function GenerateScreen() {
   useEffect(() => {
     loadPresets();
   }, [loadPresets]);
+
+  // Compute original aspect ratio of the selected image
+  useEffect(() => {
+    if (selectedImage) {
+      Image.getSize(
+        selectedImage as string,
+        (width, height) => {
+          if (width && height) setImageAspect(width / height);
+        },
+        () => setImageAspect(null)
+      );
+    }
+  }, [selectedImage]);
 
   const handleGenerate = async (presetId?: string) => {
     if (!selectedImage) {
@@ -88,7 +102,10 @@ export default function GenerateScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Selected Image Preview */}
         <View style={styles.imageContainer}>
-          <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
+          <Image
+            source={{ uri: selectedImage }}
+            style={[styles.selectedImage, imageAspect ? { aspectRatio: imageAspect } : null]}
+          />
         </View>
 
         {/* Generation Modes */}
@@ -151,6 +168,7 @@ const styles = StyleSheet.create({
   },
   selectedImage: {
     width: '100%',
+    aspectRatio: 0.8, // 4:5 to match generation defaults
     resizeMode: 'contain',
   },
   section: {

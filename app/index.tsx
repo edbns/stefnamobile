@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View, StyleSheet, Image, Text } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 
@@ -9,19 +9,19 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace('/welcome');
-    }, 2000); // Show splash for 2 seconds
+      if (isAuthenticated) {
+        router.replace('/main');
+      } else {
+        router.replace('/welcome');
+      }
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [router]);
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
     </View>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
+import { config } from '../config/environment';
 import PresetsService, { DatabasePreset } from '../services/presetsService';
 
 export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
@@ -146,8 +147,23 @@ export default function GenerationModes({
               {/* Magic Wand Button - Inside text input */}
               <TouchableOpacity
                 style={styles.magicWandButton}
-                onPress={() => {
-                  Alert.alert('Magic Wand', 'Magic wand enhancement coming soon!');
+                onPress={async () => {
+                  try {
+                    if (!customPrompt.trim()) return;
+                    // Call backend magic-wand function
+                    const response = await fetch(config.apiUrl('magic-wand'), {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ prompt: customPrompt, enhanceNegativePrompt: false })
+                    });
+                    const data = await response.json();
+                    if (!response.ok || !data.success) {
+                      throw new Error(data.error || 'Failed to enhance prompt');
+                    }
+                    onCustomPromptChange(data.enhancedPrompt || customPrompt);
+                  } catch (err: any) {
+                    Alert.alert('Magic Wand', err?.message || 'Failed to enhance prompt.');
+                  }
                 }}
                 disabled={!customPrompt.trim() || isGenerating}
               >

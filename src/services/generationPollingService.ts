@@ -59,7 +59,8 @@ class GenerationPollingService {
         console.log(`🔍 [GenerationPolling] Poll attempt ${attempts}/${maxAttempts} for job ${jobId}`);
 
         // Poll the same endpoint as the website
-        const response = await fetch(`/.netlify/functions/getMediaByRunId?runId=${runId}`, {
+        const { config } = require('../config/environment');
+        const response = await fetch(config.apiUrl(`getMediaByRunId?runId=${encodeURIComponent(runId)}`), {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -76,10 +77,14 @@ class GenerationPollingService {
         let message = 'Getting it ready';
         let status: 'processing' | 'completed' | 'failed' = 'processing';
 
-        if (data.status === 'completed' && data.image_url) {
+        if (data.success && data.media && data.media.url) {
           progress = 100;
           message = 'Complete!';
           status = 'completed';
+          
+          // Normalize shape to shared interface
+          data.status = 'completed';
+          data.image_url = data.media.url;
         } else if (data.status === 'failed') {
           progress = 0;
           message = 'Edit failed';

@@ -17,11 +17,11 @@ export default function UploadScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: [ImagePicker.MediaType.Images],
-      allowsEditing: true,
-      aspect: [1, 1],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
       quality: 0.8,
       allowsMultipleSelection: false,
+      base64: false,
     });
 
     if (!result.canceled) {
@@ -84,17 +84,25 @@ const styles = StyleSheet.create({
   },
   floatingBackButton: {
     position: 'absolute',
-    top: 50,
+    top: 20,
     left: 20,
     zIndex: 1000,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   content: {
     flex: 1,

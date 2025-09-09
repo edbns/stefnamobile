@@ -53,7 +53,7 @@ class PresetsService {
       console.log('🎨 [PresetsService] Fetching available presets from database');
 
       // Use the same endpoint as the website
-      const response = await fetch('/.netlify/functions/get-presets', {
+      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -126,7 +126,7 @@ class PresetsService {
     try {
       console.log('🔍 [Presets] Getting current week presets');
       
-      const response = await fetch('/.netlify/functions/get-current-week-presets', {
+      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
         method: 'GET'
       });
 
@@ -180,7 +180,7 @@ class PresetsService {
     try {
       console.log('🔍 [Presets] Getting all presets');
       
-      const response = await fetch('/.netlify/functions/get-all-presets', {
+      const response = await fetch(require('../config/environment').config.apiUrl('get-presets'), {
         method: 'GET'
       });
 

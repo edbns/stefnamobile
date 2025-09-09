@@ -19,7 +19,7 @@ export interface UserSettingsResponse {
 export const settingsService = {
   // Get user settings
   async getSettings(token: string): Promise<UserSettingsResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/user-settings`, {
+    const response = await fetch(config.apiUrl('user-settings'), {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -55,7 +55,7 @@ export const settingsService = {
     if (config.READ_ONLY) {
       return { settings: { media_upload_agreed: false, share_to_feed: false }, error: 'READ_ONLY_MODE' };
     }
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/user-settings`, {
+    const response = await fetch(config.apiUrl('user-settings'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

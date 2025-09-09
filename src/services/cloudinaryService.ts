@@ -32,7 +32,7 @@ export interface CloudinaryUploadResult {
 export const cloudinaryService = {
   // Get Cloudinary signature for direct upload
   async getSignature(request?: CloudinarySignRequest): Promise<CloudinarySignResponse> {
-    const response = await fetch(`${config.API_BASE_URL}/.netlify/functions/cloudinary-sign`, {
+    const response = await fetch(config.apiUrl('cloudinary-sign'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
