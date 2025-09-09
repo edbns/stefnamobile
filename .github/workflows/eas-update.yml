@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -16,6 +18,11 @@ jobs:
         run: npm i -g eas-cli
       - name: Install deps
         run: npm ci
+      - name: Debug repo state
+        run: |
+          git rev-parse HEAD
+          ls -la assets | cat
+          sed -n '1,60p' app/welcome.tsx | cat
       - name: Publish OTA update to development
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
