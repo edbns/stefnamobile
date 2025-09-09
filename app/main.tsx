@@ -129,50 +129,43 @@ export default function MainScreen() {
     router.push('/profile');
   };
 
-  const renderMediaItem = ({ item }: { item: any }) => {
-    const getPresetTag = (item: any) => {
-      // Extract preset information from the media item
-      if (item.prompt?.includes('neo') || item.prompt?.includes('glitch')) return 'Neo Glitch';
-      if (item.prompt?.includes('custom')) return 'Custom';
-      if (item.prompt?.includes('studio') || item.prompt?.includes('edit')) return 'Studio';
-      if (item.prompt?.includes('emotion') || item.prompt?.includes('mask')) return 'Emotion Mask';
-      if (item.prompt?.includes('ghibli')) return 'Ghibli Reaction';
-      return 'AI Generated';
-    };
-
-    const handleMediaPress = () => {
-      // Navigate to fullscreen media view
+  const renderFolderItem = ({ section }: { section: any }) => {
+    const handleFolderPress = () => {
+      // Navigate to folder view with all photos of this generation type
       router.push({
-        pathname: '/media-viewer',
+        pathname: '/generation-folder',
         params: { 
-          imageUrl: item.cloudUrl || item.localUri,
-          prompt: item.prompt || '',
-          preset: getPresetTag(item),
-          date: new Date(item.createdAt).toLocaleDateString()
+          folderName: section.title,
+          folderData: JSON.stringify(section.data)
         }
       });
     };
 
+    // Get the most recent image as folder cover
+    const coverImage = section.data[0];
+
     return (
-      <TouchableOpacity style={styles.mediaItem} onPress={handleMediaPress}>
-        <View style={styles.mediaImage}>
-          {item.cloudUrl ? (
+      <TouchableOpacity style={styles.folderItem} onPress={handleFolderPress}>
+        <View style={styles.folderImage}>
+          {coverImage?.cloudUrl ? (
             <Image 
-              source={{ uri: item.cloudUrl }} 
-              style={styles.mediaImageContent}
+              source={{ uri: coverImage.cloudUrl }} 
+              style={styles.folderImageContent}
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.mediaImagePlaceholder}>
-              <Feather name="heart" size={24} color="#666666" />
+            <View style={styles.folderImagePlaceholder}>
+              <Feather name="folder" size={40} color="#666666" />
             </View>
           )}
+          {/* Photo count overlay */}
+          <View style={styles.photoCountOverlay}>
+            <Text style={styles.photoCount}>{section.data.length}</Text>
+          </View>
         </View>
-        <View style={styles.mediaInfo}>
-          <Text style={styles.presetTag}>{getPresetTag(item)}</Text>
-          <Text style={styles.mediaDate}>
-            {new Date(item.createdAt).toLocaleDateString()}
-          </Text>
+        <View style={styles.folderInfo}>
+          <Text style={styles.folderTitle}>{section.title}</Text>
+          <Text style={styles.folderSubtitle}>{section.data.length} photos</Text>
         </View>
       </TouchableOpacity>
     );
@@ -186,11 +179,11 @@ export default function MainScreen() {
           <Text style={styles.loadingText}>Loading your creations...</Text>
         </View>
       ) : media && media.length > 0 ? (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => {
-            // Calculate if this item should be on the left or right in 2-column layout
+        <FlatList
+          data={sections}
+          keyExtractor={(section) => section.title}
+          renderItem={({ item: section, index }) => {
+            // 2-column layout for folders
             const isLeft = index % 2 === 0;
             return (
               <View style={[
@@ -198,19 +191,13 @@ export default function MainScreen() {
                 styles.twoColumnItem,
                 isLeft ? styles.leftColumn : styles.rightColumn
               ]}>
-                {renderMediaItem({ item })}
+                {renderFolderItem({ section })}
               </View>
             );
           }}
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeaderContainer}>
-              <Text style={styles.sectionHeader}>{section.title}</Text>
-              <Text style={styles.sectionCount}>({section.data?.length || 0})</Text>
-            </View>
-          )}
           contentContainerStyle={styles.galleryContainer}
-          stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
+          numColumns={2}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -314,8 +301,55 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
   },
   sectionItemWrapper: {
-    width: '48%',
     marginBottom: 16,
+  },
+  // Folder styles
+  folderItem: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  folderImage: {
+    position: 'relative',
+    aspectRatio: 1,
+  },
+  folderImageContent: {
+    width: '100%',
+    height: '100%',
+  },
+  folderImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#333333',
+  },
+  photoCountOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  photoCount: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  folderInfo: {
+    padding: 12,
+  },
+  folderTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  folderSubtitle: {
+    color: '#888888',
+    fontSize: 14,
   },
   row: {
     justifyContent: 'space-between',

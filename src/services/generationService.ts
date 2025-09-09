@@ -446,7 +446,15 @@ export class GenerationService {
       promptLength: payload.prompt?.length || 0,
       hasSource: !!payload.sourceAssetId,
       runId: payload.runId,
-      url: config.apiUrl('unified-generate-background')
+      url: config.apiUrl('unified-generate-background'),
+      payloadSize: JSON.stringify(payload).length
+    });
+
+    // Log the actual payload being sent (truncated for readability)
+    console.log('📦 [Mobile Generation] Full payload preview:', {
+      ...payload,
+      sourceAssetId: payload.sourceAssetId ? `base64:${payload.sourceAssetId.substring(0, 50)}...` : 'none',
+      prompt: payload.prompt?.substring(0, 100) + (payload.prompt?.length > 100 ? '...' : '')
     });
 
     // Use the unified background endpoint (matching website)

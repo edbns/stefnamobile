@@ -47,6 +47,7 @@ export default function CameraScreen() {
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: false,
+        cameraType: ImagePicker.CameraType.back, // Force back camera to avoid flip
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {

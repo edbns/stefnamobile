@@ -14,14 +14,8 @@ export default function MediaViewerScreen() {
 
   const handleShare = async () => {
     try {
+      // Share only the image for direct social media posting
       await Share.share({
-        message: `Check out this AI-generated image I created with Stefna! 
-        
-Prompt: "${prompt}"
-Style: ${preset}
-        
-Created with Stefna - AI Photo Transformations
-Download the app: https://stefna.xyz`,
         url: imageUrl,
       });
     } catch (error) {
