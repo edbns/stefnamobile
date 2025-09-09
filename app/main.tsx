@@ -176,8 +176,14 @@ export default function MainScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.sectionItemWrapper}>{renderMediaItem({ item })}</View>
+          renderItem={({ item, index, section }) => (
+            <View style={[
+              styles.sectionItemWrapper, 
+              { width: '50%' }, // 2 columns
+              index % 2 === 0 ? { paddingRight: 4 } : { paddingLeft: 4 }
+            ]}>
+              {renderMediaItem({ item })}
+            </View>
           )}
           renderSectionHeader={({ section: { title } }) => (
             <Text style={styles.sectionHeader}>{title}</Text>
@@ -185,6 +191,7 @@ export default function MainScreen() {
           contentContainerStyle={styles.galleryContainer}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
+          numColumns={2}
         />
       ) : (
         <View style={styles.emptyContainer}>

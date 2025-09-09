@@ -58,10 +58,17 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Legal Text */}
-        <Text style={styles.legalText}>
-          By proceeding, you agree to our Terms of Use & Privacy Policy
-        </Text>
+        {/* Legal Text with clickable links */}
+        <View style={styles.legalContainer}>
+          <Text style={styles.legalText}>By proceeding, you agree to our </Text>
+          <TouchableOpacity onPress={() => router.push('/terms')}>
+            <Text style={styles.legalLink}>Terms of Use</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalText}> & </Text>
+          <TouchableOpacity onPress={() => router.push('/privacy')}>
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -82,10 +89,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   imageContainer: {
-    margin: 1,
-    overflow: 'hidden',
-    borderRadius: 8, // Slightly smaller radius for tighter grid
     width: columnWidth,
+    // No margin, border radius, or overflow for fullscreen effect
   },
   backgroundImage: {
     width: '100%',
@@ -98,7 +103,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Darker for better text readability
   },
   content: {
     flex: 1,
@@ -139,11 +144,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  legalContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   legalText: {
     fontSize: 12,
     color: '#ffffff',
-    textAlign: 'center',
     opacity: 0.8,
+    lineHeight: 16,
+  },
+  legalLink: {
+    fontSize: 12,
+    color: '#ffffff',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
     lineHeight: 16,
   },
 });

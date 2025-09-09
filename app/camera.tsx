@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Alert, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 
 export default function CameraScreen() {
   const router = useRouter();
-  const [capturedPhoto, setCapturedPhoto] = useState<{ uri: string } | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
-  // Auto-launch camera picker when component mounts
+  // Auto-launch camera when component mounts
   useEffect(() => {
-    // Small delay to allow component to mount properly
     const timer = setTimeout(() => {
       takePicture();
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, []);
@@ -27,7 +24,7 @@ export default function CameraScreen() {
     }
 
     try {
-      console.log('📸 Opening camera - using ImagePicker only');
+      console.log('📸 Opening camera - direct to generate flow');
       setIsCapturing(true);
 
       // Request camera permissions
@@ -44,7 +41,7 @@ export default function CameraScreen() {
         return;
       }
 
-      // Launch camera directly
+      // Launch camera directly - no preview needed
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
@@ -55,14 +52,17 @@ export default function CameraScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         if (asset?.uri) {
-          console.log('✅ Photo captured successfully:', asset.uri);
-          setCapturedPhoto({ uri: asset.uri });
-          setShowPreview(true);
+          console.log('✅ Photo captured, going directly to generate:', asset.uri);
+          // Navigate directly to generate - no double confirmation
+          router.replace({
+            pathname: '/generate',
+            params: { selectedImage: asset.uri }
+          });
           return;
         }
       }
       
-      // User cancelled or no image - go back
+      // User cancelled - go back to main
       console.log('📱 User cancelled camera');
       router.back();
 
@@ -81,105 +81,18 @@ export default function CameraScreen() {
     }
   };
 
-  const confirmPhoto = () => {
-    if (capturedPhoto) {
-      console.log('Confirming photo and navigating to generate screen...');
-      router.replace({
-        pathname: '/generate',
-        params: { selectedImage: capturedPhoto.uri }
-      });
-    }
-  };
-
-  const retakePhoto = () => {
-    console.log('Retaking photo...');
-    setCapturedPhoto(null);
-    setShowPreview(false);
-    // Launch camera again after brief delay
-    setTimeout(() => takePicture(), 300);
-  };
-
-  // Removed toggleCameraFacing - no longer needed without CameraView
-
-  const closeCamera = () => {
-    router.back();
-  };
-
-  if (showPreview && capturedPhoto) {
-    return (
-      <View style={styles.container}>
-        {/* Photo Preview */}
-        <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
-
-        {/* Preview Controls */}
-        <View style={styles.previewOverlay}>
-          {/* Top Controls */}
-          <View style={styles.previewTopControls}>
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={closeCamera}
-            >
-              <Feather name="x" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Bottom Controls */}
-          <View style={styles.previewBottomControls}>
-            <TouchableOpacity
-              style={[styles.previewButton, styles.retakeButton]}
-              onPress={retakePhoto}
-            >
-              <Feather name="rotate-ccw" size={24} color="#000000" />
-              <Text style={styles.previewButtonText}>Retake</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.previewButton, styles.confirmButton]}
-              onPress={confirmPhoto}
-            >
-              <Feather name="check" size={24} color="#000000" />
-              <Text style={styles.previewButtonText}>Use Photo</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  // Show loading screen while launching camera
-  if (!showPreview) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Opening Camera...</Text>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // Show preview after photo is taken
+  // Simple loading screen
   return (
     <View style={styles.container}>
-      <View style={styles.previewContainer}>
-        {capturedPhoto && (
-          <Image source={{ uri: capturedPhoto.uri }} style={styles.previewImage} />
-        )}
-        
-        <View style={styles.previewControls}>
-          <TouchableOpacity style={styles.retakeButton} onPress={retakePhoto}>
-            <Text style={styles.retakeText}>Retake</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.confirmButton} onPress={confirmPhoto}>
-            <Text style={styles.confirmText}>Use Photo</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.loadingContainer}>
+        <Feather name="camera" size={48} color="#ffffff" />
+        <Text style={styles.loadingText}>Opening Camera...</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.backButtonText}>Cancel</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -199,53 +112,18 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#ffffff',
     fontSize: 18,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 40,
   },
   backButton: {
     backgroundColor: '#333333',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 12,
   },
   backButtonText: {
     color: '#ffffff',
     fontSize: 16,
-  },
-  previewContainer: {
-    flex: 1,
-  },
-  previewImage: {
-    flex: 1,
-    resizeMode: 'contain',
-  },
-  previewControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-  },
-  retakeButton: {
-    backgroundColor: '#333333',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
-  },
-  retakeText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
-  },
-  confirmText: {
-    color: '#000000',
-    fontSize: 16,
     fontWeight: '600',
   },
 });
-
