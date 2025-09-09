@@ -458,12 +458,33 @@ export class GenerationService {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    // Check if response is JSON before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const textResponse = await response.text();
+      console.error('❌ Non-JSON response from generation API:', textResponse);
+      return {
+        success: false,
+        error: response.ok ? 'Server returned non-JSON response' : `Server error (${response.status}): ${textResponse.substring(0, 200)}`
+      };
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError);
+      const textResponse = await response.text();
+      return {
+        success: false,
+        error: `Invalid response format: ${textResponse.substring(0, 200)}`
+      };
+    }
 
     if (!response.ok) {
       return {
         success: false,
-        error: data.error || 'Generation failed'
+        error: data.error || `Generation failed (${response.status})`
       };
     }
 

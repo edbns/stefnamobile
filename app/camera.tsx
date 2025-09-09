@@ -55,6 +55,11 @@ export default function CameraScreen() {
   }
 
   const takePicture = async () => {
+    if (isCapturing) {
+      console.log('Already capturing, ignoring tap');
+      return;
+    }
+
     try {
       if (!permission?.granted) {
         await requestPermission();
@@ -64,63 +69,49 @@ export default function CameraScreen() {
         }
       }
 
-      console.log('Taking picture...', { 
-        cameraReady: isCameraReady, 
-        capturing: isCapturing, 
-        hasRef: !!cameraRef.current 
-      });
-      
+      console.log('📸 Taking picture - using reliable ImagePicker method');
       setIsCapturing(true);
 
-      // Try CameraView capture with better error handling
-      if (cameraRef.current && isCameraReady) {
-        console.log('Attempting CameraView capture...');
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: false,
-          skipProcessing: false,
-        });
-
-        if (photo?.uri) {
-          console.log('✅ CameraView photo taken:', photo.uri);
-          setCapturedPhoto(photo);
-          setShowPreview(true);
-          return; // Success - exit early
-        } else {
-          throw new Error('CameraView returned no URI');
-        }
-      } else {
-        // Camera not ready, throw error to trigger fallback
-        throw new Error('Camera not ready or ref unavailable');
+      // Use ImagePicker camera directly (most reliable method)
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+        return;
       }
-    } catch (error) {
-      console.error('Camera error:', error);
-      // Fallback to ImagePicker camera if CameraView fails
-      try {
-        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        if (status !== 'granted') {
-          Alert.alert('Permission needed', 'Please allow camera access to take photos.');
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+        allowsMultipleSelection: false,
+        base64: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (asset?.uri) {
+          console.log('✅ Photo captured successfully:', asset.uri);
+          setCapturedPhoto({ uri: asset.uri });
+          setShowPreview(true);
           return;
         }
-        const result = await ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: false,
-          quality: 0.8,
-          allowsMultipleSelection: false,
-        });
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-          const asset = result.assets[0];
-          if (asset?.uri) {
-            setCapturedPhoto({ uri: asset.uri });
-            setShowPreview(true);
-            return;
-          }
-        }
-        Alert.alert('Error', 'Failed to take picture. Please try again.');
-      } catch (pickerError) {
-        console.error('Picker fallback error:', pickerError);
-        Alert.alert('Error', 'Failed to take picture. Please try again.');
       }
+      
+      console.log('📱 User cancelled camera or no image returned');
+
+    } catch (error) {
+      console.error('❌ Camera error:', error);
+      Alert.alert(
+        'Camera Error', 
+        'Unable to access camera. Please check permissions in device settings.',
+        [
+          { text: 'OK', style: 'default' },
+          { 
+            text: 'Try Upload Instead', 
+            onPress: () => router.replace('/main')
+          }
+        ]
+      );
     } finally {
       setIsCapturing(false);
     }
