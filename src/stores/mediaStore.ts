@@ -195,7 +195,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       if (cloudId && token) {
         const cloudResponse: DeleteMediaResponse = await mediaService.deleteMedia(token, {
           mediaId: cloudId,
-          userId: user.id, // Keep this for now - delete-media backend may still need it
+          // userId removed - backend extracts from JWT token
         });
 
         if (!cloudResponse.success) {
