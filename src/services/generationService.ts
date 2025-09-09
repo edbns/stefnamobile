@@ -450,30 +450,48 @@ export class GenerationService {
     });
 
     // Use the unified background endpoint (matching website)
-    const response = await fetch(config.apiUrl('unified-generate-background'), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    // Check if response is JSON before parsing
-    const contentType = response.headers.get('content-type');
-    console.log('📡 [Mobile Generation] Response status:', response.status);
-    console.log('📡 [Mobile Generation] Content-Type:', contentType);
+    console.log('🌐 [Mobile Generation] Making request to:', config.apiUrl('unified-generate-background'));
+    console.log('🔐 [Mobile Generation] Token length:', token.length);
     
-    if (!contentType || !contentType.includes('application/json')) {
-      const textResponse = await response.text();
-      console.error('❌ Non-JSON response from generation API:', {
-        status: response.status,
-        contentType,
-        responseStart: textResponse.substring(0, 500)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      const response = await fetch(config.apiUrl('unified-generate-background'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
+
+      // Check if response is JSON before parsing
+      const contentType = response.headers.get('content-type');
+      console.log('📡 [Mobile Generation] Response status:', response.status);
+      console.log('📡 [Mobile Generation] Content-Type:', contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        const textResponse = await response.text();
+        console.error('❌ Non-JSON response from generation API:', {
+          status: response.status,
+          contentType,
+          responseStart: textResponse.substring(0, 500)
+        });
+        return {
+          success: false,
+          error: response.ok ? 'Server returned non-JSON response' : `Server error (${response.status}): ${textResponse.substring(0, 200)}`
+        };
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error('❌ Fetch request failed:', fetchError);
       return {
         success: false,
-        error: response.ok ? 'Server returned non-JSON response' : `Server error (${response.status}): ${textResponse.substring(0, 200)}`
+        error: fetchError.name === 'AbortError' ? 'Request timeout' : `Network error: ${fetchError.message}`
       };
     }
 

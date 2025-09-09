@@ -140,8 +140,21 @@ export default function MainScreen() {
       return 'AI Generated';
     };
 
+    const handleMediaPress = () => {
+      // Navigate to fullscreen media view
+      router.push({
+        pathname: '/media-viewer',
+        params: { 
+          imageUrl: item.cloudUrl || item.localUri,
+          prompt: item.prompt || '',
+          preset: getPresetTag(item),
+          date: new Date(item.createdAt).toLocaleDateString()
+        }
+      });
+    };
+
     return (
-      <TouchableOpacity style={styles.mediaItem}>
+      <TouchableOpacity style={styles.mediaItem} onPress={handleMediaPress}>
         <View style={styles.mediaImage}>
           {item.cloudUrl ? (
             <Image 
@@ -176,22 +189,29 @@ export default function MainScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
-          renderItem={({ item, index, section }) => (
-            <View style={[
-              styles.sectionItemWrapper, 
-              { width: '50%' }, // 2 columns
-              index % 2 === 0 ? { paddingRight: 4 } : { paddingLeft: 4 }
-            ]}>
-              {renderMediaItem({ item })}
-            </View>
-          )}
+          renderItem={({ item, index, section }) => {
+            // Calculate if this item should be on the left or right in 2-column layout
+            const itemIndex = section.data.indexOf(item);
+            const isLeft = itemIndex % 2 === 0;
+            return (
+              <View style={[
+                styles.sectionItemWrapper, 
+                styles.twoColumnItem,
+                isLeft ? styles.leftColumn : styles.rightColumn
+              ]}>
+                {renderMediaItem({ item })}
+              </View>
+            );
+          }}
           renderSectionHeader={({ section: { title } }) => (
-            <Text style={styles.sectionHeader}>{title}</Text>
+            <View style={styles.sectionHeaderContainer}>
+              <Text style={styles.sectionHeader}>{title}</Text>
+              <Text style={styles.sectionCount}>({section.data.length})</Text>
+            </View>
           )}
           contentContainerStyle={styles.galleryContainer}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
-          numColumns={2}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -268,12 +288,31 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 100, // Space for floating footer
   },
+  sectionHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 24,
+  },
   sectionHeader: {
     color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  sectionCount: {
+    color: '#888888',
     fontSize: 16,
-    fontWeight: '700',
-    marginTop: 8,
-    marginBottom: 8,
+    fontWeight: '500',
+  },
+  twoColumnItem: {
+    width: '50%',
+  },
+  leftColumn: {
+    paddingRight: 6,
+  },
+  rightColumn: {
+    paddingLeft: 6,
   },
   sectionItemWrapper: {
     width: '48%',

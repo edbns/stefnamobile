@@ -181,7 +181,19 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         throw new Error('Not authenticated');
       }
 
-      // Import userService to get fresh profile data
+      // Try to get cached credits first for faster loading
+      const cachedUser = await AsyncStorage.getItem('user_profile');
+      if (cachedUser) {
+        const user = JSON.parse(cachedUser);
+        if (user.credits !== undefined) {
+          // Show cached credits immediately
+          set({ balance: user.credits, isLoading: false });
+          console.log('📱 Showing cached credits:', user.credits);
+        }
+      }
+
+      // Then fetch fresh data in background
+      console.log('🔄 Fetching fresh credit balance...');
       const { userService } = await import('../services/userService');
       const profileResponse = await userService.fetchUserProfile(token);
 
@@ -191,8 +203,16 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
           dailyCap: profileResponse.daily_cap,
           isLoading: false
         });
+        console.log('✅ Fresh credits loaded:', profileResponse.credits.balance);
       } else {
-        throw new Error('Failed to refresh balance');
+        // If we had cached data, keep showing it
+        const currentBalance = get().balance;
+        if (currentBalance > 0) {
+          set({ isLoading: false }); // Keep cached data
+          console.log('⚠️ API failed but keeping cached credits');
+        } else {
+          throw new Error('Failed to refresh balance');
+        }
       }
     } catch (error) {
       console.error('Refresh balance error:', error);
