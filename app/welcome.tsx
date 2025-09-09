@@ -17,6 +17,7 @@ const backgroundImages = [
   require('../assets/w7.jpg'),
   require('../assets/w8.jpg'),
   require('../assets/w9.jpg'),
+  require('../assets/w10.jpg'),
 ];
   require("../assets/w10.jpg"),
 
