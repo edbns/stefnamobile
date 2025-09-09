@@ -58,9 +58,10 @@ export const mediaService = {
     };
   },
 
-  // Get user's media from cloud
+  // Get user's media from cloud (userId extracted from JWT by backend)
   async getUserMedia(token: string, type?: 'photo' | 'video'): Promise<UserMediaResponse> {
     try {
+      // Don't pass userId - backend will extract from JWT token
       const response = await fetch(config.apiUrl('getUserMedia'), {
         method: 'GET',
         headers: {

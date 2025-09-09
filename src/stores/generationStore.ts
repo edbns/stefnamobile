@@ -80,14 +80,14 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
 
       console.log(`💰 Reserved ${creditCost} credits for generation`);
 
-      // Call the generation API
+      // Call the generation API (userId will be extracted from JWT by backend)
       const response = await GenerationService.startGeneration({
         imageUri: job.imageUri,
         mode: job.mode,
         presetId: job.presetId,
         customPrompt: job.customPrompt,
         specialModeId: job.specialModeId,
-        userId: user.id,
+        // userId removed - backend extracts from JWT token
       });
 
       if (response.success && response.jobId) {

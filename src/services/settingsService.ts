@@ -52,9 +52,9 @@ export const settingsService = {
     token: string,
     updates: Partial<UserSettings>
   ): Promise<UserSettingsResponse> {
-    if (config.READ_ONLY) {
-      return { settings: { media_upload_agreed: false, share_to_feed: false }, error: 'READ_ONLY_MODE' };
-    }
+    // Mobile should not modify web-only settings like share_to_feed
+    // Backend will enforce platform permissions via JWT claims
+    // Only allow mobile to update mobile-relevant settings
     const response = await fetch(config.apiUrl('user-settings'), {
       method: 'POST',
       headers: {

@@ -42,9 +42,7 @@ export const creditsService = {
     token: string,
     request: CreditReservationRequest
   ): Promise<CreditReservationResponse> {
-    if (config.READ_ONLY) {
-      return { ok: false, request_id: request.request_id || '', balance: 0, cost: request.cost, action: request.action, error: 'READ_ONLY_MODE' };
-    }
+    // Mobile can reserve credits - this is a shared feature
     const payload = {
       cost: request.cost,
       action: request.action,
@@ -90,9 +88,7 @@ export const creditsService = {
     token: string,
     request: CreditFinalizationRequest
   ): Promise<CreditFinalizationResponse> {
-    if (config.READ_ONLY) {
-      return { ok: false, disposition: request.disposition, error: 'READ_ONLY_MODE' };
-    }
+    // Mobile can finalize credits - this is a shared feature
     const payload = {
       request_id: request.request_id,
       disposition: request.disposition,

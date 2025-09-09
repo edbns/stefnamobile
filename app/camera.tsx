@@ -72,14 +72,16 @@ export default function CameraScreen() {
 
       console.log('Taking picture...');
       setIsCapturing(true);
-      const cameraAny: any = cameraRef.current as any;
-      if (typeof cameraAny?.takePictureAsync !== 'function') {
-        throw new Error('CAMERA_METHOD_UNAVAILABLE');
+      
+      // Use the correct method for expo-camera v16+
+      if (!cameraRef.current) {
+        throw new Error('Camera ref not available');
       }
-      const photo = await cameraAny.takePictureAsync({
+      
+      const photo = await cameraRef.current.takePictureAsync({
         quality: 0.8,
         base64: false,
-        skipProcessing: true,
+        skipProcessing: false, // Changed to false for better compatibility
       });
 
       if (!photo?.uri) {

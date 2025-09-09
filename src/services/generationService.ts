@@ -44,7 +44,7 @@ export interface GenerationRequest {
   presetId?: string;
   customPrompt?: string;
   specialModeId?: string;
-  userId: string;
+  // userId removed - backend will extract from JWT token
 }
 
 export interface GenerationResponse {
@@ -79,9 +79,6 @@ export class GenerationService {
   // Network detection
   static async isOnline(): Promise<boolean> {
     try {
-      if (config.READ_ONLY) {
-        return { success: false, error: 'READ_ONLY_MODE' };
-      }
       const state = await NetInfo.fetch();
       return state.isConnected ?? false;
     } catch (error) {
@@ -417,7 +414,7 @@ export class GenerationService {
       mode: modeMap[request.mode] || request.mode,
       prompt: processedPrompt,
       sourceAssetId: base64Image, // Website expects base64 as sourceAssetId
-      userId: request.userId,
+      // userId removed - backend will extract from JWT token
       runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
 
       // Mode-specific parameters (matching website)
@@ -581,31 +578,8 @@ export class GenerationService {
     };
   }
 
-  static async getUserMedia(userId: string): Promise<any[]> {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No auth token found');
-
-      const response = await fetch(config.apiUrl(`getUserMedia?userId=${encodeURIComponent(userId)}`), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch media');
-      }
-
-      return data.media || [];
-    } catch (error) {
-      console.error('Get user media error:', error);
-      return [];
-    }
-  }
+  // Removed: getUserMedia - use mediaService.getUserMedia instead
+  // Backend will extract userId from JWT token, no need to pass it
 
   static async refreshUserCredits(): Promise<number> {
     try {

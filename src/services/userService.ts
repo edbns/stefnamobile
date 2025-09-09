@@ -56,9 +56,8 @@ export const userService = {
 
   // Update user profile via API
   async updateProfile(token: string, updates: Partial<UserProfile>): Promise<UserProfileResponse> {
-    if (config.READ_ONLY) {
-      throw new Error('READ_ONLY_MODE');
-    }
+    // Profile updates are shared between mobile and web
+    // Backend will enforce platform permissions via JWT claims
     const response = await fetch(config.apiUrl('update-profile'), {
       method: 'POST',
       headers: {

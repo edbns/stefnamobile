@@ -19,8 +19,9 @@ const currentEnv = isDevelopment ? ENV.development : ENV.production;
 export const config = {
   API_BASE_URL: currentEnv.API_BASE_URL,
   apiUrl: (fn: string) => `${currentEnv.API_BASE_URL}/.netlify/functions/${fn}`,
-  // Keep production read-only until parity; allow writes in development
-  READ_ONLY: !isDevelopment,
+  // Mobile app can write to shared features (generations, media, credits, invites)
+  // Backend will enforce platform permissions via JWT claims
+  READ_ONLY: false,
 
   // App configuration
   APP_NAME: 'StefnaMobile',
