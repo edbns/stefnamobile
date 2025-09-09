@@ -1,4 +1,4 @@
-name: EAS Update on main
+name: EAS Update (development)
 
 on:
   push:
@@ -16,8 +16,8 @@ jobs:
         run: npm i -g eas-cli
       - name: Install deps
         run: npm ci
-      - name: Publish OTA update to production
+      - name: Publish OTA update to development
         env:
           EXPO_TOKEN: ${{ secrets.EAS_TOKEN }}
           EAS_NO_VCS: 1
-        run: npx eas update --auto --branch production --message "Auto OTA from main"
+        run: npx eas update --auto --branch development --message "Auto OTA from main"
