@@ -25,9 +25,9 @@ export default function UploadScreen() {
     });
 
     if (!result.canceled) {
-      // Navigate back to main with the selected image
+      // Navigate to generate with the selected image
       router.replace({
-        pathname: '/main',
+        pathname: '/generate',
         params: { selectedImage: result.assets[0].uri }
       });
     }
