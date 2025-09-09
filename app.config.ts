@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'StefnaMobile',
   slug: 'stefnamobile',
-  version: '1.0.1',
+  version: '1.0.3',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'dark',
@@ -47,7 +47,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png'
   },
   plugins: [
-    'expo-router'
+    'expo-router',
+    'expo-font',
+    'expo-camera'
   ],
   extra: {
     router: {},
@@ -55,8 +57,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       projectId: '20065ae5-0214-413d-8de7-7182c3467641'
     }
   },
-  // Force the runtime version to 1.0.1
-  runtimeVersion: '1.0.1',
+  // Use app version for runtime version policy
+  runtimeVersion: {
+    policy: 'appVersion'
+  },
   updates: {
     url: 'https://u.expo.dev/20065ae5-0214-413d-8de7-7182c3467641'
   }
