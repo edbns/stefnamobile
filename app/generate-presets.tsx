@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
-import PresetsService, { DatabasePreset } from '../src/services/presetsService';
+import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface PresetsModeProps {
@@ -196,8 +196,9 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
 }
 
 export default function GeneratePresetsScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="presets">
+    <BaseGenerationScreen mode={mode as string || "presets"}>
       <PresetsMode />
     </BaseGenerationScreen>
   );

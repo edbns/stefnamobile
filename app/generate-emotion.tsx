@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 interface EmotionMaskModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -195,8 +195,9 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
 }
 
 export default function GenerateEmotionScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="emotion-mask">
+    <BaseGenerationScreen mode={mode as string || "emotion-mask"}>
       <EmotionMaskMode />
     </BaseGenerationScreen>
   );

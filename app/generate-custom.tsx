@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams } from 'expo-router';
 import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -129,8 +130,9 @@ function CustomPromptMode({ onGenerate, isGenerating }: CustomPromptModeProps) {
 }
 
 export default function GenerateCustomScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="custom-prompt">
+    <BaseGenerationScreen mode={mode as string || "custom-prompt"}>
       <CustomPromptMode />
     </BaseGenerationScreen>
   );

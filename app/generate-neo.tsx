@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 interface NeoTokyoModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -74,8 +74,9 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
 }
 
 export default function GenerateNeoScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="neo-glitch">
+    <BaseGenerationScreen mode={mode as string || "neo-glitch"}>
       <NeoTokyoMode />
     </BaseGenerationScreen>
   );

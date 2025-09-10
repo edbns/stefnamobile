@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import { useLocalSearchParams } from 'expo-router';
 
 interface GhibliReactionModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -77,8 +77,9 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
 }
 
 export default function GenerateGhibliScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="ghibli-reaction">
+    <BaseGenerationScreen mode={mode as string || "ghibli-reaction"}>
       <GhibliReactionMode />
     </BaseGenerationScreen>
   );

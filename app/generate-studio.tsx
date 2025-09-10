@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
-import { config } from '../src/config/environment';
+import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface StudioPromptModeProps {
@@ -132,8 +132,9 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
 }
 
 export default function GenerateStudioScreen() {
+  const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="edit-photo">
+    <BaseGenerationScreen mode={mode as string || "edit-photo"}>
       <StudioPromptMode />
     </BaseGenerationScreen>
   );

@@ -242,6 +242,7 @@ const styles = StyleSheet.create({
   mediaImage: {
     width: '100%',
     height: '100%',
+    resizeMode: 'contain', // Preserve aspect ratio
   },
   deleteButton: {
     position: 'absolute',

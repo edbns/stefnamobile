@@ -365,6 +365,8 @@ export class GenerationService {
       // Upload image to Cloudinary first (like website)
       const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
       console.log('🔗 [Mobile] Cloudinary URL received:', cloudinaryUrl);
+      console.log('🔗 [Mobile] Cloudinary URL type:', typeof cloudinaryUrl);
+      console.log('🔗 [Mobile] Cloudinary URL length:', cloudinaryUrl?.length);
       
       // Use 'present' like website does - backend will handle the Cloudinary URL
       const sourceAssetId = 'present';
@@ -468,6 +470,8 @@ export class GenerationService {
       
       // Debug: Show full payload structure
       console.log('📋 [Mobile] Full payload structure:', Object.keys(payload));
+      console.log('📋 [Mobile] Payload cloudinaryUrl:', payload.cloudinaryUrl);
+      console.log('📋 [Mobile] Payload sourceAssetId:', payload.sourceAssetId);
 
       // Hermes-safe fetch + parse with timeout and defensive checks
       const controller = new AbortController();
