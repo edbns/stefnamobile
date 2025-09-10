@@ -90,19 +90,57 @@ export default function CameraScreen() {
   );
 }
 
-// Normalize image orientation by rasterizing with no flips and preserving EXIF
+// Normalize image orientation by checking EXIF and applying corrections
 async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> {
   try {
-    // Draw the image onto a new bitmap to strip mirror/rotation
+    console.log('📸 EXIF data:', exif);
+    
+    // Determine if we need to flip horizontally (front camera mirror effect)
+    const needsFlip = exif?.Orientation === 2 || exif?.Orientation === 4 || 
+                      exif?.Orientation === 5 || exif?.Orientation === 7;
+    
+    // Determine rotation needed based on EXIF orientation
+    let rotationDegrees = 0;
+    if (exif?.Orientation) {
+      switch (exif.Orientation) {
+        case 3: rotationDegrees = 180; break;
+        case 4: rotationDegrees = 180; break;
+        case 5: rotationDegrees = 90; break;
+        case 6: rotationDegrees = 90; break;
+        case 7: rotationDegrees = 270; break;
+        case 8: rotationDegrees = 270; break;
+      }
+    }
+    
+    const actions: any[] = [];
+    
+    // Apply rotation if needed
+    if (rotationDegrees > 0) {
+      actions.push({ rotate: rotationDegrees });
+    }
+    
+    // Apply horizontal flip if needed (typically for front camera)
+    if (needsFlip) {
+      actions.push({ flip: ImageManipulator.FlipType.Horizontal });
+    }
+    
+    // If no corrections needed, still re-encode to normalize
+    if (actions.length === 0) {
+      actions.push({ resize: { width: 1920 } }); // Max width to maintain quality
+    }
+    
+    console.log('📸 Applying corrections:', actions);
+    
     const result = await ImageManipulator.manipulateAsync(
       uri,
-      [
-        // No explicit rotate/flip; manipulateAsync re-encodes the bitmap
-      ],
+      actions,
       { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
     );
+    
+    console.log('✅ Image normalized');
     return result.uri;
   } catch (e) {
+    console.error('❌ Failed to normalize image:', e);
     return uri;
   }
 }

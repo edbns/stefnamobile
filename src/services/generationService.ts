@@ -342,12 +342,29 @@ export class GenerationService {
           responseStart: responseText.substring(0, 200),
         });
 
-        if (!contentType || !contentType.includes('application/json')) {
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ [Mobile Generation] Non-JSON response:', {
+          contentType,
+          status: response.status,
+          responsePreview: responseText.substring(0, 500)
+        });
+        
+        // Check for common error patterns
+        if (responseText.includes('Internal Error') && responseText.includes('ID:')) {
+          // Extract error ID for debugging
+          const idMatch = responseText.match(/ID:\s*([A-Z0-9]+)/);
+          const errorId = idMatch ? idMatch[1] : 'unknown';
           return {
             success: false,
-            error: `Invalid response format: ${responseText.substring(0, 200)}`
+            error: `Server error (ID: ${errorId}). Please try again or contact support.`
           };
         }
+        
+        return {
+          success: false,
+          error: `Invalid response format: ${responseText.substring(0, 200)}`
+        };
+      }
 
         const trimmed = responseText.trim();
         if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {

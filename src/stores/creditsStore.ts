@@ -174,59 +174,68 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
 
   refreshBalance: async () => {
     try {
-      set({ isLoading: true, error: null });
-
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) {
-        throw new Error('Not authenticated');
+        set({ error: 'Not authenticated', isLoading: false });
+        return;
       }
 
-      // Try to get cached credits first for faster loading
+      // Try to get cached credits first for INSTANT display
       const cachedUser = await AsyncStorage.getItem('user_profile');
       if (cachedUser) {
-        const user = JSON.parse(cachedUser);
-        if (user.credits !== undefined) {
-          // Show cached credits immediately
-          set({ balance: user.credits, isLoading: false });
-          console.log('📱 Showing cached credits:', user.credits);
+        try {
+          const user = JSON.parse(cachedUser);
+          if (user.credits !== undefined && user.credits !== null) {
+            // Show cached credits immediately WITHOUT setting loading
+            set({ balance: user.credits, error: null });
+            console.log('📱 Showing cached credits instantly:', user.credits);
+          }
+        } catch (e) {
+          console.error('Failed to parse cached user:', e);
         }
       }
 
-      // Then fetch fresh data in background with a short timeout and retry
+      // Fetch fresh data in background
       console.log('🔄 Fetching fresh credit balance...');
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const { userService } = await import('../services/userService');
-      let profileResponse;
+      
       try {
-        profileResponse = await userService.fetchUserProfile(token);
-      } catch (e) {
-        // One quick retry
-        console.log('⏳ Retry fetching credits...');
-        profileResponse = await userService.fetchUserProfile(token);
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (profileResponse.ok) {
-        set({
-          balance: profileResponse.credits.balance,
-          dailyCap: profileResponse.daily_cap,
-          isLoading: false
-        });
-        console.log('✅ Fresh credits loaded:', profileResponse.credits.balance);
-      } else {
-        // If we had cached data, keep showing it
-        const currentBalance = get().balance;
-        if (currentBalance > 0) {
-          set({ isLoading: false }); // Keep cached data
-          console.log('⚠️ API failed but keeping cached credits');
-        } else {
-          throw new Error('Failed to refresh balance');
+        const profileResponse = await userService.fetchUserProfile(token);
+        
+        if (profileResponse.ok && profileResponse.credits) {
+          const newBalance = profileResponse.credits.balance;
+          const currentBalance = get().balance;
+          
+          // Update balance and cache
+          set({
+            balance: newBalance,
+            dailyCap: profileResponse.daily_cap || 30,
+            error: null
+          });
+          
+          // Update cached user credits
+          if (cachedUser) {
+            try {
+              const user = JSON.parse(cachedUser);
+              user.credits = newBalance;
+              await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+            } catch (e) {
+              console.error('Failed to update cached credits:', e);
+            }
+          }
+          
+          console.log(`✅ Credits updated: ${currentBalance} → ${newBalance}`);
+        }
+      } catch (error) {
+        // Silently fail for background refresh - we already showed cached
+        console.error('Background credit refresh error:', error);
+        // Don't set error state if we have cached balance
+        if (get().balance === 0) {
+          set({ error: 'Failed to load credits' });
         }
       }
     } catch (error) {
-      console.error('Refresh balance error:', error);
+      console.error('Critical refresh balance error:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to refresh balance',
         isLoading: false

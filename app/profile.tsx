@@ -45,7 +45,12 @@ export default function ProfileScreen() {
   // Load referral stats and refresh credits on mount
   useEffect(() => {
     loadReferralStats();
+    // Refresh credits immediately and set up periodic refresh
     refreshBalance();
+    const interval = setInterval(() => {
+      refreshBalance();
+    }, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, [refreshBalance]);
 
   const loadReferralStats = async () => {

@@ -122,59 +122,106 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ isLoading: true });
 
       // Note: Removed development auto-login to enforce proper auth gating
+      console.log('🔐 [Mobile Auth] Starting initialization...');
 
       const [userString, token] = await AsyncStorage.multiGet(['user_profile', 'auth_token']);
+      console.log('🔐 [Mobile Auth] Storage check:', { 
+        hasUser: !!userString[1], 
+        hasToken: !!token[1],
+        tokenLength: token[1]?.length 
+      });
 
-      if (userString[1] && token[1]) {
-        const user = JSON.parse(userString[1]);
-        
-        // Check if session is still valid (30 days)
-        const loginTime = user.loginTime || Date.now();
-        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-        
-        if (loginTime > thirtyDaysAgo) {
-          // Session is still valid - keep user logged in
-          console.log('🔐 [Mobile Auth] Restoring valid session');
-          set({
-            user,
-            token: token[1],
-            isAuthenticated: true,
-            isLoading: false
-          });
-          try { await useCreditsStore.getState().refreshBalance(); } catch {}
-        } else {
-          // Session expired - clear storage
-          console.log('⏰ [Mobile Auth] Session expired, clearing storage');
-          await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
-          set({
-            user: null,
-            token: null,
-            isAuthenticated: false,
-            isLoading: false
-          });
-        }
-      } else if (!userString[1] && token[1]) {
-        // Token exists but user profile missing — try fetching minimal profile
+      if (token[1]) {
+        // We have a token - validate it first
         try {
-          const profile = await userService.whoami(token[1]);
-          if (profile.ok && profile.user) {
-            const restoredUser: User = {
-              id: profile.user.id,
-              email: profile.user.email,
-              credits: 0,
-              loginTime: Date.now(),
-            };
-            await AsyncStorage.setItem('user_profile', JSON.stringify(restoredUser));
-            set({ user: restoredUser, token: token[1], isAuthenticated: true, isLoading: false });
-            // Kick off background credits/profile refresh to sync numbers
-            try { await useCreditsStore.getState().refreshBalance(); } catch {}
+          console.log('🔐 [Mobile Auth] Validating existing token...');
+          const isValid = await userService.whoami(token[1]);
+          
+          if (isValid.ok && isValid.user) {
+            console.log('✅ [Mobile Auth] Token is valid');
+            
+            // Update or create user profile
+            let user: User;
+            if (userString[1]) {
+              // Update existing user with fresh data
+              user = JSON.parse(userString[1]);
+              user.id = isValid.user.id;
+              user.email = isValid.user.email;
+            } else {
+              // Create new user profile
+              user = {
+                id: isValid.user.id,
+                email: isValid.user.email,
+                credits: 0,
+                loginTime: Date.now(),
+              };
+            }
+            
+            // Check session age
+            const loginTime = user.loginTime || Date.now();
+            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+            
+            if (loginTime > thirtyDaysAgo) {
+              // Save updated user and restore session
+              await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+              set({
+                user,
+                token: token[1],
+                isAuthenticated: true,
+                isLoading: false
+              });
+              console.log('✅ [Mobile Auth] Session restored successfully');
+              
+              // Refresh credits in background
+              setTimeout(() => {
+                useCreditsStore.getState().refreshBalance().catch(console.error);
+              }, 100);
+            } else {
+              // Session too old
+              console.log('⏰ [Mobile Auth] Session expired (>30 days)');
+              await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
+              set({
+                user: null,
+                token: null,
+                isAuthenticated: false,
+                isLoading: false
+              });
+            }
           } else {
-            set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+            // Invalid token
+            console.log('❌ [Mobile Auth] Token is invalid');
+            await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false
+            });
           }
         } catch (e) {
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          console.error('❌ [Mobile Auth] Token validation error:', e);
+          // Keep existing session if network error
+          if (userString[1]) {
+            const user = JSON.parse(userString[1]);
+            set({
+              user,
+              token: token[1],
+              isAuthenticated: true,
+              isLoading: false
+            });
+            console.log('⚠️ [Mobile Auth] Keeping session due to network error');
+          } else {
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false
+            });
+          }
         }
       } else {
+        // No token
+        console.log('🔐 [Mobile Auth] No token found');
         set({
           user: null,
           token: null,
