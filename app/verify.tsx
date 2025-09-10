@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Keyboard, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 
@@ -54,9 +54,18 @@ export default function VerifyScreen() {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
       <View style={[styles.content, keyboardVisible && styles.contentWithKeyboard]}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+        
         <Text style={styles.title}>Enter Login Code</Text>
         <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
-        <Text style={styles.infoPill}>Login code sent to your email</Text>
+        <Text style={styles.infoPill}>Please check your <Text style={styles.spamText}>Spam</Text> in case</Text>
 
         <TextInput
           style={styles.input}
@@ -87,16 +96,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   contentWithKeyboard: { justifyContent: 'flex-start', paddingTop: 100 },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logo: {
+    width: 120,
+    height: 40,
+  },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
   infoPill: { alignSelf: 'center', color: '#bbb', backgroundColor: '#1a1a1a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 16, fontSize: 12 },
-  input: { backgroundColor: '#1a1a1a', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, color: '#fff', textAlign: 'center', letterSpacing: 8, marginBottom: 16, borderWidth: 1, borderColor: '#333' },
+  input: { backgroundColor: '#1a1a1a', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 14, fontSize: 20, color: '#fff', textAlign: 'center', letterSpacing: 0, marginBottom: 16, borderWidth: 1, borderColor: '#333' },
   button: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
   backToEmail: { marginTop: 12, alignItems: 'center' },
   backToEmailText: { color: '#888', fontSize: 14 },
   resendHint: { marginTop: 12, color: '#888', textAlign: 'center' },
+  spamText: { color: '#ff4444', fontWeight: '600' },
 });
 
 

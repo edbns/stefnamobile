@@ -92,6 +92,24 @@ export default function GenerationFolderScreen() {
   const renderMediaItem = ({ item }: { item: any }) => {
     const isSelected = selectedItems.has(item.id);
     
+    const handleDelete = () => {
+      Alert.alert(
+        'Delete Photo',
+        'Delete this photo?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              await deleteMedia(item.id, item.cloudId);
+              router.back(); // Go back to refresh main page
+            }
+          }
+        ]
+      );
+    };
+    
     return (
       <TouchableOpacity 
         style={[styles.mediaItem, isSelected && styles.selectedItem]} 
@@ -102,6 +120,10 @@ export default function GenerationFolderScreen() {
           style={styles.mediaImage}
           resizeMode="cover"
         />
+        {/* Delete button overlay */}
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+          <Feather name="trash-2" size={16} color="#ffffff" />
+        </TouchableOpacity>
         {isSelectionMode && (
           <View style={styles.selectionOverlay}>
             <View style={[styles.selectionIndicator, isSelected && styles.selectedIndicator]}>
@@ -115,10 +137,10 @@ export default function GenerationFolderScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Transparent Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#ffffff" />
+          <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>{folderName}</Text>
@@ -130,15 +152,9 @@ export default function GenerationFolderScreen() {
           <TouchableOpacity style={styles.actionButton} onPress={toggleSelectionMode}>
             <Feather name={isSelectionMode ? "x" : "check-square"} size={20} color="#ffffff" />
           </TouchableOpacity>
-          {isSelectionMode ? (
-            selectedItems.size > 0 && (
-              <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
-                <Feather name="trash-2" size={20} color="#ff4444" />
-              </TouchableOpacity>
-            )
-          ) : (
-            <TouchableOpacity style={styles.actionButton} onPress={deleteAll}>
-              <Feather name="trash" size={20} color="#ff4444" />
+          {isSelectionMode && selectedItems.size > 0 && (
+            <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
+              <Feather name="trash-2" size={20} color="#ff4444" />
             </TouchableOpacity>
           )}
         </View>
@@ -164,19 +180,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 60,
+    paddingTop: 40,
     paddingBottom: 20,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333333',
+    zIndex: 1000,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#333333',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -209,20 +228,31 @@ const styles = StyleSheet.create({
   },
   gridContainer: {
     padding: 16,
+    paddingTop: 100,
   },
   row: {
     justifyContent: 'space-between',
   },
   mediaItem: {
-    width: '48%',
+    width: '49.5%',
     aspectRatio: 1,
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: 4,
     overflow: 'hidden',
   },
   mediaImage: {
     width: '100%',
     height: '100%',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedItem: {
     borderWidth: 3,
@@ -231,7 +261,7 @@ const styles = StyleSheet.create({
   selectionOverlay: {
     position: 'absolute',
     top: 8,
-    right: 8,
+    left: 8,
   },
   selectionIndicator: {
     width: 24,

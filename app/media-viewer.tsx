@@ -60,32 +60,36 @@ export default function MediaViewerScreen() {
   return (
     <View style={styles.container}>
       {/* Fullscreen Image */}
-      <Image 
-        source={{ uri: imageUrl }} 
-        style={styles.fullscreenImage}
-        resizeMode="contain"
-      />
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: imageUrl }} 
+          style={styles.fullscreenImage}
+          resizeMode="contain"
+        />
+      </View>
       
       {/* Top Controls */}
       <View style={styles.topControls}>
-        <TouchableOpacity style={styles.controlButton} onPress={handleClose}>
-          <Feather name="x" size={24} color="#ffffff" />
+        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+          <Feather name="x" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.topRightGroup}>
           <TouchableOpacity style={styles.controlButton} onPress={handleShare}>
-            <Feather name="share" size={24} color="#ffffff" />
+            <Feather name="share" size={20} color="#ffffff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.controlButton} onPress={handleDelete}>
-            <Feather name="trash-2" size={24} color="#ff6b6b" />
+            <Feather name="trash-2" size={20} color="#ff6b6b" />
           </TouchableOpacity>
         </View>
       </View>
       
-      {/* Bottom Info */}
-      <View style={styles.bottomInfo}>
-        <Text style={styles.presetText}>{preset}</Text>
-        <Text style={styles.promptText} numberOfLines={2}>{prompt}</Text>
-        <Text style={styles.dateText}>{date}</Text>
+      {/* Floating Info Card */}
+      <View style={styles.floatingCard}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.presetText}>{preset}</Text>
+          <Text style={styles.dateText}>{date}</Text>
+        </View>
+        <Text style={styles.promptText} numberOfLines={3}>{prompt}</Text>
       </View>
     </View>
   );
@@ -96,54 +100,84 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  fullscreenImage: {
+  imageContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+    paddingBottom: 120,
+  },
+  fullscreenImage: {
     width: '100%',
     height: '100%',
   },
   topControls: {
     position: 'absolute',
-    top: 50,
-    left: 20,
-    right: 20,
+    top: 40,
+    left: 8,
+    right: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   topRightGroup: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  bottomInfo: {
+  floatingCard: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    bottom: 30,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    borderRadius: 16,
     padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   presetText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    flex: 1,
   },
   promptText: {
     color: '#cccccc',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
     marginBottom: 8,
   },
   dateText: {
     color: '#888888',
-    fontSize: 12,
+    fontSize: 11,
   },
 });

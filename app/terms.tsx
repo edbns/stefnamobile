@@ -17,7 +17,7 @@ export default function TermsScreen() {
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconBackButton}>
-          <Feather name="arrow-left" size={20} color="#000000" />
+          <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingLeft: 8, zIndex: 1000 },
-  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
   content: {
     flex: 1,
     paddingHorizontal: 20,

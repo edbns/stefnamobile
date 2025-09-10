@@ -264,7 +264,7 @@ export default function ProfileScreen() {
 
   const settingsItems = [
     {
-      iconName: 'dollar-sign' as const,
+      iconName: 'award' as const,
       title: 'Tokens',
       subtitle: '',
       onPress: undefined, // Non-clickable - just display
@@ -310,9 +310,7 @@ export default function ProfileScreen() {
       {/* Settings List */}
       <ScrollView style={styles.settingsList} showsVerticalScrollIndicator={false}>
         {/* Greeting Only */}
-        <View style={styles.greetingBox}>
-          <Text style={styles.greetingText}>Hello!</Text>
-        </View>
+        <Text style={styles.greetingText}>Hello!</Text>
         {settingsItems.map((item, index) => (
           <View key={index}>
             <TouchableOpacity
@@ -523,7 +521,7 @@ export default function ProfileScreen() {
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.iconBackButton} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#000000" />
+          <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -537,25 +535,14 @@ const styles = StyleSheet.create({
   },
 
   // User Info
-  greetingBox: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#1a1a1a',
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    borderRadius: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-    alignItems: 'center',
-  },
   greetingText: {
     fontSize: 20,
     fontWeight: '700',
     color: '#ffffff',
+    marginTop: 20,
+    marginBottom: 40,
+    paddingHorizontal: 20,
+    textAlign: 'center',
   },
 
   // Settings List
@@ -708,6 +695,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     marginRight: 8,
+    letterSpacing: 0,
   },
   sendButton: {
     backgroundColor: '#ffffff',
@@ -862,6 +850,6 @@ const styles = StyleSheet.create({
   },
 
   // Floating Back Button
-  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 8, paddingLeft: 8, zIndex: 1000 },
-  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center' },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
 });

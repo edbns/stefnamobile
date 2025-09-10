@@ -133,6 +133,14 @@ export default function MainScreen() {
     }
   };
 
+  const handleEditPress = () => {
+    router.push('/edit');
+  };
+
+  const handleMediaPress = () => {
+    // Already on media screen, no action needed
+  };
+
   const handleProfilePress = () => {
     router.push('/profile');
   };
@@ -166,14 +174,11 @@ export default function MainScreen() {
               <Feather name="folder" size={40} color="#666666" />
             </View>
           )}
-          {/* Photo count overlay */}
-          <View style={styles.photoCountOverlay}>
-            <Text style={styles.photoCount}>{section.data.length}</Text>
+          {/* Transparent overlay with folder name and count */}
+          <View style={styles.folderOverlay}>
+            <Text style={styles.folderTitleOverlay}>{section.title}</Text>
+            <Text style={styles.folderCountOverlay}>{section.data.length} photos</Text>
           </View>
-        </View>
-        <View style={styles.folderInfo}>
-          <Text style={styles.folderTitle}>{section.title}</Text>
-          <Text style={styles.folderSubtitle}>{section.data.length} photos</Text>
         </View>
       </TouchableOpacity>
     );
@@ -219,14 +224,14 @@ export default function MainScreen() {
 
       {/* Floating Footer */}
       <View style={styles.floatingFooter}>
-        <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
-          <Feather name="plus" size={24} color="#000000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton} onPress={handleCameraPress}>
-          <Feather name="camera" size={24} color="#000000" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
           <Feather name="user" size={24} color="#000000" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
+          <Feather name="image" size={24} color="#000000" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
+          <Feather name="edit-3" size={24} color="#000000" />
         </TouchableOpacity>
       </View>
     </View>
@@ -314,7 +319,6 @@ const styles = StyleSheet.create({
   // Folder styles
   folderItem: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
     overflow: 'hidden',
   },
   folderImage: {
@@ -332,32 +336,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#333333',
   },
-  photoCountOverlay: {
+  folderOverlay: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  photoCount: {
+  folderTitleOverlay: {
     color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  folderInfo: {
-    padding: 12,
-  },
-  folderTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  folderSubtitle: {
-    color: '#888888',
     fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  folderCountOverlay: {
+    color: '#cccccc',
+    fontSize: 12,
   },
   row: {
     justifyContent: 'space-between',

@@ -49,17 +49,17 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         {/* Main Content */}
         <View style={styles.mainContent}>
-          <Text style={styles.title}>🚀 Welcome to Stefna 🚀</Text>
-          <Text style={styles.subtitle}>✨ One photo. One transformation. Which preset? ✨</Text>
+          <Text style={styles.title}>Welcome to Stefna</Text>
+          <Text style={styles.subtitle}>One photo. One transformation. Which preset?</Text>
           
           <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
-            <Text style={styles.buttonText}>🎯 Get Started 🎯</Text>
+            <Text style={styles.buttonText}>Get Started</Text>
           </TouchableOpacity>
         </View>
 
         {/* Legal Text with clickable links */}
         <View style={styles.legalContainer}>
-          <Text style={styles.legalText}>📱 By proceeding, you agree to our </Text>
+          <Text style={styles.legalText}>By proceeding, you agree to our </Text>
           <TouchableOpacity onPress={() => router.push('/terms')}>
             <Text style={styles.legalLink}>Terms of Use</Text>
           </TouchableOpacity>
@@ -112,21 +112,21 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 40,
-    lineHeight: 24,
+    marginBottom: 24,
+    lineHeight: 18,
   },
   getStartedButton: {
     backgroundColor: '#ffffff',
