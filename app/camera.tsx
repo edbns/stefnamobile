@@ -28,23 +28,17 @@ export default function CameraScreen() {
 
       if (result.success && result.uri) {
         try {
-          // Normalize orientation to avoid mirrored/rotated images on some devices
-          const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
-          console.log('✅ Photo captured, normalized and going to generate:', normalizedUri);
-          // Navigate directly to generate - no double confirmation
-          router.replace({
-            pathname: '/generate',
-            params: { selectedImage: normalizedUri }
-          });
-          return;
-        } catch (normalizeError) {
-          console.error('❌ Image normalization failed:', normalizeError);
-          // Fallback: use original image if normalization fails
-          console.log('📸 Using original image as fallback');
+          // Skip normalization to prevent flipping issues
+          console.log('✅ Photo captured, going to generate:', result.uri);
+          // Navigate directly to generate - no normalization
           router.replace({
             pathname: '/generate',
             params: { selectedImage: result.uri }
           });
+          return;
+        } catch (error) {
+          console.error('❌ Navigation error:', error);
+          router.back();
           return;
         }
       }

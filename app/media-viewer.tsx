@@ -1,15 +1,17 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions, PanResponder } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 import { useMediaStore } from '../src/stores/mediaStore';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { deleteMedia } = useMediaStore();
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const imageUrl = params.imageUrl as string;
   const prompt = params.prompt as string;
@@ -17,6 +19,84 @@ export default function MediaViewerScreen() {
   const date = params.date as string;
   const mediaId = (params.id as string) || '';
   const cloudId = (params.cloudId as string) || '';
+
+  // Simple zoom functionality
+  const [scale, setScale] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  // Double tap to zoom
+  const handleDoubleTap = () => {
+    if (scale === 1) {
+      setScale(2);
+      setIsZoomed(true);
+    } else {
+      setScale(1);
+      setIsZoomed(false);
+    }
+  };
+
+  // PanResponder for pan when zoomed
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => isZoomed,
+      onMoveShouldSetPanResponder: () => isZoomed,
+      onPanResponderGrant: () => {
+        // Allow panning when zoomed
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Simple pan implementation could be added here if needed
+      },
+      onPanResponderRelease: () => {
+        // Reset pan if needed
+      },
+    })
+  ).current;
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      
+      // Request media library permissions
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to download images.');
+        return;
+      }
+
+      // Download image to local cache first
+      const isRemote = imageUrl.startsWith('http');
+      const fileName = `stefna_${Date.now()}.jpg`;
+      const localPath = FileSystem.cacheDirectory + fileName;
+
+      if (isRemote) {
+        console.log('📱 Downloading image from:', imageUrl);
+        const download = await FileSystem.downloadAsync(imageUrl, localPath);
+        if (download.status !== 200) {
+          throw new Error('Download failed');
+        }
+        console.log('📱 Image downloaded to:', localPath);
+      } else {
+        // If it's already local, copy it to cache with new name
+        await FileSystem.copyAsync({
+          from: imageUrl,
+          to: localPath
+        });
+      }
+
+      // Save to photo library
+      console.log('📱 Saving to photo library...');
+      const asset = await MediaLibrary.createAssetAsync(localPath);
+      console.log('📱 Image saved to photo library:', asset.id);
+      
+      Alert.alert('Success', 'Image saved to your photo library!');
+      
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('Download Error', 'Unable to download image. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -59,13 +139,25 @@ export default function MediaViewerScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Fullscreen Image */}
+      {/* Fullscreen Image with Zoom */}
       <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: imageUrl }} 
-          style={styles.fullscreenImage}
-          resizeMode="contain"
-        />
+        <TouchableOpacity 
+          style={styles.imageWrapper}
+          onPress={handleDoubleTap}
+          activeOpacity={1}
+          {...panResponder.panHandlers}
+        >
+          <Image 
+            source={{ uri: imageUrl }} 
+            style={[
+              styles.fullscreenImage,
+              {
+                transform: [{ scale: scale }],
+              },
+            ]}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
       
       {/* Top Controls */}
@@ -74,6 +166,17 @@ export default function MediaViewerScreen() {
           <Feather name="x" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.topRightGroup}>
+          <TouchableOpacity 
+            style={[styles.controlButton, isDownloading && styles.controlButtonDisabled]} 
+            onPress={handleDownload}
+            disabled={isDownloading}
+          >
+            <Feather 
+              name={isDownloading ? "loader" : "download"} 
+              size={20} 
+              color={isDownloading ? "#888888" : "#4CAF50"} 
+            />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.controlButton} onPress={handleShare}>
             <Feather name="share" size={20} color="#ffffff" />
           </TouchableOpacity>
@@ -104,8 +207,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
+    paddingTop: 60, // Reduced top padding for better full-screen
     paddingBottom: 120,
+  },
+  imageWrapper: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   fullscreenImage: {
     width: '100%',
@@ -140,6 +249,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  controlButtonDisabled: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   floatingCard: {
     position: 'absolute',

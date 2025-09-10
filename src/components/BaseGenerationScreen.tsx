@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
@@ -18,6 +18,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // Compute original aspect ratio of the selected image
   useEffect(() => {
@@ -31,6 +32,21 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       );
     }
   }, [selectedImage]);
+
+  // Auto-scroll to content after image loads
+  useEffect(() => {
+    if (selectedImage && imageAspect !== null) {
+      // Delay scroll to ensure content is rendered
+      const timer = setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          y: 600, // Scroll down to show the presets/prompt box area
+          animated: true,
+        });
+      }, 800); // Wait 800ms for image to load and render
+
+      return () => clearTimeout(timer);
+    }
+  }, [selectedImage, imageAspect]);
 
   const handleGenerate = async (presetId?: string, customPrompt?: string) => {
     if (!selectedImage) {
@@ -89,7 +105,11 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+      >
         {/* Selected Image Preview */}
         <View style={styles.imageContainer}>
           <Image

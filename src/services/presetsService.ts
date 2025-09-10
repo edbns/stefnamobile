@@ -174,6 +174,68 @@ class PresetsService {
   }
 
   /**
+   * Get mode-specific presets from their respective database tables
+   * Supports: emotion-mask, ghibli-reaction, neo-glitch
+   */
+  async getModeSpecificPresets(mode: string): Promise<PresetsResponse> {
+    try {
+      console.log(`🎨 [PresetsService] Fetching ${mode} presets from database`);
+
+      const response = await fetch(`${config.apiUrl('get-presets')}?mode=${mode}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`${mode} presets service is not available. Please try again later.`);
+        } else if (response.status === 500) {
+          throw new Error('Server error occurred. Please try again later.');
+        } else {
+          throw new Error(`Unable to connect to ${mode} presets service. Please check your connection.`);
+        }
+      }
+
+      let data: PresetsResponse;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        throw new Error(`${mode} presets service returned invalid data. Please try again later.`);
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || data.message || `Failed to load ${mode} presets. Please try again.`);
+      }
+
+      console.log(`✅ [PresetsService] Successfully fetched ${mode} presets`);
+      return data;
+
+    } catch (error) {
+      console.error(`❌ [PresetsService] Failed to fetch ${mode} presets:`, error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes('presets service') || 
+            error.message.includes('Server error') || 
+            error.message.includes('Unable to connect') ||
+            error.message.includes('invalid data') ||
+            error.message.includes('Failed to load')) {
+          throw error;
+        }
+        
+        if (error.message.includes('Unexpected token') || error.message.includes('<!DOCTYPE')) {
+          throw new Error(`${mode} presets service is temporarily unavailable. Please try again later.`);
+        } else if (error.message.includes('fetch')) {
+          throw new Error(`Unable to connect to ${mode} presets service. Please check your internet connection.`);
+        } else {
+          throw new Error(`Failed to load ${mode} presets. Please try again later.`);
+        }
+      }
+      
+      throw new Error('An unexpected error occurred. Please try again later.');
+    }
+  }
+
+  /**
    * Get all available presets (25 total)
    * NO FALLBACKS - if database fails, throws user-friendly error
    */

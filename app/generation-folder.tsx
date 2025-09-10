@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 import { useMediaStore } from '../src/stores/mediaStore';
 
 export default function GenerationFolderScreen() {
@@ -39,9 +41,78 @@ export default function GenerationFolderScreen() {
     }
   };
 
-  const toggleSelectionMode = () => {
-    setIsSelectionMode(!isSelectionMode);
+  const handleLongPress = (item: any) => {
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+      setSelectedItems(new Set([item.id]));
+    } else {
+      // Toggle selection
+      const newSelected = new Set(selectedItems);
+      if (newSelected.has(item.id)) {
+        newSelected.delete(item.id);
+      } else {
+        newSelected.add(item.id);
+      }
+      setSelectedItems(newSelected);
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setIsSelectionMode(false);
     setSelectedItems(new Set());
+  };
+
+  const selectAll = () => {
+    const allIds = folderData.map((item: any) => item.id);
+    setSelectedItems(new Set(allIds));
+  };
+
+  const downloadSelected = async () => {
+    try {
+      // Request media library permissions
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photo library to download images.');
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const itemId of selectedItems) {
+        const item = folderData.find((m: any) => m.id === itemId);
+        if (item) {
+          try {
+            const imageUrl = item.cloudUrl || item.localUri;
+            const fileName = `stefna_${Date.now()}_${itemId}.jpg`;
+            const localPath = FileSystem.cacheDirectory + fileName;
+
+            // Download image
+            const download = await FileSystem.downloadAsync(imageUrl, localPath);
+            if (download.status === 200) {
+              // Save to photo library
+              await MediaLibrary.createAssetAsync(localPath);
+              successCount++;
+            } else {
+              errorCount++;
+            }
+          } catch (error) {
+            errorCount++;
+          }
+        }
+      }
+
+      if (successCount > 0) {
+        Alert.alert('Success', `${successCount} images saved to your photo library!`);
+      }
+      if (errorCount > 0) {
+        Alert.alert('Error', `Failed to download ${errorCount} images.`);
+      }
+
+      exitSelectionMode();
+    } catch (error) {
+      Alert.alert('Download Error', 'Unable to download images. Please try again.');
+    }
   };
 
   const deleteSelected = async () => {
@@ -60,8 +131,7 @@ export default function GenerationFolderScreen() {
                 await deleteMedia(item.id, item.cloudId);
               }
             }
-            setSelectedItems(new Set());
-            setIsSelectionMode(false);
+            exitSelectionMode();
             router.back(); // Go back to refresh main page
           }
         }
@@ -114,16 +184,20 @@ export default function GenerationFolderScreen() {
       <TouchableOpacity 
         style={[styles.mediaItem, isSelected && styles.selectedItem]} 
         onPress={() => handleMediaPress(item)}
+        onLongPress={() => handleLongPress(item)}
+        delayLongPress={500}
       >
         <Image 
           source={{ uri: item.cloudUrl || item.localUri }} 
           style={styles.mediaImage}
-          resizeMode="cover"
         />
-        {/* Delete button overlay */}
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-          <Feather name="trash-2" size={16} color="#ffffff" />
-        </TouchableOpacity>
+        {/* Individual delete button - only show when not in selection mode */}
+        {!isSelectionMode && (
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Feather name="trash-2" size={16} color="#ffffff" />
+          </TouchableOpacity>
+        )}
+        {/* Selection indicator - only show when in selection mode */}
         {isSelectionMode && (
           <View style={styles.selectionOverlay}>
             <View style={[styles.selectionIndicator, isSelected && styles.selectedIndicator]}>
@@ -148,16 +222,11 @@ export default function GenerationFolderScreen() {
             {isSelectionMode ? `${selectedItems.size} selected` : `${folderData.length} photos`}
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionButton} onPress={toggleSelectionMode}>
-            <Feather name={isSelectionMode ? "x" : "check-square"} size={20} color="#ffffff" />
+        {isSelectionMode && (
+          <TouchableOpacity style={styles.actionButton} onPress={exitSelectionMode}>
+            <Feather name="x" size={20} color="#ffffff" />
           </TouchableOpacity>
-          {isSelectionMode && selectedItems.size > 0 && (
-            <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
-              <Feather name="trash-2" size={20} color="#ff4444" />
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
       </View>
 
       {/* Photo Grid */}
@@ -170,6 +239,38 @@ export default function GenerationFolderScreen() {
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={styles.row}
       />
+
+      {/* Action Bar - appears when in selection mode */}
+      {isSelectionMode && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity style={styles.actionBarButton} onPress={selectAll}>
+            <Feather name="check-square" size={20} color="#ffffff" />
+            <Text style={styles.actionBarText}>Select All</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
+            onPress={downloadSelected}
+            disabled={selectedItems.size === 0}
+          >
+            <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#4CAF50"} />
+            <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
+              Download
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
+            onPress={deleteSelected}
+            disabled={selectedItems.size === 0}
+          >
+            <Feather name="trash-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ff4444"} />
+            <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
+              Delete
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -229,20 +330,20 @@ const styles = StyleSheet.create({
   gridContainer: {
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 100, // Space for action bar when in selection mode
   },
   row: {
     justifyContent: 'space-between',
   },
   mediaItem: {
     width: '49.5%',
-    // Remove fixed aspectRatio to preserve original image proportions
     marginBottom: 4,
     overflow: 'hidden',
   },
   mediaImage: {
     width: '100%',
-    height: '100%',
-    resizeMode: 'contain', // Preserve aspect ratio
+    aspectRatio: undefined, // Allow natural aspect ratio
+    resizeMode: 'contain', // Show full image in original proportions
   },
   deleteButton: {
     position: 'absolute',
@@ -276,5 +377,38 @@ const styles = StyleSheet.create({
   },
   selectedIndicator: {
     backgroundColor: '#ffffff',
+  },
+  // Action Bar Styles
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 16, // Account for home indicator
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  actionBarButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  actionBarButtonDisabled: {
+    opacity: 0.5,
+  },
+  actionBarText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  actionBarTextDisabled: {
+    color: '#666666',
   },
 });

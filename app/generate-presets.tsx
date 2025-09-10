@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
+import { PresetsService, DatabasePreset } from '../src/services/presetsService';
 
 interface PresetsModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -134,6 +135,9 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                             styles.presetButton,
                             { backgroundColor: selectedPreset === preset.key ? '#ffffff' : '#0f0f0f' }
                           ]}>
+                            {/* Magical glow overlay */}
+                            <View style={styles.magicalGlowOverlay} />
+                            
                             {/* Vintage lines pattern overlay */}
                             <View style={styles.vintageLinesOverlay} />
                             
@@ -168,6 +172,9 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                             styles.presetButton,
                             { backgroundColor: selectedPreset === preset.key ? '#ffffff' : '#0f0f0f' }
                           ]}>
+                            {/* Magical glow overlay */}
+                            <View style={styles.magicalGlowOverlay} />
+                            
                             {/* Vintage lines pattern overlay */}
                             <View style={styles.vintageLinesOverlay} />
                             
@@ -258,6 +265,24 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     position: 'relative',
     overflow: 'hidden',
+  },
+  magicalGlowOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    width: 40,
+    height: 40,
+    marginTop: -20,
+    marginLeft: -20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    opacity: 0.3,
+    // Radial glow effect
+    shadowColor: '#ffffff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   vintageLinesOverlay: {
     position: 'absolute',

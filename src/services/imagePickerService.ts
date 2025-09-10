@@ -43,7 +43,7 @@ export class ImagePickerService {
         quality: options.quality || 0.8,
         allowsMultipleSelection: false,
         cameraType: options.cameraType || ImagePicker.CameraType.back,
-        exif: true, // Always preserve EXIF for orientation handling
+        exif: false, // Disable EXIF to prevent orientation issues
         base64: false, // Always false to reduce memory usage
         presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
         ...options
@@ -140,60 +140,23 @@ export class ImagePickerService {
   static async normalizeImage(uri: string, exif?: any): Promise<string> {
     try {
       console.log('📸 [ImagePicker] Normalizing image orientation');
+      console.log('📸 [ImagePicker] EXIF data:', exif);
       
       // Validate URI first
       if (!uri || typeof uri !== 'string') {
         throw new Error('Invalid image URI');
       }
       
-      // Determine if we need to flip horizontally (front camera mirror effect)
-      const needsFlip = exif?.Orientation === 2 || exif?.Orientation === 4 || 
-                        exif?.Orientation === 5 || exif?.Orientation === 7;
-      
-      // Determine rotation needed based on EXIF orientation
-      let rotationDegrees = 0;
-      if (exif?.Orientation) {
-        switch (exif.Orientation) {
-          case 3: rotationDegrees = 180; break;
-          case 4: rotationDegrees = 180; break;
-          case 5: rotationDegrees = 90; break;
-          case 6: rotationDegrees = 90; break;
-          case 7: rotationDegrees = 270; break;
-          case 8: rotationDegrees = 270; break;
-        }
+      // Skip normalization if no EXIF data - this often causes more problems than it solves
+      if (!exif || !exif.Orientation) {
+        console.log('📸 [ImagePicker] No EXIF orientation data, skipping normalization');
+        return uri;
       }
       
-      const actions: any[] = [];
-      
-      // Apply rotation if needed
-      if (rotationDegrees > 0) {
-        actions.push({ rotate: rotationDegrees });
-      }
-      
-      // Apply horizontal flip if needed (typically for front camera)
-      if (needsFlip) {
-        actions.push({ flip: ImageManipulator.FlipType.Horizontal });
-      }
-      
-      // Always apply some normalization to ensure consistent output
-      if (actions.length === 0) {
-        // No orientation changes needed, just resize for consistency
-        actions.push({ resize: { width: 1920 } });
-      } else {
-        // Add resize after orientation changes to maintain quality
-        actions.push({ resize: { width: 1920 } });
-      }
-      
-      console.log('📸 [ImagePicker] Applying corrections:', actions);
-      
-      const result = await ImageManipulator.manipulateAsync(
-        uri,
-        actions,
-        { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
-      );
-      
-      console.log('✅ [ImagePicker] Image normalized successfully');
-      return result.uri;
+      // TEMPORARY FIX: Skip normalization entirely to prevent flipping issues
+      // Many developers have messed up EXIF handling, so we'll disable it for now
+      console.log('📸 [ImagePicker] EXIF normalization disabled to prevent flipping issues');
+      return uri;
       
     } catch (error) {
       console.error('❌ [ImagePicker] Image normalization failed:', error);

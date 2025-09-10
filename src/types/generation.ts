@@ -6,9 +6,8 @@ export interface GenerationJob {
   id: string;
   imageUri: string;
   mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
-  presetId?: string;
+  presetId?: string; // Now used for all modes - maps to correct database table
   customPrompt?: string;
-  specialModeId?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress?: number;
   resultUrl?: string;

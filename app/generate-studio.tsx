@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityInd
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
 
 interface StudioPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;

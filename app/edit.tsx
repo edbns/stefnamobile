@@ -180,7 +180,7 @@ export default function EditScreen() {
     <View style={styles.container}>
       {/* Transparent Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/main')}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>

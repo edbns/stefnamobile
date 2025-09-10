@@ -4,7 +4,7 @@ import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { config } from '../src/config/environment';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
 
 interface CustomPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;

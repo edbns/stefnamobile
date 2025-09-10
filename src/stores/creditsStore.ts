@@ -59,16 +59,25 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
   // Initialize credits from cache on store creation
   initializeFromCache: async () => {
     try {
+      console.log('🔄 Initializing credits from cache...');
       const cachedUser = await AsyncStorage.getItem('user_profile');
+      console.log('📱 Cached user data:', cachedUser);
+      
       if (cachedUser) {
         const user = JSON.parse(cachedUser);
+        console.log('📱 Parsed user:', user);
+        
         if (user.credits !== undefined && user.credits !== null) {
           set({ balance: user.credits });
-          console.log('📱 Initialized credits from cache:', user.credits, '(will fetch real-time data)');
+          console.log('📱 Initialized credits from cache:', user.credits);
+        } else {
+          console.log('❌ No credits found in cached user:', user);
         }
+      } else {
+        console.log('❌ No cached user found');
       }
     } catch (error) {
-      console.error('Failed to initialize credits from cache:', error);
+      console.error('❌ Failed to initialize credits from cache:', error);
     }
   },
 
@@ -197,6 +206,24 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         return;
       }
 
+      // Bypass API calls for test accounts
+      if (token.startsWith('test-token-')) {
+        console.log('🧪 [Test Account] Bypassing API calls for test account');
+        const cachedUser = await AsyncStorage.getItem('user_profile');
+        if (cachedUser) {
+          try {
+            const user = JSON.parse(cachedUser);
+            if (user.credits !== undefined && user.credits !== null) {
+              set({ balance: user.credits, error: null });
+              console.log('📱 [Test Account] Credits loaded from cache:', user.credits);
+            }
+          } catch (e) {
+            console.error('Failed to parse cached user:', e);
+          }
+        }
+        return;
+      }
+
       // Show cached credits immediately if we don't have a balance yet
       const currentBalance = get().balance;
       if (currentBalance === 0) {
@@ -221,10 +248,13 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
       
       try {
         const profileResponse = await userService.fetchUserProfile(token);
+        console.log('📱 Profile response:', JSON.stringify(profileResponse, null, 2));
         
         if (profileResponse.ok && profileResponse.credits) {
           const newBalance = profileResponse.credits.balance;
           const currentBalance = get().balance;
+          
+          console.log(`📱 Credits data: balance=${newBalance}, dailyCap=${profileResponse.daily_cap}`);
           
           // Always update the balance to reflect the real-time data
           set({
@@ -246,14 +276,26 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
               const user = JSON.parse(cachedUser);
               user.credits = newBalance;
               await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+              console.log('📱 Updated cached user credits:', newBalance);
             } catch (e) {
               console.error('Failed to update cached credits:', e);
             }
           }
+        } else {
+          console.error('❌ Invalid profile response:', {
+            ok: profileResponse.ok,
+            hasCredits: !!profileResponse.credits,
+            credits: profileResponse.credits
+          });
         }
       } catch (error) {
-        // Silently fail for background refresh - we already showed cached
-        console.error('Background credit refresh error:', error);
+        // Enhanced error logging for debugging
+        console.error('❌ Background credit refresh error:', error);
+        console.error('❌ Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        
         // Don't set error state if we have cached balance
         if (get().balance === 0) {
           set({ error: 'Failed to load credits' });

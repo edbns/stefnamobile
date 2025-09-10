@@ -109,7 +109,8 @@ export default function UploadModeScreen() {
 
       {/* Main Content */}
       <View style={styles.content}>
-        <Text style={styles.mainTitle}>Upload or Snap</Text>
+        <Text style={styles.mainTitle}>Start with a Photo</Text>
+        <Text style={styles.subtitle}>Upload or capture a moment to transform.</Text>
       </View>
 
       {/* Bottom Buttons */}
@@ -173,10 +174,17 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   mainTitle: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#cccccc',
+    textAlign: 'center',
+    lineHeight: 22,
   },
   bottomButtons: {
     position: 'absolute',

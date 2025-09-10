@@ -42,9 +42,8 @@ const applyAdvancedPromptEnhancements = (prompt: string): string => {
 export interface GenerationRequest {
   imageUri: string;
   mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
-  presetId?: string;
+  presetId?: string; // Now used for all modes - maps to correct database table
   customPrompt?: string;
-  specialModeId?: string;
   // userId removed - backend will extract from JWT token
 }
 
@@ -432,11 +431,11 @@ export class GenerationService {
         editImages: 0,
         storyTimePresetId: undefined,
 
-        // Mode-specific parameters (matching website)
-        ...(request.presetId && { presetKey: request.presetId }),
-        ...(request.specialModeId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.specialModeId }),
-        ...(request.specialModeId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.specialModeId }),
-        ...(request.specialModeId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.specialModeId }),
+        // Mode-specific parameters (matching website's database table structure)
+        ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
+        ...(request.presetId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.presetId }),
+        ...(request.presetId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.presetId }),
+        ...(request.presetId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.presetId }),
 
         // Prompt enhancement results
         ...(negativePrompt && { negative_prompt: negativePrompt }),
@@ -707,11 +706,11 @@ export class GenerationService {
       editImages: 0,
       storyTimePresetId: undefined,
 
-      // Mode-specific parameters (matching website)
-      ...(request.presetId && { presetKey: request.presetId }),
-      ...(request.specialModeId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.specialModeId }),
-      ...(request.specialModeId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.specialModeId }),
-      ...(request.specialModeId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.specialModeId }),
+      // Mode-specific parameters (matching website's database table structure)
+      ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
+      ...(request.presetId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.presetId }),
+      ...(request.presetId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.presetId }),
+      ...(request.presetId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.presetId }),
 
       // Prompt enhancement results
       ...(negativePrompt && { negative_prompt: negativePrompt }),

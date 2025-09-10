@@ -216,7 +216,7 @@ export default function MainScreen() {
             <Image 
               source={{ uri: coverImage.cloudUrl }} 
               style={styles.folderImageContent}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           ) : (
             <View style={styles.folderImagePlaceholder}>
@@ -277,19 +277,19 @@ export default function MainScreen() {
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-            <Feather name="user" size={24} color="#ffffff" />
+            <Feather name="user" size={28} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: mediaAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
-            <Feather name="image" size={24} color="#ffffff" />
+            <Feather name="image" size={28} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: editAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
-            <Feather name="edit-3" size={24} color="#ffffff" />
+            <Feather name="edit-3" size={28} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         </View>
@@ -384,8 +384,7 @@ const styles = StyleSheet.create({
   },
   folderImage: {
     position: 'relative',
-    minHeight: 200, // Set minimum height
-    // Remove fixed aspectRatio to preserve original image proportions
+    aspectRatio: 1, // Square containers
   },
   folderImageContent: {
     width: '100%',
@@ -479,7 +478,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 100,
     borderRadius: 24,
     backgroundColor: 'rgba(15, 15, 15, 0.95)',
     borderWidth: 1,
@@ -494,6 +493,8 @@ const styles = StyleSheet.create({
     elevation: 12,
     position: 'relative',
     overflow: 'hidden',
+    minWidth: 500,
+    maxWidth: 600,
   },
   techGridOverlay: {
     position: 'absolute',
@@ -521,9 +522,9 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   footerButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',

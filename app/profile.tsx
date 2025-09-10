@@ -44,6 +44,9 @@ export default function ProfileScreen() {
 
   // Load referral stats and refresh credits on mount
   useEffect(() => {
+    console.log('🔄 Profile screen mounted, initializing credits...');
+    console.log('📱 Current balance:', balance);
+    
     loadReferralStats();
     
     // Initialize credits from cache immediately for instant display
@@ -330,6 +333,7 @@ export default function ProfileScreen() {
               {item.showCount ? (
                 <View style={styles.countContainer}>
                   <Text style={styles.countText}>{balance}</Text>
+                  {console.log('📱 Displaying balance:', balance, 'for item:', item.title)}
                 </View>
               ) : item.onPress ? (
                 <View style={styles.settingArrow}>

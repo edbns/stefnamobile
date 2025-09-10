@@ -13,9 +13,8 @@ interface GenerationJob {
   id: string;
   imageUri: string;
   mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
-  presetId?: string;
+  presetId?: string; // Now used for all modes - maps to correct database table
   customPrompt?: string;
-  specialModeId?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress?: number;
   resultUrl?: string;
@@ -86,7 +85,6 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
         mode: job.mode,
         presetId: job.presetId,
         customPrompt: job.customPrompt,
-        specialModeId: job.specialModeId,
         // userId removed - backend extracts from JWT token
       });
 

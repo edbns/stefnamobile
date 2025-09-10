@@ -12,6 +12,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../src/stores/authStore';
 import { AuthService } from '../src/services/authService';
 
@@ -59,6 +60,7 @@ export default function AuthScreen() {
       setIsRequestingOTP(false);
     }
   };
+
 
   const handleResendOTP = () => {
     if (countdown === 0) {
@@ -108,6 +110,7 @@ export default function AuthScreen() {
               <Text style={styles.buttonText}>Get Login Code</Text>
             )}
           </TouchableOpacity>
+
 
         </View>
 

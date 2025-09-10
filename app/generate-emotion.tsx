@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-// import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
+import PresetsService, { DatabasePreset } from '../src/services/presetsService';
 
 interface EmotionMaskModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -11,37 +12,62 @@ interface EmotionMaskModeProps {
 function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
+  const [presets, setPresets] = useState<DatabasePreset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handlePresetClick = (presetId: string) => {
-    console.log('Emotion preset clicked:', presetId);
+  // Load emotion mask presets from database
+  useEffect(() => {
+    const loadPresets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await PresetsService.getInstance().getModeSpecificPresets('emotion-mask');
+        if (response.success && response.data) {
+          setPresets(response.data.presets.filter(preset => preset.isActive));
+        } else {
+          setError(response.error || 'Failed to load presets');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load presets');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPresets();
+  }, []);
+
+  const handlePresetClick = (preset: DatabasePreset) => {
+    console.log('Emotion preset clicked:', preset.id);
     
     // Initialize animation if not exists
-    if (!presetAnims[presetId]) {
-      presetAnims[presetId] = new Animated.Value(1);
+    if (!presetAnims[preset.id]) {
+      presetAnims[preset.id] = new Animated.Value(1);
     }
     
-    setSelectedPreset(presetId);
+    setSelectedPreset(preset.id);
     
     // Magic animation on preset click
     Animated.sequence([
-      Animated.timing(presetAnims[presetId], {
+      Animated.timing(presetAnims[preset.id], {
         toValue: 0.95,
         duration: 100,
         useNativeDriver: true,
       }),
-      Animated.timing(presetAnims[presetId], {
+      Animated.timing(presetAnims[preset.id], {
         toValue: 1.05,
         duration: 100,
         useNativeDriver: true,
       }),
-      Animated.timing(presetAnims[presetId], {
+      Animated.timing(presetAnims[preset.id], {
         toValue: 1,
         duration: 100,
         useNativeDriver: true,
       }),
     ]).start();
     
-    onGenerate(presetId);
+    onGenerate(preset.id);
   };
 
   return (
@@ -49,147 +75,50 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
       <Text style={styles.title}>Emotion Mask</Text>
       <Text style={styles.subtitle}>Faces that feel.</Text>
       
-      <View style={styles.presetContainer}>
-        <View style={styles.presetGrid}>
-          <View style={styles.presetRow}>
-            <Animated.View 
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims['emotion_mask_nostalgia_distance'] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick('emotion_mask_nostalgia_distance')}
-                style={styles.presetTouchable}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingText}>Loading presets...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <View style={styles.presetContainer}>
+          <View style={styles.presetGrid}>
+            {presets.map((preset) => (
+              <Animated.View 
+                key={preset.id}
+                style={[
+                  styles.presetButtonWrapper,
+                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+                ]}
               >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === 'emotion_mask_nostalgia_distance' ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === 'emotion_mask_nostalgia_distance' && styles.presetTextSelected
+                <TouchableOpacity 
+                  onPress={() => handlePresetClick(preset)}
+                  style={styles.presetTouchable}
+                >
+                  <View style={[
+                    styles.presetButton,
+                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
                   ]}>
-                    Nostalgia + Distance
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-            
-            <Animated.View 
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims['emotion_mask_joy_sadness'] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick('emotion_mask_joy_sadness')}
-                style={styles.presetTouchable}
-              >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === 'emotion_mask_joy_sadness' ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === 'emotion_mask_joy_sadness' && styles.presetTextSelected
-                  ]}>
-                    Joy + Sadness
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-            
-            <Animated.View 
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims['emotion_mask_conf_loneliness'] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick('emotion_mask_conf_loneliness')}
-                style={styles.presetTouchable}
-              >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === 'emotion_mask_conf_loneliness' ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === 'emotion_mask_conf_loneliness' && styles.presetTextSelected
-                  ]}>
-                    Confidence + Loneliness
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          </View>
-          <View style={styles.presetRow}>
-            <Animated.View 
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims['emotion_mask_peace_fear'] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick('emotion_mask_peace_fear')}
-                style={styles.presetTouchable}
-              >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === 'emotion_mask_peace_fear' ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === 'emotion_mask_peace_fear' && styles.presetTextSelected
-                  ]}>
-                    Peace + Fear
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-            
-            <Animated.View 
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims['emotion_mask_strength_vuln'] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick('emotion_mask_strength_vuln')}
-                style={styles.presetTouchable}
-              >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === 'emotion_mask_strength_vuln' ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === 'emotion_mask_strength_vuln' && styles.presetTextSelected
-                  ]}>
-                    Strength + Vulnerability
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
+                    {/* Magical glow overlay */}
+                    <View style={styles.magicalGlowOverlay} />
+                    
+                    <Text style={[
+                      styles.presetText,
+                      selectedPreset === preset.id && styles.presetTextSelected
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
           </View>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -289,5 +218,26 @@ const styles = StyleSheet.create({
   presetTextSelected: {
     color: '#000000',
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  // Loading and error states
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginTop: 16,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    color: '#ff4444',
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
