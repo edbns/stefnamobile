@@ -364,6 +364,7 @@ export class GenerationService {
 
       // Upload image to Cloudinary first (like website)
       const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
+      console.log('🔗 [Mobile] Cloudinary URL received:', cloudinaryUrl);
       
       // Use 'present' like website does - backend will handle the Cloudinary URL
       const sourceAssetId = 'present';
@@ -459,11 +460,14 @@ export class GenerationService {
         promptLength: payload.prompt?.length || 0,
         hasSource: !!payload.sourceAssetId,
         sourceAssetId: payload.sourceAssetId,
-        cloudinaryUrl: payload.cloudinaryUrl?.substring(0, 50) + '...',
+        cloudinaryUrl: payload.cloudinaryUrl ? payload.cloudinaryUrl.substring(0, 50) + '...' : 'MISSING',
         runId: payload.runId,
         url: config.apiUrl('unified-generate-background'),
         payloadSize: JSON.stringify(payload).length
       });
+      
+      // Debug: Show full payload structure
+      console.log('📋 [Mobile] Full payload structure:', Object.keys(payload));
 
       // Hermes-safe fetch + parse with timeout and defensive checks
       const controller = new AbortController();
