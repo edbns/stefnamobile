@@ -159,7 +159,8 @@ export class GenerationService {
             processed.push(item);
           }
         } catch (error) {
-          processed.push({ ...item, status: 'failed', error: error.message });
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          processed.push({ ...item, status: 'failed', error: message });
         }
       }
       
@@ -191,7 +192,7 @@ export class GenerationService {
 
       return data.presets || [];
     } catch (error) {
-      console.error('Get presets error:', error);
+      console.error('Get presets error:', error instanceof Error ? error.message : error);
       // Return local presets as fallback
       return this.getLocalPresets();
     }
@@ -267,12 +268,13 @@ export class GenerationService {
       }
 
       // Build complete payload matching website's unified-generate-background
+      const runId = `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const payload: any = {
         mode: modeMap[request.mode] || request.mode,
         prompt: processedPrompt,
         sourceAssetId: base64Image, // Website expects base64 as sourceAssetId
-        userId: request.userId,
-        runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        // userId removed - backend will extract from JWT token
+        runId,
 
         // Mode-specific parameters (matching website)
         ...(request.presetId && { presetKey: request.presetId }),
@@ -304,38 +306,90 @@ export class GenerationService {
         promptLength: payload.prompt?.length || 0,
         hasSource: !!payload.sourceAssetId,
         runId: payload.runId,
+        url: config.apiUrl('unified-generate-background'),
+        payloadSize: JSON.stringify(payload).length
       });
 
-      // Use the unified background endpoint (matching website)
-      const response = await fetch(config.apiUrl('unified-generate-background'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      // Hermes-safe fetch + parse with timeout and defensive checks
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const data = await response.json();
+      let response: Response | undefined;
+      let responseText = '';
+      try {
+        response = await fetch(config.apiUrl('unified-generate-background'), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
+        clearTimeout(timeoutId);
+
+        const contentType = response.headers.get('content-type');
+        responseText = await response.text();
+
+        console.log('📡 [Mobile Generation] Response status:', response.status);
+        console.log('📡 [Mobile Generation] Content-Type:', contentType);
+        console.log('📄 [Mobile Generation] Raw response:', {
+          status: response.status,
+          responseLength: responseText.length,
+          responseStart: responseText.substring(0, 200),
+        });
+
+        if (!contentType || !contentType.includes('application/json')) {
+          return {
+            success: false,
+            error: `Invalid response format: ${responseText.substring(0, 200)}`
+          };
+        }
+
+        const trimmed = responseText.trim();
+        if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+          return {
+            success: false,
+            error: `Unexpected response from server (status ${response.status})`
+          };
+        }
+
+        const data = JSON.parse(responseText);
+
+        if (!response.ok) {
+          return {
+            success: false,
+            error: data.error || 'Generation failed'
+          };
+        }
+
+        return {
+          success: true,
+          jobId: data.jobId,
+          runId: data.runId || runId,
+          estimatedTime: data.estimatedTime,
+        };
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        console.error('❌ [Mobile Generation] Fetch or JSON error:', {
+          message: fetchError?.message,
+          responseText,
+        });
+        if (fetchError?.name === 'AbortError') {
+          return { success: false, error: 'Request timeout' };
+        }
         return {
           success: false,
-          error: data.error || 'Generation failed'
+          error: `Unexpected error: ${fetchError?.message || 'Unknown error'}`
         };
       }
-
-      return {
-        success: true,
-        jobId: data.jobId,
-        runId: data.runId,
-        estimatedTime: data.estimatedTime,
-      };
     } catch (error) {
-      console.error('Start generation error:', error);
+      console.error('Start generation error:', error instanceof Error ? error.message : error);
       
       // If network error, queue for offline processing
-      if (error.message.includes('network') || error.message.includes('fetch')) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('network') || message.includes('fetch')) {
         await this.queueOfflineGeneration(request);
         return {
           success: true,
@@ -347,7 +401,7 @@ export class GenerationService {
       
       return {
         success: false,
-        error: this.getUserFriendlyErrorMessage(error.message)
+        error: this.getUserFriendlyErrorMessage(message)
       };
     }
   }
@@ -584,11 +638,11 @@ export class GenerationService {
         error: data.error,
       };
     } catch (error) {
-      console.error('Get generation status error:', error);
+      console.error('Get generation status error:', error instanceof Error ? error.message : error);
       return {
         jobId,
         status: 'failed',
-        error: this.getUserFriendlyErrorMessage(error.message),
+        error: this.getUserFriendlyErrorMessage(error instanceof Error ? error.message : String(error)),
       };
     }
   }
@@ -656,7 +710,7 @@ export class GenerationService {
 
       return data?.credits?.balance ?? 0;
     } catch (error) {
-      console.error('Refresh credits error:', error);
+      console.error('Refresh credits error:', error instanceof Error ? error.message : error);
       return 0;
     }
   }
