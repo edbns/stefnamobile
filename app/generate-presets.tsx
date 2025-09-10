@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import PresetsService, { DatabasePreset } from '../src/services/presetsService';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -130,15 +130,10 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                           onPress={() => handlePresetClick(preset.key)}
                           style={styles.presetTouchable}
                         >
-                          <LinearGradient
-                            colors={selectedPreset === preset.key 
-                              ? ['#ffffff', '#f0f0f0'] 
-                              : ['#0f0f0f', '#1a1a1a']
-                            }
-                            style={styles.presetButton}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                          >
+                          <View style={[
+                            styles.presetButton,
+                            { backgroundColor: selectedPreset === preset.key ? '#ffffff' : '#0f0f0f' }
+                          ]}>
                             {/* Vintage lines pattern overlay */}
                             <View style={styles.vintageLinesOverlay} />
                             
@@ -151,7 +146,7 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                             ]}>
                               {preset.label}
                             </Text>
-                          </LinearGradient>
+                          </View>
                         </TouchableOpacity>
                       </Animated.View>
                     ))}
@@ -169,15 +164,10 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                           onPress={() => handlePresetClick(preset.key)}
                           style={styles.presetTouchable}
                         >
-                          <LinearGradient
-                            colors={selectedPreset === preset.key 
-                              ? ['#ffffff', '#f0f0f0'] 
-                              : ['#0f0f0f', '#1a1a1a']
-                            }
-                            style={styles.presetButton}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                          >
+                          <View style={[
+                            styles.presetButton,
+                            { backgroundColor: selectedPreset === preset.key ? '#ffffff' : '#0f0f0f' }
+                          ]}>
                             {/* Vintage lines pattern overlay */}
                             <View style={styles.vintageLinesOverlay} />
                             
@@ -190,7 +180,7 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                             ]}>
                               {preset.label}
                             </Text>
-                          </LinearGradient>
+                          </View>
                         </TouchableOpacity>
                       </Animated.View>
                     ))}

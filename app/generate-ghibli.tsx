@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface GhibliReactionModeProps {

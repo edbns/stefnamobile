@@ -99,7 +99,120 @@ export class GenerationService {
     });
   }
 
-  // Image compression and Cloudinary upload
+  // Upload image to backend media_assets table and get UUID
+  private static async uploadToMediaAssets(imageUri: string): Promise<string> {
+    try {
+      console.log('🖼️ [Mobile] Uploading image to media_assets table:', imageUri);
+      
+      // Compress image before upload
+      const compressedImage = await ImageManipulator.manipulateAsync(
+        imageUri,
+        [
+          { resize: { width: 1024, height: 1024 } } // Resize to max 1024px
+        ],
+        { 
+          compress: 0.8, 
+          format: ImageManipulator.SaveFormat.JPEG 
+        }
+      );
+      
+      console.log('✅ [Mobile] Image compressed successfully');
+      
+      // Get Cloudinary signature
+      const signatureData = await cloudinaryService.getSignature({
+        folder: 'stefna/sources'
+      });
+      
+      // Upload to Cloudinary
+      const uploadResult = await cloudinaryService.uploadImage(
+        compressedImage.uri,
+        signatureData
+      );
+      
+      console.log('☁️ [Mobile] Image uploaded to Cloudinary:', uploadResult.secure_url);
+      
+      // Now upload to backend media_assets table to get UUID
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('No auth token found');
+      }
+      
+      const mediaAssetResponse = await fetch(config.apiUrl('create-media-asset'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cloudinaryUrl: uploadResult.secure_url,
+          cloudinaryId: uploadResult.public_id,
+          filename: uploadResult.original_filename || 'image.jpg',
+          folder: 'stefna/sources'
+        })
+      });
+      
+      if (!mediaAssetResponse.ok) {
+        throw new Error(`Failed to create media asset: ${mediaAssetResponse.statusText}`);
+      }
+      
+      const mediaAssetData = await mediaAssetResponse.json();
+      console.log('📋 [Mobile] Media asset created with UUID:', mediaAssetData.id);
+      
+      return mediaAssetData.id; // Return the UUID from media_assets table
+      
+    } catch (error) {
+      console.error('❌ [Mobile] Upload to media_assets failed, trying fallback:', error);
+      
+      // Fallback: try uploading original image
+      try {
+        const signatureData = await cloudinaryService.getSignature({
+          folder: 'stefna/sources'
+        });
+        
+        const uploadResult = await cloudinaryService.uploadImage(
+          imageUri,
+          signatureData
+        );
+        
+        console.log('☁️ [Mobile] Fallback upload successful:', uploadResult.secure_url);
+        
+        // Try to create media asset with fallback upload
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) {
+          throw new Error('No auth token found');
+        }
+        
+        const mediaAssetResponse = await fetch(config.apiUrl('create-media-asset'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            cloudinaryUrl: uploadResult.secure_url,
+            cloudinaryId: uploadResult.public_id,
+            filename: uploadResult.original_filename || 'image.jpg',
+            folder: 'stefna/sources'
+          })
+        });
+        
+        if (!mediaAssetResponse.ok) {
+          throw new Error(`Failed to create media asset: ${mediaAssetResponse.statusText}`);
+        }
+        
+        const mediaAssetData = await mediaAssetResponse.json();
+        console.log('📋 [Mobile] Fallback media asset created with UUID:', mediaAssetData.id);
+        
+        return mediaAssetData.id;
+        
+      } catch (fallbackError) {
+        console.error('❌ [Mobile] Fallback upload failed:', fallbackError);
+        throw new Error('Failed to upload image to media_assets table');
+      }
+    }
+  }
+
+  // Image compression and Cloudinary upload (legacy - kept for compatibility)
   private static async compressAndUploadImage(imageUri: string): Promise<string> {
     try {
       console.log('🖼️ [Mobile] Compressing and uploading image:', imageUri);
@@ -249,8 +362,8 @@ export class GenerationService {
         };
       }
 
-      // Compress and upload image to Cloudinary
-      const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
+      // Upload image to backend media_assets table and get UUID
+      const sourceAssetId = await this.uploadToMediaAssets(request.imageUri);
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -305,7 +418,7 @@ export class GenerationService {
       const payload: any = {
         mode: modeMap[request.mode] || request.mode,
         prompt: processedPrompt,
-        sourceAssetId: cloudinaryUrl, // Now using Cloudinary URL like website
+        sourceAssetId: sourceAssetId, // Using UUID from media_assets table
         // userId removed - backend will extract from JWT token
         runId,
         additionalImages: 0,
@@ -341,7 +454,7 @@ export class GenerationService {
         mode: payload.mode,
         promptLength: payload.prompt?.length || 0,
         hasSource: !!payload.sourceAssetId,
-        sourceUrl: payload.sourceAssetId?.substring(0, 100) + '...',
+        sourceAssetId: payload.sourceAssetId,
         runId: payload.runId,
         url: config.apiUrl('unified-generate-background'),
         payloadSize: JSON.stringify(payload).length
@@ -515,8 +628,8 @@ export class GenerationService {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) throw new Error('No auth token found');
 
-    // Compress and upload image to Cloudinary
-    const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
+    // Upload image to backend media_assets table and get UUID
+    const sourceAssetId = await this.uploadToMediaAssets(request.imageUri);
 
     // Convert mobile mode names to website's expected format
     const modeMap: Record<string, string> = {
@@ -570,7 +683,7 @@ export class GenerationService {
     const payload: any = {
       mode: modeMap[request.mode] || request.mode,
       prompt: processedPrompt,
-      sourceAssetId: cloudinaryUrl, // Now using Cloudinary URL like website
+        sourceAssetId: sourceAssetId, // Using UUID from media_assets table
       // userId removed - backend will extract from JWT token
       runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       additionalImages: 0,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -79,12 +79,7 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
       <Text style={styles.subtitle}>Tools for precision.</Text>
       
       <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
-        <LinearGradient
-          colors={['#0f0f0f', '#1a1a1a']}
-          style={styles.promptInputWrapper}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f' }]}>
           {/* Tech grid pattern overlay */}
           <View style={styles.techGridOverlay} />
           
@@ -130,7 +125,7 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
               )}
             </TouchableOpacity>
           </Animated.View>
-        </LinearGradient>
+        </View>
       </Animated.View>
     </View>
   );

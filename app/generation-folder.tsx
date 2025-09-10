@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   mediaItem: {
     width: '49.5%',
-    aspectRatio: 1,
+    // Remove fixed aspectRatio to preserve original image proportions
     marginBottom: 4,
     overflow: 'hidden',
   },

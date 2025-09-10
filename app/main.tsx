@@ -272,7 +272,8 @@ export default function MainScreen() {
       )}
 
       {/* Floating Footer */}
-      <View style={styles.floatingFooter}>
+      <View style={styles.footerContainer}>
+        <View style={styles.floatingFooter}>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
@@ -291,6 +292,7 @@ export default function MainScreen() {
             <Feather name="edit-3" size={24} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
+        </View>
       </View>
     </View>
   );
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
   },
   folderImage: {
     position: 'relative',
-    aspectRatio: 1,
+    // Remove fixed aspectRatio to preserve original image proportions
   },
   folderImageContent: {
     width: '100%',
@@ -460,12 +462,18 @@ const styles = StyleSheet.create({
     color: '#cccccc',
   },
 
-  // Floating Footer
-  floatingFooter: {
+  // Footer Container
+  footerContainer: {
     position: 'absolute',
     bottom: 20,
-    left: 12,
-    right: 12,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Floating Footer
+  floatingFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

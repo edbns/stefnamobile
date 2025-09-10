@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -79,12 +79,7 @@ function CustomPromptMode({ onGenerate, isGenerating }: CustomPromptModeProps) {
       <Text style={styles.subtitle}>Describe. Create.</Text>
       
       <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
-        <LinearGradient
-          colors={['#18181b', '#27272a']}
-          style={styles.promptInputWrapper}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
+        <View style={[styles.promptInputWrapper, { backgroundColor: '#18181b' }]}>
           {/* Grid pattern overlay */}
           <View style={styles.gridOverlay} />
           
@@ -127,7 +122,7 @@ function CustomPromptMode({ onGenerate, isGenerating }: CustomPromptModeProps) {
               )}
             </TouchableOpacity>
           </Animated.View>
-        </LinearGradient>
+        </View>
       </Animated.View>
     </View>
   );

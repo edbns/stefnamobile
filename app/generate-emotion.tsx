@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface EmotionMaskModeProps {
@@ -80,7 +80,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                   ]}>
                     Nostalgia + Distance
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </Animated.View>
             
@@ -112,7 +112,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                   ]}>
                     Joy + Sadness
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </Animated.View>
             
@@ -144,7 +144,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                   ]}>
                     Confidence + Loneliness
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -177,7 +177,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                   ]}>
                     Peace + Fear
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </Animated.View>
             
@@ -209,7 +209,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                   ]}>
                     Strength + Vulnerability
                   </Text>
-                </LinearGradient>
+                </View>
               </TouchableOpacity>
             </Animated.View>
           </View>
