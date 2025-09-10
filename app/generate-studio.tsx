@@ -21,12 +21,42 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
       return;
     }
+    
+    // Magic animation on generate
+    Animated.sequence([
+      Animated.timing(generateAnim, {
+        toValue: 0.8,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(generateAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     onGenerate(undefined, customPrompt);
   };
 
   const handleMagicWand = async () => {
     try {
       if (!customPrompt.trim()) return;
+      
+      // Magic wand animation
+      Animated.sequence([
+        Animated.timing(magicWandAnim, {
+          toValue: 1.3,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(magicWandAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      
       // Call backend magic-wand function
       const response = await fetch(config.apiUrl('magic-wand'), {
         method: 'POST',
@@ -48,8 +78,19 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
       <Text style={styles.title}>Studio</Text>
       <Text style={styles.subtitle}>Tools for precision.</Text>
       
-      <View style={styles.promptContainer}>
-        <View style={styles.promptInputWrapper}>
+      <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
+        <LinearGradient
+          colors={['#0f0f0f', '#1a1a1a']}
+          style={styles.promptInputWrapper}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Tech grid pattern overlay */}
+          <View style={styles.techGridOverlay} />
+          
+          {/* Camera frame overlay */}
+          <View style={styles.cameraFrameOverlay} />
+          
           <TextInput
             style={styles.promptInput}
             value={customPrompt}
@@ -62,31 +103,35 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
           />
           
           {/* Magic Wand Button */}
-          <TouchableOpacity
-            style={styles.magicWandButton}
-            onPress={handleMagicWand}
-            disabled={!customPrompt.trim() || isGenerating}
-          >
-            <Text style={styles.magicWandIcon}>✨</Text>
-          </TouchableOpacity>
+          <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
+            <TouchableOpacity
+              onPress={handleMagicWand}
+              disabled={!customPrompt.trim() || isGenerating}
+              style={styles.magicWandTouchable}
+            >
+              <Text style={styles.magicWandIcon}>✨</Text>
+            </TouchableOpacity>
+          </Animated.View>
           
           {/* Generate Button */}
-          <TouchableOpacity
-            style={[
-              styles.generateIconButton,
-              (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
-            ]}
-            onPress={handleGenerate}
-            disabled={!customPrompt.trim() || isGenerating}
-          >
-            {isGenerating ? (
-              <View style={styles.spinner} />
-            ) : (
-              <ArrowUp size={16} color="#000000" />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+          <Animated.View style={[styles.generateIconButton, { transform: [{ scale: generateAnim }] }]}>
+            <TouchableOpacity
+              style={[
+                styles.generateTouchable,
+                (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
+              ]}
+              onPress={handleGenerate}
+              disabled={!customPrompt.trim() || isGenerating}
+            >
+              {isGenerating ? (
+                <View style={styles.spinner} />
+              ) : (
+                <ArrowUp size={16} color="#000000" />
+              )}
+            </TouchableOpacity>
+          </Animated.View>
+        </LinearGradient>
+      </Animated.View>
     </View>
   );
 }
@@ -109,6 +154,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 8,
     textAlign: 'center',
+    textShadowColor: 'rgba(255, 255, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   subtitle: {
     fontSize: 16,
@@ -122,11 +170,39 @@ const styles = StyleSheet.create({
   },
   promptInputWrapper: {
     position: 'relative',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    minHeight: 100,
+    borderRadius: 16,
+    minHeight: 120,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  techGridOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    opacity: 0.1,
+    // Tech grid pattern using borders
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cameraFrameOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    bottom: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    opacity: 0.3,
   },
   promptInput: {
     backgroundColor: 'transparent',
@@ -134,32 +210,50 @@ const styles = StyleSheet.create({
     paddingRight: 80,
     fontSize: 14,
     color: '#ffffff',
-    minHeight: 100,
+    minHeight: 120,
+    zIndex: 2,
   },
   magicWandButton: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 24,
-    height: 24,
+    top: 12,
+    right: 12,
+    zIndex: 3,
+  },
+  magicWandTouchable: {
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   magicWandIcon: {
     fontSize: 18,
     color: '#ffffff',
-    opacity: 0.7,
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   generateIconButton: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
-    width: 32,
-    height: 32,
+    bottom: 12,
+    right: 12,
+    zIndex: 3,
+  },
+  generateTouchable: {
+    width: 40,
+    height: 40,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   generateIconButtonDisabled: {
     backgroundColor: '#cccccc',

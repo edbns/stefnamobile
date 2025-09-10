@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface NeoTokyoModeProps {
@@ -8,8 +9,38 @@ interface NeoTokyoModeProps {
 }
 
 function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
+
   const handlePresetClick = (presetId: string) => {
     console.log('Neo Tokyo preset clicked:', presetId);
+    
+    // Initialize animation if not exists
+    if (!presetAnims[presetId]) {
+      presetAnims[presetId] = new Animated.Value(1);
+    }
+    
+    setSelectedPreset(presetId);
+    
+    // Magic animation on preset click
+    Animated.sequence([
+      Animated.timing(presetAnims[presetId], {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(presetAnims[presetId], {
+        toValue: 1.05,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(presetAnims[presetId], {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     onGenerate(presetId);
   };
 
