@@ -505,13 +505,25 @@ export class GenerationService {
 
     let data;
     try {
-      data = await response.json();
+      const responseText = await response.text();
+      console.log('📄 [Mobile Generation] Raw response:', {
+        status: response.status,
+        contentType,
+        responseLength: responseText.length,
+        responseStart: responseText.substring(0, 200),
+        responseEnd: responseText.substring(-100)
+      });
+      
+      data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('❌ JSON parse error:', parseError);
-      const textResponse = await response.text();
+      console.error('❌ JSON parse error details:', {
+        error: parseError.message,
+        responseStatus: response.status,
+        contentType
+      });
       return {
         success: false,
-        error: `Invalid response format: ${textResponse.substring(0, 200)}`
+        error: `Server returned invalid response. Status: ${response.status}`
       };
     }
 

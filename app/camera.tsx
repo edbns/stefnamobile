@@ -8,13 +8,9 @@ export default function CameraScreen() {
   const router = useRouter();
   const [isCapturing, setIsCapturing] = useState(false);
 
-  // Auto-launch camera when component mounts
+  // Auto-launch camera immediately when component mounts
   useEffect(() => {
-    const timer = setTimeout(() => {
-      takePicture();
-    }, 300);
-
-    return () => clearTimeout(timer);
+    takePicture();
   }, []);
 
   const takePicture = async () => {
@@ -41,13 +37,14 @@ export default function CameraScreen() {
         return;
       }
 
-      // Launch camera directly - no preview needed
+      // Launch camera directly - preserve original orientation
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: false,
-        cameraType: ImagePicker.CameraType.back, // Force back camera to avoid flip
+        cameraType: ImagePicker.CameraType.back,
+        exif: true, // Preserve EXIF data including orientation
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -82,19 +79,10 @@ export default function CameraScreen() {
     }
   };
 
-  // Simple loading screen
+  // Transparent screen - camera launches in background
   return (
     <View style={styles.container}>
-      <View style={styles.loadingContainer}>
-        <Feather name="camera" size={48} color="#ffffff" />
-        <Text style={styles.loadingText}>Opening Camera...</Text>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Camera launches automatically, no UI needed */}
     </View>
   );
 }

@@ -28,6 +28,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           id: result.user.id,
           email: result.user.email,
           credits: result.user.credits || 0,
+          loginTime: Date.now(), // Store login time for 30-day persistence
         };
 
         // Store auth data
@@ -125,14 +126,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (userString[1] && token[1]) {
         const user = JSON.parse(userString[1]);
-
-        // Persisted session: trust for 30 days unless explicitly invalidated
-        set({
-          user,
-          token: token[1],
-          isAuthenticated: true,
-          isLoading: false
-        });
+        
+        // Check if session is still valid (30 days)
+        const loginTime = user.loginTime || Date.now();
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        
+        if (loginTime > thirtyDaysAgo) {
+          // Session is still valid - keep user logged in
+          console.log('🔐 [Mobile Auth] Restoring valid session');
+          set({
+            user,
+            token: token[1],
+            isAuthenticated: true,
+            isLoading: false
+          });
+        } else {
+          // Session expired - clear storage
+          console.log('⏰ [Mobile Auth] Session expired, clearing storage');
+          await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false
+          });
+        }
       } else {
         set({
           user: null,

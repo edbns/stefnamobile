@@ -1,40 +1,117 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { useMediaStore } from '../src/stores/mediaStore';
 
 export default function GenerationFolderScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { deleteMedia } = useMediaStore();
   
   const folderName = params.folderName as string;
   const folderData = JSON.parse(params.folderData as string);
+  
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
   const handleMediaPress = (item: any) => {
-    // Navigate to fullscreen media view
-    router.push({
-      pathname: '/media-viewer',
-      params: { 
-        imageUrl: item.cloudUrl || item.localUri,
-        prompt: item.prompt || '',
-        preset: folderName,
-        date: new Date(item.createdAt).toLocaleDateString()
+    if (isSelectionMode) {
+      // Toggle selection
+      const newSelected = new Set(selectedItems);
+      if (newSelected.has(item.id)) {
+        newSelected.delete(item.id);
+      } else {
+        newSelected.add(item.id);
       }
-    });
+      setSelectedItems(newSelected);
+    } else {
+      // Navigate to fullscreen media view
+      router.push({
+        pathname: '/media-viewer',
+        params: { 
+          imageUrl: item.cloudUrl || item.localUri,
+          prompt: item.prompt || '',
+          preset: folderName,
+          date: new Date(item.createdAt).toLocaleDateString()
+        }
+      });
+    }
   };
 
-  const renderMediaItem = ({ item }: { item: any }) => (
-    <TouchableOpacity 
-      style={styles.mediaItem} 
-      onPress={() => handleMediaPress(item)}
-    >
-      <Image 
-        source={{ uri: item.cloudUrl || item.localUri }} 
-        style={styles.mediaImage}
-        resizeMode="cover"
-      />
-    </TouchableOpacity>
-  );
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedItems(new Set());
+  };
+
+  const deleteSelected = async () => {
+    Alert.alert(
+      'Delete Photos',
+      `Delete ${selectedItems.size} selected photos?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            for (const itemId of selectedItems) {
+              const item = folderData.find((m: any) => m.id === itemId);
+              if (item) {
+                await deleteMedia(item.id, item.cloudId);
+              }
+            }
+            setSelectedItems(new Set());
+            setIsSelectionMode(false);
+            router.back(); // Go back to refresh main page
+          }
+        }
+      ]
+    );
+  };
+
+  const deleteAll = async () => {
+    Alert.alert(
+      'Delete All Photos',
+      `Delete all ${folderData.length} photos in ${folderName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            for (const item of folderData) {
+              await deleteMedia(item.id, item.cloudId);
+            }
+            router.back(); // Go back to refresh main page
+          }
+        }
+      ]
+    );
+  };
+
+  const renderMediaItem = ({ item }: { item: any }) => {
+    const isSelected = selectedItems.has(item.id);
+    
+    return (
+      <TouchableOpacity 
+        style={[styles.mediaItem, isSelected && styles.selectedItem]} 
+        onPress={() => handleMediaPress(item)}
+      >
+        <Image 
+          source={{ uri: item.cloudUrl || item.localUri }} 
+          style={styles.mediaImage}
+          resizeMode="cover"
+        />
+        {isSelectionMode && (
+          <View style={styles.selectionOverlay}>
+            <View style={[styles.selectionIndicator, isSelected && styles.selectedIndicator]}>
+              {isSelected && <Feather name="check" size={16} color="#ffffff" />}
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -45,7 +122,22 @@ export default function GenerationFolderScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>{folderName}</Text>
-          <Text style={styles.headerSubtitle}>{folderData.length} photos</Text>
+          <Text style={styles.headerSubtitle}>
+            {isSelectionMode ? `${selectedItems.size} selected` : `${folderData.length} photos`}
+          </Text>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.actionButton} onPress={toggleSelectionMode}>
+            <Feather name={isSelectionMode ? "x" : "check-square"} size={20} color="#ffffff" />
+          </TouchableOpacity>
+          {isSelectionMode && selectedItems.size > 0 && (
+            <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
+              <Feather name="trash-2" size={20} color="#ff4444" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.actionButton} onPress={deleteAll}>
+            <Feather name="trash" size={20} color="#ff4444" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -99,6 +191,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 4,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
   gridContainer: {
     padding: 16,
   },
@@ -115,5 +220,27 @@ const styles = StyleSheet.create({
   mediaImage: {
     width: '100%',
     height: '100%',
+  },
+  selectedItem: {
+    borderWidth: 3,
+    borderColor: '#ffffff',
+  },
+  selectionOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  selectionIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedIndicator: {
+    backgroundColor: '#ffffff',
   },
 });
