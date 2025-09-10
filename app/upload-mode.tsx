@@ -91,7 +91,7 @@ export default function UploadModeScreen() {
   };
 
   const handleBack = () => {
-    router.back();
+    router.push('/edit');
   };
 
   return (

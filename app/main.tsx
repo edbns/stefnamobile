@@ -373,6 +373,7 @@ const styles = StyleSheet.create({
   },
   sectionItemWrapper: {
     marginBottom: 16,
+    paddingTop: 20,
   },
   // Folder styles
   folderItem: {
@@ -463,14 +464,14 @@ const styles = StyleSheet.create({
   floatingFooter: {
     position: 'absolute',
     bottom: 20,
-    left: 16,
-    right: 16,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 24,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 20,
     backgroundColor: 'rgba(15, 15, 15, 0.95)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
