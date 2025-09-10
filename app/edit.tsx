@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 
 export default function EditScreen() {
   const router = useRouter();
@@ -66,12 +66,7 @@ export default function EditScreen() {
       switch (item.style) {
         case 'custom':
           return (
-            <LinearGradient
-              colors={['#18181b', '#27272a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#18181b' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.gridPattern} />
                 <View style={styles.cardContent}>
@@ -80,17 +75,12 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         case 'studio':
           return (
-            <LinearGradient
-              colors={['#0f0f0f', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.techGrid} />
                 <View style={styles.cameraFrame} />
@@ -100,17 +90,12 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         case 'emotion':
           return (
-            <LinearGradient
-              colors={['#0f0f0f', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.emotionGlow} />
                 <View style={styles.cardContent}>
@@ -119,17 +104,12 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         case 'glitch':
           return (
-            <LinearGradient
-              colors={['#0f0f0f', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.glitchPattern} />
                 <View style={styles.digitalLines} />
@@ -139,17 +119,12 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         case 'ghibli':
           return (
-            <LinearGradient
-              colors={['#0f0f0f', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.magicCircles} />
                 <View style={styles.sparkleDots} />
@@ -159,17 +134,12 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         case 'presets':
           return (
-            <LinearGradient
-              colors={['#0f0f0f', '#1a1a1a']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.cardWrapper}
-            >
+            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
                 <View style={styles.vintageLines} />
                 <View style={styles.filmStrip} />
@@ -179,7 +149,7 @@ export default function EditScreen() {
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
               </View>
-            </LinearGradient>
+            </View>
           );
         
         default:

@@ -272,17 +272,7 @@ export default function MainScreen() {
       )}
 
       {/* Floating Footer */}
-      <LinearGradient
-        colors={['#0f0f0f', '#1a1a1a']}
-        style={styles.floatingFooter}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        {/* Tech grid pattern overlay */}
-        <View style={styles.techGridOverlay} />
-        
-        {/* Digital lines overlay */}
-        <View style={styles.digitalLinesOverlay} />
+      <View style={styles.floatingFooter}>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
@@ -301,7 +291,7 @@ export default function MainScreen() {
             <Feather name="edit-3" size={24} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -473,14 +463,15 @@ const styles = StyleSheet.create({
   floatingFooter: {
     position: 'absolute',
     bottom: 20,
-    left: 20,
-    right: 20,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 28,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(15, 15, 15, 0.95)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000000',
