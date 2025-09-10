@@ -62,7 +62,11 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   };
 
   const handleBack = () => {
-    router.back();
+    // Navigate back to upload-mode screen with the mode parameter
+    router.push({
+      pathname: '/upload-mode',
+      params: { mode: mode }
+    });
   };
 
   if (!selectedImage) {
