@@ -14,7 +14,7 @@ import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
 import { Feather } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+import { ImagePickerService } from '../src/services/imagePickerService';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -87,66 +87,48 @@ export default function MainScreen() {
     try {
       console.log('Upload button pressed');
 
-      // Try to request permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      console.log('Permission status:', status);
+      // Use unified image picker service
+      const result = await ImagePickerService.pickFromGallery();
 
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Please grant photo library access to upload images. You can enable this in your device settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Try Again',
-              onPress: () => handleUploadPress()
-            }
-          ]
-        );
-        return;
-      }
-
-      console.log('Launching image picker...');
-
-      // Prefer images only and avoid editing UI (can crash on some OEMs)
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.8,
-        allowsMultipleSelection: false,
-        base64: false,
-      });
-
-      console.log('Image picker result:', result);
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0];
-        console.log('Selected image:', selectedImage.uri);
-
-        if (selectedImage.uri) {
-          // Navigate to generation screen with selected image
-          router.push({
-            pathname: '/generate',
-            params: { selectedImage: selectedImage.uri }
-          });
-        } else {
-          Alert.alert('Error', 'Failed to get image data. Please try again.');
-        }
+      if (result.success && result.uri) {
+        console.log('Selected image:', result.uri);
+        // Navigate to generation screen with selected image
+        router.push({
+          pathname: '/generate',
+          params: { selectedImage: result.uri }
+        });
       } else {
-        console.log('Image selection was canceled or no assets found');
+        // Handle errors or cancellation
+        if (result.error === 'Media library permission denied') {
+          ImagePickerService.showErrorAlert(
+            'Permission Required',
+            'Please grant photo library access to upload images. You can enable this in your device settings.',
+            () => handleUploadPress(),
+            () => {}
+          );
+          return;
+        }
+        
+        if (result.error === 'Image selection cancelled') {
+          console.log('Image selection was canceled');
+          return;
+        }
+        
+        // Other errors
+        ImagePickerService.showErrorAlert(
+          'Upload Failed',
+          'Unable to access photo library. This might be due to device restrictions. Please try again or use the camera instead.',
+          () => handleUploadPress(),
+          () => handleCameraPress()
+        );
       }
     } catch (error) {
       console.error('Upload error:', error);
-      Alert.alert(
+      ImagePickerService.showErrorAlert(
         'Upload Failed',
         'Unable to access photo library. This might be due to device restrictions. Please try again or use the camera instead.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Use Camera',
-            onPress: () => handleCameraPress()
-          }
-        ]
+        () => handleUploadPress(),
+        () => handleCameraPress()
       );
     }
   };
