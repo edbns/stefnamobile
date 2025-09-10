@@ -29,7 +29,7 @@ export default function CameraScreen() {
       if (result.success && result.uri) {
         try {
           // Normalize orientation to avoid mirrored/rotated images on some devices
-          const normalizedUri = await ImagePickerService.normalizeImage(result.uri);
+          const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
           console.log('✅ Photo captured, normalized and going to generate:', normalizedUri);
           // Navigate directly to generate - no double confirmation
           router.replace({

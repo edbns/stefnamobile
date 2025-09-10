@@ -15,6 +15,7 @@ export interface ImagePickerOptions {
 export interface ImagePickerResult {
   success: boolean;
   uri?: string;
+  exif?: any;
   error?: string;
 }
 
@@ -66,7 +67,8 @@ export class ImagePickerService {
       console.log('📸 [ImagePicker] Camera capture successful');
       return {
         success: true,
-        uri: asset.uri
+        uri: asset.uri,
+        exif: (asset as any).exif // Include EXIF data for orientation handling
       };
 
     } catch (error) {

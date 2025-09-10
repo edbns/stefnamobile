@@ -413,25 +413,37 @@ export class GenerationService {
       }
 
         const trimmed = responseText.trim();
+        
+        // Handle 202 responses with empty body (common case)
+        if (response.status === 202 && trimmed === '') {
+          console.log('✅ [Mobile Generation] Empty 202 response - async processing started');
+          return {
+            success: true,
+            jobId: payload.runId,
+            runId: payload.runId,
+            estimatedTime: 45,
+          };
+        }
+        
+        // Check if response is valid JSON
         if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-          // Handle empty responses (202 Accepted)
-          if (response.status === 202 && trimmed === '') {
-            console.log('✅ [Mobile Generation] Empty 202 response - async processing started');
-            return {
-              success: true,
-              jobId: payload.runId,
-              runId: payload.runId,
-              estimatedTime: 45,
-            };
-          }
-          
           return {
             success: false,
-            error: `Unexpected response from server (status ${response.status})`
+            error: `Unexpected response from server (status ${response.status}): ${trimmed.substring(0, 200)}`
           };
         }
 
-        const data = JSON.parse(responseText);
+        // Safe JSON parsing with error handling
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('❌ [Mobile Generation] JSON parse error:', parseError);
+          return {
+            success: false,
+            error: `Invalid JSON response: ${responseText.substring(0, 200)}`
+          };
+        }
 
         if (!response.ok) {
           return {
