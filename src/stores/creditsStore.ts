@@ -192,10 +192,21 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         }
       }
 
-      // Then fetch fresh data in background
+      // Then fetch fresh data in background with a short timeout and retry
       console.log('🔄 Fetching fresh credit balance...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       const { userService } = await import('../services/userService');
-      const profileResponse = await userService.fetchUserProfile(token);
+      let profileResponse;
+      try {
+        profileResponse = await userService.fetchUserProfile(token);
+      } catch (e) {
+        // One quick retry
+        console.log('⏳ Retry fetching credits...');
+        profileResponse = await userService.fetchUserProfile(token);
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (profileResponse.ok) {
         set({

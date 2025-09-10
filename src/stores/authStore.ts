@@ -141,6 +141,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isAuthenticated: true,
             isLoading: false
           });
+          try { await useCreditsStore.getState().refreshBalance(); } catch {}
         } else {
           // Session expired - clear storage
           console.log('⏰ [Mobile Auth] Session expired, clearing storage');

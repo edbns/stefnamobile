@@ -731,9 +731,8 @@ export class GenerationService {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          // Strip data URL prefix to return raw base64 only
-          const idx = result.indexOf('base64,');
-          resolve(idx !== -1 ? result.substring(idx + 7) : result);
+          // Keep full Data URL (backend accepts data:image/...;base64, URIs)
+          resolve(result);
         };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
