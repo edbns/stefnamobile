@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     left: 30,
     right: 30,
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -518,6 +518,7 @@ const styles = StyleSheet.create({
   },
   footerButtonWrapper: {
     zIndex: 2,
+    marginHorizontal: 20,
   },
   footerButton: {
     width: 56,
