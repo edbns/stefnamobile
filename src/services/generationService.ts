@@ -460,12 +460,14 @@ export class GenerationService {
     // Use the unified background endpoint (matching website)
     console.log('🌐 [Mobile Generation] Making request to:', config.apiUrl('unified-generate-background'));
     console.log('🔐 [Mobile Generation] Token length:', token.length);
-    
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
+    let response: Response | undefined;
+    let responseText = '';
     try {
-      const response = await fetch(config.apiUrl('unified-generate-background'), {
+      response = await fetch(config.apiUrl('unified-generate-background'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -474,71 +476,57 @@ export class GenerationService {
         body: JSON.stringify(payload),
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
 
-      // Check if response is JSON before parsing
       const contentType = response.headers.get('content-type');
+      responseText = await response.text();
+
       console.log('📡 [Mobile Generation] Response status:', response.status);
       console.log('📡 [Mobile Generation] Content-Type:', contentType);
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        const textResponse = await response.text();
-        console.error('❌ Non-JSON response from generation API:', {
-          status: response.status,
-          contentType,
-          responseStart: textResponse.substring(0, 500)
-        });
-        return {
-          success: false,
-          error: response.ok ? 'Server returned non-JSON response' : `Server error (${response.status}): ${textResponse.substring(0, 200)}`
-        };
-      }
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      console.error('❌ Fetch request failed:', fetchError);
-      return {
-        success: false,
-        error: fetchError.name === 'AbortError' ? 'Request timeout' : `Network error: ${fetchError.message}`
-      };
-    }
-
-    let data;
-    try {
-      const responseText = await response.text();
       console.log('📄 [Mobile Generation] Raw response:', {
         status: response.status,
-        contentType,
         responseLength: responseText.length,
         responseStart: responseText.substring(0, 200),
-        responseEnd: responseText.substring(-100)
       });
-      
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error('❌ JSON parse error details:', {
-        error: parseError.message,
-        responseStatus: response.status,
-        contentType
+
+      // Hermes-safe defensive check before parsing as JSON
+      const trimmed = responseText.trim();
+      if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+        return {
+          success: false,
+          error: `Unexpected response from server (status ${response.status})`
+        };
+      }
+
+      const data = JSON.parse(responseText);
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: data.error || `Generation failed (${response.status})`
+        };
+      }
+
+      return {
+        success: true,
+        jobId: data.jobId,
+        estimatedTime: data.estimatedTime,
+      };
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      console.error('❌ [Mobile Generation] Fetch or JSON error:', {
+        message: fetchError?.message,
+        responseText,
       });
+      if (fetchError?.name === 'AbortError') {
+        return { success: false, error: 'Request timeout' };
+      }
       return {
         success: false,
-        error: `Server returned invalid response. Status: ${response.status}`
+        error: `Unexpected error: ${fetchError?.message || 'Unknown error'}`
       };
     }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || `Generation failed (${response.status})`
-      };
-    }
-
-    return {
-      success: true,
-      jobId: data.jobId,
-      estimatedTime: data.estimatedTime,
-    };
   }
 
   // User-friendly error messages

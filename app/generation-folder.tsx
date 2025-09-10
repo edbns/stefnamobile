@@ -130,14 +130,17 @@ export default function GenerationFolderScreen() {
           <TouchableOpacity style={styles.actionButton} onPress={toggleSelectionMode}>
             <Feather name={isSelectionMode ? "x" : "check-square"} size={20} color="#ffffff" />
           </TouchableOpacity>
-          {isSelectionMode && selectedItems.size > 0 && (
-            <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
-              <Feather name="trash-2" size={20} color="#ff4444" />
+          {isSelectionMode ? (
+            selectedItems.size > 0 && (
+              <TouchableOpacity style={styles.actionButton} onPress={deleteSelected}>
+                <Feather name="trash-2" size={20} color="#ff4444" />
+              </TouchableOpacity>
+            )
+          ) : (
+            <TouchableOpacity style={styles.actionButton} onPress={deleteAll}>
+              <Feather name="trash" size={20} color="#ff4444" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity style={styles.actionButton} onPress={deleteAll}>
-            <Feather name="trash" size={20} color="#ff4444" />
-          </TouchableOpacity>
         </View>
       </View>
 

@@ -1,23 +1,43 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { useMediaStore } from '../src/stores/mediaStore';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { deleteMedia } = useMediaStore();
   
   const imageUrl = params.imageUrl as string;
   const prompt = params.prompt as string;
   const preset = params.preset as string;
   const date = params.date as string;
+  const mediaId = (params.id as string) || '';
+  const cloudId = (params.cloudId as string) || '';
 
   const handleShare = async () => {
     try {
-      // Share only the image for direct social media posting
-      await Share.share({
-        url: imageUrl,
-      });
+      // Download to local cache to share raw media (no links)
+      const isRemote = imageUrl.startsWith('http');
+      const localPath = isRemote
+        ? FileSystem.cacheDirectory + `share_${Date.now()}.jpg`
+        : imageUrl;
+
+      if (isRemote) {
+        const download = await FileSystem.downloadAsync(imageUrl, localPath);
+        if (download.status !== 200) {
+          throw new Error('Download failed');
+        }
+      }
+
+      if (Platform.OS === 'ios' || (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(localPath);
+      } else {
+        await Share.share({ url: localPath });
+      }
     } catch (error) {
       console.error('Share error:', error);
       Alert.alert('Share Error', 'Unable to share image. Please try again.');
@@ -26,6 +46,15 @@ export default function MediaViewerScreen() {
 
   const handleClose = () => {
     router.back();
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteMedia(mediaId, cloudId);
+      router.back();
+    } catch (e) {
+      Alert.alert('Delete Error', 'Unable to delete this image.');
+    }
   };
 
   return (
@@ -42,9 +71,14 @@ export default function MediaViewerScreen() {
         <TouchableOpacity style={styles.controlButton} onPress={handleClose}>
           <Feather name="x" size={24} color="#ffffff" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleShare}>
-          <Feather name="share" size={24} color="#ffffff" />
-        </TouchableOpacity>
+        <View style={styles.topRightGroup}>
+          <TouchableOpacity style={styles.controlButton} onPress={handleShare}>
+            <Feather name="share" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.controlButton} onPress={handleDelete}>
+            <Feather name="trash-2" size={24} color="#ff6b6b" />
+          </TouchableOpacity>
+        </View>
       </View>
       
       {/* Bottom Info */}
@@ -75,6 +109,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  topRightGroup: {
+    flexDirection: 'row',
+    gap: 10,
   },
   controlButton: {
     width: 44,
