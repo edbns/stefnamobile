@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { balance, refreshBalance } = useCreditsStore();
+  const { balance, refreshBalance, initializeFromCache } = useCreditsStore();
   
   // State for invite friends dropdown
   const [showInviteDropdown, setShowInviteDropdown] = useState(false);
@@ -45,13 +45,20 @@ export default function ProfileScreen() {
   // Load referral stats and refresh credits on mount
   useEffect(() => {
     loadReferralStats();
-    // Refresh credits immediately and set up periodic refresh
+    
+    // Initialize credits from cache immediately for instant display
+    initializeFromCache();
+    
+    // Refresh credits once on mount, then less frequently
     refreshBalance();
+    
+    // Set up periodic refresh (reduced frequency)
     const interval = setInterval(() => {
       refreshBalance();
-    }, 30000); // Refresh every 30 seconds
+    }, 60000); // Refresh every 60 seconds instead of 30
+    
     return () => clearInterval(interval);
-  }, [refreshBalance]);
+  }, [refreshBalance, initializeFromCache]);
 
   const loadReferralStats = async () => {
     try {

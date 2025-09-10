@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import NetInfo from '@react-native-community/netinfo';
 import { config } from '../config/environment';
+import { cloudinaryService } from './cloudinaryService';
 
 // Import prompt enhancement utilities (need to copy from website)
 const enhancePromptForSpecificity = (originalPrompt: string, options: any = {}) => {
@@ -98,12 +99,12 @@ export class GenerationService {
     });
   }
 
-  // Image compression and processing
-  private static async compressAndConvertImage(imageUri: string): Promise<string> {
+  // Image compression and Cloudinary upload
+  private static async compressAndUploadImage(imageUri: string): Promise<string> {
     try {
-      console.log('🖼️ [Mobile] Compressing image:', imageUri);
+      console.log('🖼️ [Mobile] Compressing and uploading image:', imageUri);
       
-      // Compress image before base64 conversion (fixed: removed invalid compress action)
+      // Compress image before upload
       const compressedImage = await ImageManipulator.manipulateAsync(
         imageUri,
         [
@@ -116,10 +117,40 @@ export class GenerationService {
       );
       
       console.log('✅ [Mobile] Image compressed successfully');
-      return await this.convertImageToBase64(compressedImage.uri);
+      
+      // Get Cloudinary signature
+      const signatureData = await cloudinaryService.getSignature({
+        folder: 'stefna/sources'
+      });
+      
+      // Upload to Cloudinary
+      const uploadResult = await cloudinaryService.uploadImage(
+        compressedImage.uri,
+        signatureData
+      );
+      
+      console.log('☁️ [Mobile] Image uploaded to Cloudinary:', uploadResult.secure_url);
+      return uploadResult.secure_url;
     } catch (error) {
-      console.error('❌ [Mobile] Compression failed, using original:', error);
-      return await this.convertImageToBase64(imageUri);
+      console.error('❌ [Mobile] Upload failed, trying original:', error);
+      
+      // Fallback: try uploading original image
+      try {
+        const signatureData = await cloudinaryService.getSignature({
+          folder: 'stefna/sources'
+        });
+        
+        const uploadResult = await cloudinaryService.uploadImage(
+          imageUri,
+          signatureData
+        );
+        
+        console.log('☁️ [Mobile] Original image uploaded to Cloudinary:', uploadResult.secure_url);
+        return uploadResult.secure_url;
+      } catch (fallbackError) {
+        console.error('❌ [Mobile] Fallback upload also failed:', fallbackError);
+        throw new Error('Failed to upload image to Cloudinary');
+      }
     }
   }
 
@@ -218,8 +249,8 @@ export class GenerationService {
         };
       }
 
-      // Compress and convert image URI to base64 for upload
-      const base64Image = await this.compressAndConvertImage(request.imageUri);
+      // Compress and upload image to Cloudinary
+      const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -269,14 +300,17 @@ export class GenerationService {
         }
       }
 
-      // Build complete payload matching website's unified-generate-background
+      // Build payload matching website's unified-generate-background format
       const runId = `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const payload: any = {
         mode: modeMap[request.mode] || request.mode,
         prompt: processedPrompt,
-        sourceAssetId: base64Image, // Website expects base64 as sourceAssetId
+        sourceAssetId: cloudinaryUrl, // Now using Cloudinary URL like website
         // userId removed - backend will extract from JWT token
         runId,
+        additionalImages: 0,
+        editImages: 0,
+        storyTimePresetId: undefined,
 
         // Mode-specific parameters (matching website)
         ...(request.presetId && { presetKey: request.presetId }),
@@ -307,6 +341,7 @@ export class GenerationService {
         mode: payload.mode,
         promptLength: payload.prompt?.length || 0,
         hasSource: !!payload.sourceAssetId,
+        sourceUrl: payload.sourceAssetId?.substring(0, 100) + '...',
         runId: payload.runId,
         url: config.apiUrl('unified-generate-background'),
         payloadSize: JSON.stringify(payload).length
@@ -430,8 +465,8 @@ export class GenerationService {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) throw new Error('No auth token found');
 
-    // Compress and convert image URI to base64 for upload
-    const base64Image = await this.compressAndConvertImage(request.imageUri);
+    // Compress and upload image to Cloudinary
+    const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
 
     // Convert mobile mode names to website's expected format
     const modeMap: Record<string, string> = {
@@ -481,13 +516,16 @@ export class GenerationService {
       }
     }
 
-    // Build complete payload matching website's unified-generate-background
+    // Build payload matching website's unified-generate-background format
     const payload: any = {
       mode: modeMap[request.mode] || request.mode,
       prompt: processedPrompt,
-      sourceAssetId: base64Image, // Website expects base64 as sourceAssetId
+      sourceAssetId: cloudinaryUrl, // Now using Cloudinary URL like website
       // userId removed - backend will extract from JWT token
       runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      additionalImages: 0,
+      editImages: 0,
+      storyTimePresetId: undefined,
 
       // Mode-specific parameters (matching website)
       ...(request.presetId && { presetKey: request.presetId }),
@@ -738,27 +776,6 @@ export class GenerationService {
     }
   }
 
-  private static async convertImageToBase64(imageUri: string): Promise<string> {
-    try {
-      // For React Native, we need to fetch the image and convert to base64
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
-      
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          // Keep full Data URL (backend accepts data:image/...;base64, URIs)
-          resolve(result);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('Failed to convert image to base64:', error);
-      throw new Error('Failed to process image for upload');
-    }
-  }
 
   private static getLocalPresets(): Preset[] {
     // Fallback presets for offline/demo mode

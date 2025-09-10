@@ -32,6 +32,7 @@ interface CreditsState {
   error: string | null;
 
   // Actions
+  initializeFromCache: () => Promise<void>;
   reserveCredits: (cost: number, action: string) => Promise<boolean>;
   finalizeCredits: (disposition: 'commit' | 'refund') => Promise<boolean>;
   refreshBalance: () => Promise<void>;
@@ -54,6 +55,22 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
   isLoading: false,
 
   error: null,
+
+  // Initialize credits from cache on store creation
+  initializeFromCache: async () => {
+    try {
+      const cachedUser = await AsyncStorage.getItem('user_profile');
+      if (cachedUser) {
+        const user = JSON.parse(cachedUser);
+        if (user.credits !== undefined && user.credits !== null) {
+          set({ balance: user.credits });
+          console.log('📱 Initialized credits from cache:', user.credits);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize credits from cache:', error);
+    }
+  },
 
   reserveCredits: async (cost: number, action: string): Promise<boolean> => {
     try {
@@ -180,22 +197,25 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         return;
       }
 
-      // Try to get cached credits first for INSTANT display
-      const cachedUser = await AsyncStorage.getItem('user_profile');
-      if (cachedUser) {
-        try {
-          const user = JSON.parse(cachedUser);
-          if (user.credits !== undefined && user.credits !== null) {
-            // Show cached credits immediately WITHOUT setting loading
-            set({ balance: user.credits, error: null });
-            console.log('📱 Showing cached credits instantly:', user.credits);
+      // Only show cached credits if we don't have a balance yet
+      const currentBalance = get().balance;
+      if (currentBalance === 0) {
+        const cachedUser = await AsyncStorage.getItem('user_profile');
+        if (cachedUser) {
+          try {
+            const user = JSON.parse(cachedUser);
+            if (user.credits !== undefined && user.credits !== null) {
+              // Show cached credits immediately WITHOUT setting loading
+              set({ balance: user.credits, error: null });
+              console.log('📱 Showing cached credits instantly:', user.credits);
+            }
+          } catch (e) {
+            console.error('Failed to parse cached user:', e);
           }
-        } catch (e) {
-          console.error('Failed to parse cached user:', e);
         }
       }
 
-      // Fetch fresh data in background
+      // Fetch fresh data in background (silently)
       console.log('🔄 Fetching fresh credit balance...');
       const { userService } = await import('../services/userService');
       
@@ -206,14 +226,20 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
           const newBalance = profileResponse.credits.balance;
           const currentBalance = get().balance;
           
-          // Update balance and cache
-          set({
-            balance: newBalance,
-            dailyCap: profileResponse.daily_cap || 30,
-            error: null
-          });
+          // Only update if balance actually changed to avoid UI flicker
+          if (newBalance !== currentBalance) {
+            set({
+              balance: newBalance,
+              dailyCap: profileResponse.daily_cap || 30,
+              error: null
+            });
+            console.log(`✅ Credits updated: ${currentBalance} → ${newBalance}`);
+          } else {
+            console.log('📱 Credits unchanged, skipping UI update');
+          }
           
-          // Update cached user credits
+          // Always update cached user credits
+          const cachedUser = await AsyncStorage.getItem('user_profile');
           if (cachedUser) {
             try {
               const user = JSON.parse(cachedUser);
@@ -223,8 +249,6 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
               console.error('Failed to update cached credits:', e);
             }
           }
-          
-          console.log(`✅ Credits updated: ${currentBalance} → ${newBalance}`);
         }
       } catch (error) {
         // Silently fail for background refresh - we already showed cached

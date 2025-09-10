@@ -46,6 +46,8 @@ export default function CameraScreen() {
         allowsMultipleSelection: false,
         cameraType: ImagePicker.CameraType.back,
         exif: true, // Preserve EXIF data including orientation
+        base64: false, // Don't include base64 to reduce memory usage
+        presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -96,6 +98,7 @@ async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> 
     console.log('📸 EXIF data:', exif);
     
     // Determine if we need to flip horizontally (front camera mirror effect)
+    // Front camera typically produces mirrored images, so we flip them back
     const needsFlip = exif?.Orientation === 2 || exif?.Orientation === 4 || 
                       exif?.Orientation === 5 || exif?.Orientation === 7;
     
@@ -120,13 +123,18 @@ async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> 
     }
     
     // Apply horizontal flip if needed (typically for front camera)
+    // This corrects the mirror effect that front cameras produce
     if (needsFlip) {
       actions.push({ flip: ImageManipulator.FlipType.Horizontal });
     }
     
-    // If no corrections needed, still re-encode to normalize
+    // Always apply some normalization to ensure consistent output
     if (actions.length === 0) {
+      // No orientation changes needed, just resize for consistency
       actions.push({ resize: { width: 1920 } }); // Max width to maintain quality
+    } else {
+      // Add resize after orientation changes to maintain quality
+      actions.push({ resize: { width: 1920 } });
     }
     
     console.log('📸 Applying corrections:', actions);

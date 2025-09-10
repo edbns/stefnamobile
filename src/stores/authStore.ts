@@ -172,9 +172,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               });
               console.log('✅ [Mobile Auth] Session restored successfully');
               
-              // Refresh credits in background
-              setTimeout(() => {
-                useCreditsStore.getState().refreshBalance().catch(console.error);
+              // Initialize credits from cache immediately, then refresh in background
+              setTimeout(async () => {
+                const creditsStore = useCreditsStore.getState();
+                await creditsStore.initializeFromCache();
+                creditsStore.refreshBalance().catch(console.error);
               }, 100);
             } else {
               // Session too old
