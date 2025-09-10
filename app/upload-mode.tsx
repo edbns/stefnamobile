@@ -10,12 +10,12 @@ export default function UploadModeScreen() {
   const mode = params.mode as string;
 
   const modeInfo = {
-    custom: { title: 'Custom', subtitle: 'Create with your own prompt' },
-    studio: { title: 'Studio', subtitle: 'Professional editing' },
-    emotion_mask: { title: 'Emotion Mask', subtitle: 'Express your emotions' },
-    neo_glitch: { title: 'Neo Tokyo Glitch', subtitle: 'Cyberpunk aesthetic' },
-    ghibli: { title: 'Ghibli Reaction', subtitle: 'Anime magic' },
-    presets: { title: 'Presets', subtitle: 'Quick transformations' },
+    custom: { title: 'Custom', subtitle: 'Describe. Create.' },
+    studio: { title: 'Studio', subtitle: 'Tools for precision.' },
+    emotion_mask: { title: 'Emotion Mask', subtitle: 'Faces that feel.' },
+    neo_glitch: { title: 'Neo Tokyo', subtitle: 'Future meets the face.' },
+    ghibli: { title: 'Ghibli Reaction', subtitle: 'Animated emotions.' },
+    presets: { title: 'Presets', subtitle: 'One-tap styles.' },
   };
 
   const currentMode = modeInfo[mode as keyof typeof modeInfo] || modeInfo.custom;
@@ -25,13 +25,7 @@ export default function UploadModeScreen() {
       const result = await ImagePickerService.captureFromCamera();
       if (result.success && result.uri) {
         const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
-        router.push({
-          pathname: '/generate',
-          params: { 
-            selectedImage: normalizedUri,
-            mode: mode
-          }
-        });
+        navigateToGeneration(normalizedUri);
       } else {
         ImagePickerService.showErrorAlert(
           'Camera Error',
@@ -55,13 +49,7 @@ export default function UploadModeScreen() {
     try {
       const result = await ImagePickerService.pickFromGallery();
       if (result.success && result.uri) {
-        router.push({
-          pathname: '/generate',
-          params: { 
-            selectedImage: result.uri,
-            mode: mode
-          }
-        });
+        navigateToGeneration(result.uri);
       } else {
         ImagePickerService.showErrorAlert(
           'Upload Error',
@@ -81,6 +69,27 @@ export default function UploadModeScreen() {
     }
   };
 
+  const navigateToGeneration = (imageUri: string) => {
+    const generationRoutes = {
+      custom: '/generate-custom',
+      studio: '/generate-studio',
+      presets: '/generate-presets',
+      emotion_mask: '/generate-emotion',
+      ghibli: '/generate-ghibli',
+      neo_glitch: '/generate-neo',
+    };
+
+    const route = generationRoutes[mode as keyof typeof generationRoutes] || '/generate-custom';
+    
+    router.push({
+      pathname: route,
+      params: { 
+        selectedImage: imageUri,
+        mode: mode
+      }
+    });
+  };
+
   const handleBack = () => {
     router.back();
   };
@@ -98,24 +107,20 @@ export default function UploadModeScreen() {
         </View>
       </View>
 
-      {/* Upload Options */}
+      {/* Main Content */}
       <View style={styles.content}>
-        <View style={styles.uploadCard}>
-          <Text style={styles.uploadTitle}>Add Your Photo</Text>
-          <Text style={styles.uploadSubtitle}>Choose how you'd like to add your image</Text>
-          
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.uploadButton} onPress={handleUploadPress}>
-              <Feather name="image" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Upload from Gallery</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
-              <Feather name="camera" size={24} color="#000000" />
-              <Text style={styles.buttonText}>Take Photo</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Text style={styles.mainTitle}>Upload or Snap</Text>
+      </View>
+
+      {/* Bottom Buttons */}
+      <View style={styles.bottomButtons}>
+        <TouchableOpacity style={styles.uploadButton} onPress={handleUploadPress}>
+          <Feather name="plus" size={32} color="#000000" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
+          <Feather name="camera" size={32} color="#000000" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -167,54 +172,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 100,
   },
-  uploadCard: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 20,
-    padding: 30,
-    alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
-  },
-  uploadTitle: {
-    fontSize: 24,
+  mainTitle: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 8,
     textAlign: 'center',
   },
-  uploadSubtitle: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: 16,
+  bottomButtons: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 60,
   },
   uploadButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   cameraButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
