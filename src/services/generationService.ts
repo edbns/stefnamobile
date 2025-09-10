@@ -362,8 +362,11 @@ export class GenerationService {
         };
       }
 
-      // Upload image to backend media_assets table and get UUID
-      const sourceAssetId = await this.uploadToMediaAssets(request.imageUri);
+      // Upload image to Cloudinary first (like website)
+      const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
+      
+      // Use 'present' like website does - backend will handle the Cloudinary URL
+      const sourceAssetId = 'present';
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -418,7 +421,8 @@ export class GenerationService {
       const payload: any = {
         mode: modeMap[request.mode] || request.mode,
         prompt: processedPrompt,
-        sourceAssetId: sourceAssetId, // Using UUID from media_assets table
+        sourceAssetId: sourceAssetId, // Using 'present' like website
+        cloudinaryUrl: cloudinaryUrl, // Include Cloudinary URL for backend
         // userId removed - backend will extract from JWT token
         runId,
         additionalImages: 0,
@@ -455,6 +459,7 @@ export class GenerationService {
         promptLength: payload.prompt?.length || 0,
         hasSource: !!payload.sourceAssetId,
         sourceAssetId: payload.sourceAssetId,
+        cloudinaryUrl: payload.cloudinaryUrl?.substring(0, 50) + '...',
         runId: payload.runId,
         url: config.apiUrl('unified-generate-background'),
         payloadSize: JSON.stringify(payload).length
@@ -628,8 +633,11 @@ export class GenerationService {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) throw new Error('No auth token found');
 
-    // Upload image to backend media_assets table and get UUID
-    const sourceAssetId = await this.uploadToMediaAssets(request.imageUri);
+    // Upload image to Cloudinary first (like website)
+    const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
+    
+    // Use 'present' like website does - backend will handle the Cloudinary URL
+    const sourceAssetId = 'present';
 
     // Convert mobile mode names to website's expected format
     const modeMap: Record<string, string> = {
@@ -683,7 +691,8 @@ export class GenerationService {
     const payload: any = {
       mode: modeMap[request.mode] || request.mode,
       prompt: processedPrompt,
-        sourceAssetId: sourceAssetId, // Using UUID from media_assets table
+        sourceAssetId: sourceAssetId, // Using 'present' like website
+        cloudinaryUrl: cloudinaryUrl, // Include Cloudinary URL for backend
       // userId removed - backend will extract from JWT token
       runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       additionalImages: 0,
