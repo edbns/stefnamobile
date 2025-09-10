@@ -7,13 +7,15 @@ import {
   FlatList, 
   Alert, 
   Image,
-  SectionList
+  SectionList,
+  Animated
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ImagePickerService } from '../src/services/imagePickerService';
 
 export default function MainScreen() {
@@ -25,6 +27,11 @@ export default function MainScreen() {
 
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+
+  // Animation states for footer buttons
+  const [profileAnim] = useState(new Animated.Value(1));
+  const [mediaAnim] = useState(new Animated.Value(1));
+  const [editAnim] = useState(new Animated.Value(1));
 
   // Load user's media on mount
   useEffect(() => {
@@ -134,14 +141,56 @@ export default function MainScreen() {
   };
 
   const handleEditPress = () => {
+    // Magic animation
+    Animated.sequence([
+      Animated.timing(editAnim, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(editAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     router.push('/edit');
   };
 
   const handleMediaPress = () => {
+    // Magic animation
+    Animated.sequence([
+      Animated.timing(mediaAnim, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(mediaAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     // Already on media screen, no action needed
   };
 
   const handleProfilePress = () => {
+    // Magic animation
+    Animated.sequence([
+      Animated.timing(profileAnim, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(profileAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     router.push('/profile');
   };
 
@@ -223,17 +272,36 @@ export default function MainScreen() {
       )}
 
       {/* Floating Footer */}
-      <View style={styles.floatingFooter}>
-        <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-          <Feather name="user" size={24} color="#000000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
-          <Feather name="image" size={24} color="#000000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
-          <Feather name="edit-3" size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
+      <LinearGradient
+        colors={['#0f0f0f', '#1a1a1a']}
+        style={styles.floatingFooter}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        {/* Tech grid pattern overlay */}
+        <View style={styles.techGridOverlay} />
+        
+        {/* Digital lines overlay */}
+        <View style={styles.digitalLinesOverlay} />
+        
+        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
+          <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
+            <Feather name="user" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </Animated.View>
+        
+        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: mediaAnim }] }]}>
+          <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
+            <Feather name="image" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </Animated.View>
+        
+        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: editAnim }] }]}>
+          <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
+            <Feather name="edit-3" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </Animated.View>
+      </LinearGradient>
     </View>
   );
 }
@@ -410,27 +478,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 12, // Reduced from 20
-    paddingHorizontal: 20, // Reduced from 40
-    backgroundColor: '#1a1a1a',
-    borderRadius: 25, // Reduced from 30
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 2, // Reduced shadow
+      height: 8,
     },
-    shadowOpacity: 0.2, // Reduced opacity
-    shadowRadius: 4, // Reduced radius
-    elevation: 4, // Reduced elevation
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  techGridOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    borderRadius: 28,
+    opacity: 0.1,
+    // Tech grid pattern using borders
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  digitalLinesOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 0.5,
+  },
+  footerButtonWrapper: {
+    zIndex: 2,
   },
   footerButton: {
-    width: 50, // Reduced from 60
-    height: 50, // Reduced from 60
-    borderRadius: 25, // Reduced from 30
-    backgroundColor: '#ffffff',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
 });
