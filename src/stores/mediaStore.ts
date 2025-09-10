@@ -55,6 +55,14 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
+      // Show locally stored media immediately for fast UX
+      try {
+        const localMedia = await StorageService.getStoredMedia();
+        if (localMedia && localMedia.length > 0) {
+          set({ media: localMedia, isLoading: false });
+        }
+      } catch {}
+
       // Development bypass - load test media
       if (__DEV__) {
         console.log('🔧 Development mode: Loading test media');
@@ -125,6 +133,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         throw new Error('Not authenticated');
       }
 
+      // Fetch cloud media in background
       const response: UserMediaResponse = await mediaService.getUserMedia(token);
 
       if (!response.error) {
@@ -143,11 +152,11 @@ export const useMediaStore = create<MediaState>((set, get) => ({
           presetKey: item.presetKey,
         }));
 
-        // Load local media
+        // Load local media (may already be displayed)
         const localMedia = await StorageService.getStoredMedia();
 
-        // Merge and deduplicate (prefer local if exists)
-        const mergedMedia = [...localMedia, ...cloudMedia].reduce((acc: MediaItem[], item) => {
+        // Merge and deduplicate (prefer existing entry by id)
+        const mergedMedia = [...(localMedia || []), ...cloudMedia].reduce((acc: MediaItem[], item) => {
           const existing = acc.find(m => m.id === item.id);
           if (!existing) {
             acc.push(item);
