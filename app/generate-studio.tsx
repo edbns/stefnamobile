@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -11,6 +12,9 @@ interface StudioPromptModeProps {
 
 function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
   const [customPrompt, setCustomPrompt] = useState('');
+  const [magicWandAnim] = useState(new Animated.Value(1));
+  const [generateAnim] = useState(new Animated.Value(1));
+  const [promptAnim] = useState(new Animated.Value(1));
 
   const handleGenerate = () => {
     if (!customPrompt.trim()) {

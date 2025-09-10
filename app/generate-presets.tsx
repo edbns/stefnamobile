@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import PresetsService, { DatabasePreset } from '../src/services/presetsService';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
@@ -12,6 +13,8 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
   const [availablePresets, setAvailablePresets] = useState<DatabasePreset[]>([]);
   const [presetsLoading, setPresetsLoading] = useState(false);
   const [presetsError, setPresetsError] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
 
   // Load presets from database on mount
   useEffect(() => {
@@ -43,6 +46,33 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
 
   const handlePresetClick = (presetId: string) => {
     console.log('Preset clicked:', presetId);
+    
+    // Initialize animation if not exists
+    if (!presetAnims[presetId]) {
+      presetAnims[presetId] = new Animated.Value(1);
+    }
+    
+    setSelectedPreset(presetId);
+    
+    // Magic animation on preset click
+    Animated.sequence([
+      Animated.timing(presetAnims[presetId], {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(presetAnims[presetId], {
+        toValue: 1.05,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(presetAnims[presetId], {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
     // Auto-run generation immediately when preset is clicked
     onGenerate(presetId);
   };
@@ -89,24 +119,80 @@ function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
                 <>
                   <View style={styles.presetRow}>
                     {firstRow.map((preset) => (
-                      <TouchableOpacity 
+                      <Animated.View 
                         key={preset.id} 
-                        style={styles.presetButton} 
-                        onPress={() => handlePresetClick(preset.key)}
+                        style={[
+                          styles.presetButtonWrapper,
+                          { transform: [{ scale: presetAnims[preset.key] || 1 }] }
+                        ]}
                       >
-                        <Text style={styles.presetText}>{preset.label}</Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity 
+                          onPress={() => handlePresetClick(preset.key)}
+                          style={styles.presetTouchable}
+                        >
+                          <LinearGradient
+                            colors={selectedPreset === preset.key 
+                              ? ['#ffffff', '#f0f0f0'] 
+                              : ['#0f0f0f', '#1a1a1a']
+                            }
+                            style={styles.presetButton}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            {/* Vintage lines pattern overlay */}
+                            <View style={styles.vintageLinesOverlay} />
+                            
+                            {/* Film strip overlay */}
+                            <View style={styles.filmStripOverlay} />
+                            
+                            <Text style={[
+                              styles.presetText,
+                              selectedPreset === preset.key && styles.presetTextSelected
+                            ]}>
+                              {preset.label}
+                            </Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      </Animated.View>
                     ))}
                   </View>
                   <View style={styles.presetRow}>
                     {secondRow.map((preset) => (
-                      <TouchableOpacity 
+                      <Animated.View 
                         key={preset.id} 
-                        style={styles.presetButton} 
-                        onPress={() => handlePresetClick(preset.key)}
+                        style={[
+                          styles.presetButtonWrapper,
+                          { transform: [{ scale: presetAnims[preset.key] || 1 }] }
+                        ]}
                       >
-                        <Text style={styles.presetText}>{preset.label}</Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity 
+                          onPress={() => handlePresetClick(preset.key)}
+                          style={styles.presetTouchable}
+                        >
+                          <LinearGradient
+                            colors={selectedPreset === preset.key 
+                              ? ['#ffffff', '#f0f0f0'] 
+                              : ['#0f0f0f', '#1a1a1a']
+                            }
+                            style={styles.presetButton}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 1 }}
+                          >
+                            {/* Vintage lines pattern overlay */}
+                            <View style={styles.vintageLinesOverlay} />
+                            
+                            {/* Film strip overlay */}
+                            <View style={styles.filmStripOverlay} />
+                            
+                            <Text style={[
+                              styles.presetText,
+                              selectedPreset === preset.key && styles.presetTextSelected
+                            ]}>
+                              {preset.label}
+                            </Text>
+                          </LinearGradient>
+                        </TouchableOpacity>
+                      </Animated.View>
                     ))}
                   </View>
                 </>
@@ -137,6 +223,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 8,
     textAlign: 'center',
+    textShadowColor: 'rgba(255, 255, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   subtitle: {
     fontSize: 16,
@@ -154,25 +243,65 @@ const styles = StyleSheet.create({
   presetRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 12,
+  },
+  presetButtonWrapper: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  presetTouchable: {
+    borderRadius: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   presetButton: {
-    flex: 1,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    padding: 12,
-    marginHorizontal: 4,
+    borderRadius: 12,
+    padding: 16,
     alignItems: 'center',
-    minHeight: 40,
+    minHeight: 60,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  vintageLinesOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    opacity: 0.1,
+    // Vintage lines pattern using borders
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  filmStripOverlay: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    height: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 1,
   },
   presetText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#ffffff',
     textAlign: 'center',
+    zIndex: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  presetTextSelected: {
+    color: '#000000',
+    textShadowColor: 'rgba(255, 255, 255, 0.5)',
   },
   loadingContainer: {
     flexDirection: 'row',
