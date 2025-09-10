@@ -473,13 +473,13 @@ const styles = StyleSheet.create({
   floatingFooter: {
     position: 'absolute',
     bottom: 20,
-    left: 30,
-    right: 30,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     borderRadius: 28,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -518,7 +518,6 @@ const styles = StyleSheet.create({
   },
   footerButtonWrapper: {
     zIndex: 2,
-    marginHorizontal: 20,
   },
   footerButton: {
     width: 56,
