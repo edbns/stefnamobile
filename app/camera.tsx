@@ -53,15 +53,26 @@ export default function CameraScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         if (asset?.uri) {
-          // Normalize orientation to avoid mirrored/rotated images on some devices
-          const normalizedUri = await normalizeCapturedImage(asset.uri, (asset as any).exif);
-          console.log('✅ Photo captured, normalized and going to generate:', normalizedUri);
-          // Navigate directly to generate - no double confirmation
-          router.replace({
-            pathname: '/generate',
-            params: { selectedImage: normalizedUri }
-          });
-          return;
+          try {
+            // Normalize orientation to avoid mirrored/rotated images on some devices
+            const normalizedUri = await normalizeCapturedImage(asset.uri, (asset as any).exif);
+            console.log('✅ Photo captured, normalized and going to generate:', normalizedUri);
+            // Navigate directly to generate - no double confirmation
+            router.replace({
+              pathname: '/generate',
+              params: { selectedImage: normalizedUri }
+            });
+            return;
+          } catch (normalizeError) {
+            console.error('❌ Image normalization failed:', normalizeError);
+            // Fallback: use original image if normalization fails
+            console.log('📸 Using original image as fallback');
+            router.replace({
+              pathname: '/generate',
+              params: { selectedImage: asset.uri }
+            });
+            return;
+          }
         }
       }
       
@@ -96,6 +107,11 @@ export default function CameraScreen() {
 async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> {
   try {
     console.log('📸 EXIF data:', exif);
+    
+    // Validate URI first
+    if (!uri || typeof uri !== 'string') {
+      throw new Error('Invalid image URI');
+    }
     
     // Determine if we need to flip horizontally (front camera mirror effect)
     // Front camera typically produces mirrored images, so we flip them back
@@ -149,6 +165,7 @@ async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> 
     return result.uri;
   } catch (e) {
     console.error('❌ Failed to normalize image:', e);
+    // Return original URI if normalization fails
     return uri;
   }
 }

@@ -384,6 +384,17 @@ export class GenerationService {
           responsePreview: responseText.substring(0, 500)
         });
         
+        // Handle 202 Accepted responses (async processing started)
+        if (response.status === 202) {
+          console.log('✅ [Mobile Generation] Request accepted (202), processing started');
+          return {
+            success: true,
+            jobId: payload.runId, // Use our runId as jobId for polling
+            runId: payload.runId,
+            estimatedTime: 45, // Default estimate
+          };
+        }
+        
         // Check for common error patterns
         if (responseText.includes('Internal Error') && responseText.includes('ID:')) {
           // Extract error ID for debugging
@@ -403,6 +414,17 @@ export class GenerationService {
 
         const trimmed = responseText.trim();
         if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+          // Handle empty responses (202 Accepted)
+          if (response.status === 202 && trimmed === '') {
+            console.log('✅ [Mobile Generation] Empty 202 response - async processing started');
+            return {
+              success: true,
+              jobId: payload.runId,
+              runId: payload.runId,
+              estimatedTime: 45,
+            };
+          }
+          
           return {
             success: false,
             error: `Unexpected response from server (status ${response.status})`
