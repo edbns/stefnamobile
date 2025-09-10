@@ -64,7 +64,7 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         const user = JSON.parse(cachedUser);
         if (user.credits !== undefined && user.credits !== null) {
           set({ balance: user.credits });
-          console.log('📱 Initialized credits from cache:', user.credits);
+          console.log('📱 Initialized credits from cache:', user.credits, '(will fetch real-time data)');
         }
       }
     } catch (error) {
@@ -197,7 +197,7 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         return;
       }
 
-      // Only show cached credits if we don't have a balance yet
+      // Show cached credits immediately if we don't have a balance yet
       const currentBalance = get().balance;
       if (currentBalance === 0) {
         const cachedUser = await AsyncStorage.getItem('user_profile');
@@ -205,9 +205,9 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
           try {
             const user = JSON.parse(cachedUser);
             if (user.credits !== undefined && user.credits !== null) {
-              // Show cached credits immediately WITHOUT setting loading
+              // Show cached credits immediately as fallback
               set({ balance: user.credits, error: null });
-              console.log('📱 Showing cached credits instantly:', user.credits);
+              console.log('📱 Showing cached credits as fallback:', user.credits);
             }
           } catch (e) {
             console.error('Failed to parse cached user:', e);
@@ -226,16 +226,17 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
           const newBalance = profileResponse.credits.balance;
           const currentBalance = get().balance;
           
-          // Only update if balance actually changed to avoid UI flicker
+          // Always update the balance to reflect the real-time data
+          set({
+            balance: newBalance,
+            dailyCap: profileResponse.daily_cap || 30,
+            error: null
+          });
+          
           if (newBalance !== currentBalance) {
-            set({
-              balance: newBalance,
-              dailyCap: profileResponse.daily_cap || 30,
-              error: null
-            });
             console.log(`✅ Credits updated: ${currentBalance} → ${newBalance}`);
           } else {
-            console.log('📱 Credits unchanged, skipping UI update');
+            console.log(`📱 Credits confirmed: ${newBalance} (no change)`);
           }
           
           // Always update cached user credits
