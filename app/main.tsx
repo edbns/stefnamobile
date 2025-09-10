@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
+import { useCreditsStore } from '../src/stores/creditsStore';
 import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -19,6 +20,7 @@ export default function MainScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { media, isLoading, loadUserMedia, deleteMedia } = useMediaStore();
+  const { refreshBalance } = useCreditsStore();
   const [sections, setSections] = useState<any[]>([]);
 
   const [showCamera, setShowCamera] = useState(false);
@@ -28,8 +30,9 @@ export default function MainScreen() {
   useEffect(() => {
     if (user?.id) {
       loadUserMedia();
+      refreshBalance();
     }
-  }, [user?.id, loadUserMedia]);
+  }, [user?.id, loadUserMedia, refreshBalance]);
 
   // Group media by mode/type
   useEffect(() => {

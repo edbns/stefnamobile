@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { balance } = useCreditsStore();
+  const { balance, refreshBalance } = useCreditsStore();
   
   // State for invite friends dropdown
   const [showInviteDropdown, setShowInviteDropdown] = useState(false);
@@ -42,10 +42,11 @@ export default function ProfileScreen() {
     referralCode: user?.id || ''
   });
 
-  // Load referral stats on mount
+  // Load referral stats and refresh credits on mount
   useEffect(() => {
     loadReferralStats();
-  }, []);
+    refreshBalance();
+  }, [refreshBalance]);
 
   const loadReferralStats = async () => {
     try {

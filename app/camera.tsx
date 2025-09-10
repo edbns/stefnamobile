@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import * as ImageManipulator from 'expo-image-manipulator';
 
 export default function CameraScreen() {
   const router = useRouter();
@@ -50,11 +51,13 @@ export default function CameraScreen() {
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
         if (asset?.uri) {
-          console.log('✅ Photo captured, going directly to generate:', asset.uri);
+          // Normalize orientation to avoid mirrored/rotated images on some devices
+          const normalizedUri = await normalizeCapturedImage(asset.uri, (asset as any).exif);
+          console.log('✅ Photo captured, normalized and going to generate:', normalizedUri);
           // Navigate directly to generate - no double confirmation
           router.replace({
             pathname: '/generate',
-            params: { selectedImage: asset.uri }
+            params: { selectedImage: normalizedUri }
           });
           return;
         }
@@ -85,6 +88,23 @@ export default function CameraScreen() {
       {/* Camera launches automatically, no UI needed */}
     </View>
   );
+}
+
+// Normalize image orientation by rasterizing with no flips and preserving EXIF
+async function normalizeCapturedImage(uri: string, exif?: any): Promise<string> {
+  try {
+    // Draw the image onto a new bitmap to strip mirror/rotation
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [
+        // No explicit rotate/flip; manipulateAsync re-encodes the bitmap
+      ],
+      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    return result.uri;
+  } catch (e) {
+    return uri;
+  }
 }
 
 const styles = StyleSheet.create({

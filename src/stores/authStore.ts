@@ -7,6 +7,7 @@ import { AuthService } from '../services/authService';
 import { userService } from '../services/userService';
 import { useErrorStore, errorHelpers } from './errorStore';
 import { useNotificationsStore, notificationHelpers } from './notificationsStore';
+import { useCreditsStore } from './creditsStore';
 import { AuthState } from '../types/auth';
 import { User } from '../types/user';
 
@@ -150,6 +151,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             isAuthenticated: false,
             isLoading: false
           });
+        }
+      } else if (!userString[1] && token[1]) {
+        // Token exists but user profile missing — try fetching minimal profile
+        try {
+          const profile = await userService.whoami(token[1]);
+          if (profile.ok && profile.user) {
+            const restoredUser: User = {
+              id: profile.user.id,
+              email: profile.user.email,
+              credits: 0,
+              loginTime: Date.now(),
+            };
+            await AsyncStorage.setItem('user_profile', JSON.stringify(restoredUser));
+            set({ user: restoredUser, token: token[1], isAuthenticated: true, isLoading: false });
+            // Kick off background credits/profile refresh to sync numbers
+            try { await useCreditsStore.getState().refreshBalance(); } catch {}
+          } else {
+            set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          }
+        } catch (e) {
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
         }
       } else {
         set({
