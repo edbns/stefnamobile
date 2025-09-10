@@ -62,15 +62,10 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                 onPress={() => handlePresetClick('emotion_mask_nostalgia_distance')}
                 style={styles.presetTouchable}
               >
-                <LinearGradient
-                  colors={selectedPreset === 'emotion_mask_nostalgia_distance' 
-                    ? ['#ffffff', '#f0f0f0'] 
-                    : ['#0f0f0f', '#1a1a1a']
-                  }
-                  style={styles.presetButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === 'emotion_mask_nostalgia_distance' ? '#ffffff' : '#0f0f0f' }
+                ]}>
                   {/* Magical glow overlay */}
                   <View style={styles.magicalGlowOverlay} />
                   
@@ -94,15 +89,10 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                 onPress={() => handlePresetClick('emotion_mask_joy_sadness')}
                 style={styles.presetTouchable}
               >
-                <LinearGradient
-                  colors={selectedPreset === 'emotion_mask_joy_sadness' 
-                    ? ['#ffffff', '#f0f0f0'] 
-                    : ['#0f0f0f', '#1a1a1a']
-                  }
-                  style={styles.presetButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === 'emotion_mask_joy_sadness' ? '#ffffff' : '#0f0f0f' }
+                ]}>
                   {/* Magical glow overlay */}
                   <View style={styles.magicalGlowOverlay} />
                   
@@ -126,15 +116,10 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                 onPress={() => handlePresetClick('emotion_mask_conf_loneliness')}
                 style={styles.presetTouchable}
               >
-                <LinearGradient
-                  colors={selectedPreset === 'emotion_mask_conf_loneliness' 
-                    ? ['#ffffff', '#f0f0f0'] 
-                    : ['#0f0f0f', '#1a1a1a']
-                  }
-                  style={styles.presetButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === 'emotion_mask_conf_loneliness' ? '#ffffff' : '#0f0f0f' }
+                ]}>
                   {/* Magical glow overlay */}
                   <View style={styles.magicalGlowOverlay} />
                   
@@ -159,15 +144,10 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                 onPress={() => handlePresetClick('emotion_mask_peace_fear')}
                 style={styles.presetTouchable}
               >
-                <LinearGradient
-                  colors={selectedPreset === 'emotion_mask_peace_fear' 
-                    ? ['#ffffff', '#f0f0f0'] 
-                    : ['#0f0f0f', '#1a1a1a']
-                  }
-                  style={styles.presetButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === 'emotion_mask_peace_fear' ? '#ffffff' : '#0f0f0f' }
+                ]}>
                   {/* Magical glow overlay */}
                   <View style={styles.magicalGlowOverlay} />
                   
@@ -191,15 +171,10 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
                 onPress={() => handlePresetClick('emotion_mask_strength_vuln')}
                 style={styles.presetTouchable}
               >
-                <LinearGradient
-                  colors={selectedPreset === 'emotion_mask_strength_vuln' 
-                    ? ['#ffffff', '#f0f0f0'] 
-                    : ['#0f0f0f', '#1a1a1a']
-                  }
-                  style={styles.presetButton}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === 'emotion_mask_strength_vuln' ? '#ffffff' : '#0f0f0f' }
+                ]}>
                   {/* Magical glow overlay */}
                   <View style={styles.magicalGlowOverlay} />
                   
