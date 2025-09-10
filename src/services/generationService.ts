@@ -183,13 +183,15 @@ export class GenerationService {
           'Content-Type': 'application/json',
         },
       });
-
-      const data = await response.json();
-
+      const contentType = response.headers.get('content-type');
+      const text = await response.text();
+      if (!contentType || !contentType.includes('application/json') || !text.trim().startsWith('{')) {
+        throw new Error('Invalid presets response');
+      }
+      const data = JSON.parse(text);
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch presets');
       }
-
       return data.presets || [];
     } catch (error) {
       console.error('Get presets error:', error instanceof Error ? error.message : error);
@@ -623,13 +625,15 @@ export class GenerationService {
           'Content-Type': 'application/json',
         },
       });
-
-      const data = await response.json();
-
+      const ct = response.headers.get('content-type');
+      const raw = await response.text();
+      if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
+        throw new Error('Invalid status response');
+      }
+      const data = JSON.parse(raw);
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get status');
       }
-
       return {
         jobId,
         status: data.status,
@@ -701,13 +705,15 @@ export class GenerationService {
           'Content-Type': 'application/json',
         },
       });
-
-      const data = await response.json();
-
+      const ct = response.headers.get('content-type');
+      const raw = await response.text();
+      if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
+        throw new Error('Invalid profile response');
+      }
+      const data = JSON.parse(raw);
       if (!response.ok) {
         throw new Error(data.error || 'Failed to refresh credits');
       }
-
       return data?.credits?.balance ?? 0;
     } catch (error) {
       console.error('Refresh credits error:', error instanceof Error ? error.message : error);

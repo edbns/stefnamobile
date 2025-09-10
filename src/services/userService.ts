@@ -44,13 +44,15 @@ export const userService = {
         'Content-Type': 'application/json',
       },
     });
-
-    const data = await response.json();
-
+    const ct = response.headers.get('content-type');
+    const raw = await response.text();
+    if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
+      throw new Error('Invalid profile response');
+    }
+    const data = JSON.parse(raw);
     if (!response.ok) {
       throw new Error(data.error || 'Failed to fetch user profile');
     }
-
     return data;
   },
 
@@ -67,7 +69,12 @@ export const userService = {
       body: JSON.stringify(updates),
     });
 
-    const data = await response.json();
+    const ct = response.headers.get('content-type');
+    const raw = await response.text();
+    if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
+      throw new Error('Invalid update response');
+    }
+    const data = JSON.parse(raw);
 
     if (!response.ok) {
       throw new Error(data.error || 'Failed to update profile');
@@ -85,13 +92,15 @@ export const userService = {
         'Content-Type': 'application/json',
       },
     });
-
-    const data = await response.json();
-
+    const ct = response.headers.get('content-type');
+    const raw = await response.text();
+    if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
+      throw new Error('Invalid whoami response');
+    }
+    const data = JSON.parse(raw);
     if (!response.ok) {
       throw new Error(data.error || 'Failed to validate user identity');
     }
-
     return data;
   },
 };

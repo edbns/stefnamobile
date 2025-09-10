@@ -36,14 +36,34 @@ export default function MainScreen() {
 
   // Group media by mode/type
   useEffect(() => {
+    const normalizeType = (item: any): string => {
+      const rawType = (item.type || '').toString().toLowerCase().replace(/-/g, '_');
+      if (rawType) return rawType;
+      const key = (item.presetKey || '').toString().toLowerCase();
+      if (key.startsWith('ghibli')) return 'ghibli_reaction';
+      if (key.startsWith('emotion_mask')) return 'emotion_mask';
+      if (key.startsWith('neo') || key.includes('glitch')) return 'neo_glitch';
+      if (key.includes('edit')) return 'edit';
+      if (key.includes('custom')) return 'custom_prompt';
+      return 'presets';
+    };
+
     const labelFor = (item: any): string => {
-      const type = (item.type || '').toLowerCase();
-      if (type === 'neo_glitch' || item.prompt?.includes('neo') || item.prompt?.includes('glitch')) return 'Neo Tokyo Glitch';
-      if (type === 'emotion_mask' || item.prompt?.includes('emotion') || item.prompt?.includes('mask')) return 'Emotion Mask';
-      if (type === 'ghibli_reaction' || item.prompt?.includes('ghibli')) return 'Ghibli Reaction';
-      if (type === 'custom_prompt' || item.prompt?.includes('custom')) return 'Custom';
-      if (type === 'edit' || item.prompt?.includes('edit') || item.prompt?.includes('studio')) return 'Studio';
-      return 'Presets';
+      const type = normalizeType(item);
+      switch (type) {
+        case 'neo_glitch':
+          return 'Neo Tokyo Glitch';
+        case 'emotion_mask':
+          return 'Emotion Mask';
+        case 'ghibli_reaction':
+          return 'Ghibli Reaction';
+        case 'custom_prompt':
+          return 'Custom';
+        case 'edit':
+          return 'Studio';
+        default:
+          return 'Presets';
+      }
     };
 
     const groups: Record<string, any[]> = {};
@@ -52,7 +72,10 @@ export default function MainScreen() {
       if (!groups[key]) groups[key] = [];
       groups[key].push(m);
     }
-    const s = Object.keys(groups).map(title => ({ title, data: groups[title] }));
+    const orderedTitles = ['Neo Tokyo Glitch', 'Emotion Mask', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
+    const s = Object.keys(groups)
+      .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))
+      .map(title => ({ title, data: groups[title] }));
     setSections(s);
   }, [media]);
 
