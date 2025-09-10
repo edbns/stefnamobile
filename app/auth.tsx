@@ -66,15 +66,6 @@ export default function AuthScreen() {
     }
   };
 
-  const handleTestLogin = async () => {
-    // Quick test login bypass for UI development
-    try {
-      await login('test@stefna.com', '123456');
-      router.replace('/main');
-    } catch (error) {
-      console.log('Test login failed:', error);
-    }
-  };
 
   return (
     <KeyboardAvoidingView
@@ -118,13 +109,6 @@ export default function AuthScreen() {
             )}
           </TouchableOpacity>
 
-          {/* Test Login Button for UI Development */}
-          <TouchableOpacity
-            style={styles.testButton}
-            onPress={handleTestLogin}
-          >
-            <Text style={styles.testButtonText}>🚀 Test Login (Dev Only)</Text>
-          </TouchableOpacity>
         </View>
 
       </View>
@@ -210,19 +194,5 @@ const styles = StyleSheet.create({
   },
   resendTextDisabled: {
     color: '#666',
-  },
-  testButton: {
-    backgroundColor: '#333333',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#555555',
-  },
-  testButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
   },
 });
