@@ -10,6 +10,7 @@ import {
   Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { useAuthStore } from '../src/stores/authStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
 import { Feather } from '@expo/vector-icons';
@@ -333,7 +334,6 @@ export default function ProfileScreen() {
               {item.showCount ? (
                 <View style={styles.countContainer}>
                   <Text style={styles.countText}>{balance}</Text>
-                  {console.log('📱 Displaying balance:', balance, 'for item:', item.title)}
                 </View>
               ) : item.onPress ? (
                 <View style={styles.settingArrow}>
@@ -520,7 +520,7 @@ export default function ProfileScreen() {
 
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.iconBackButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => navigateBack.toMain()}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>

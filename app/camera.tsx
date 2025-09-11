@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Camera, CameraType, FlashMode } from 'expo-camera';
+import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
+import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
 
@@ -9,129 +10,116 @@ const { width, height } = Dimensions.get('window');
 
 export default function CameraScreen() {
   const router = useRouter();
-  const cameraRef = useRef<Camera>(null);
-  
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const cameraRef = useRef<CameraView>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [cameraType, setCameraType] = useState<CameraType>(CameraType.back);
   const [flashMode, setFlashMode] = useState<FlashMode>(FlashMode.off);
   const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
-    getCameraPermissions();
-  }, []);
-
-  const getCameraPermissions = async () => {
-    const { status } = await Camera.requestCameraPermissionsAsync();
-    setHasPermission(status === 'granted');
-    
-    if (status !== 'granted') {
-      Alert.alert(
-        'Camera Permission Required',
-        'Please allow camera access to take photos.',
-        [
-          { text: 'Cancel', onPress: () => router.back() },
-          { text: 'Settings', onPress: () => router.back() }
-        ]
-      );
+    if (!permission?.granted) {
+      requestPermission();
     }
+  }, [permission, requestPermission]);
+
+  const handleBack = () => {
+    navigateBack.toMain();
   };
 
   const handleCapture = async () => {
-    if (!cameraRef.current || isCapturing) return;
-
-    try {
+    if (cameraRef.current && !isCapturing) {
       setIsCapturing(true);
-      console.log('📸 Capturing photo...');
-
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-        base64: false,
-        exif: true,
-        skipProcessing: false
-      });
-
-      if (photo?.uri) {
-        console.log('📸 Photo captured, processing...');
-        
-        // Process the image to fix orientation and compress
-        const processedImage = await ImageManipulator.manipulateAsync(
-          photo.uri,
-          [
-            { resize: { width: 1024, height: 1024 } } // Resize to reasonable size
-          ],
-          {
-            compress: 0.8,
-            format: ImageManipulator.SaveFormat.JPEG
-          }
-        );
-
-        console.log('✅ Photo processed, navigating to generate');
-        
-        // Navigate to generate screen with the processed image
-        router.replace({
-          pathname: '/generate',
-          params: { selectedImage: processedImage.uri }
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.8,
+          base64: false,
+          exif: false,
         });
+
+        if (photo?.uri) {
+          // Normalize the image (fix orientation, compress)
+          const manipulatedImage = await ImageManipulator.manipulateAsync(
+            photo.uri,
+            [
+              { resize: { width: 1024 } }, // Resize to reasonable size
+            ],
+            {
+              compress: 0.8,
+              format: ImageManipulator.SaveFormat.JPEG,
+            }
+          );
+
+          // Navigate to upload mode with the captured image
+          router.push({
+            pathname: '/upload-mode',
+            params: { selectedImage: manipulatedImage.uri },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to take picture:', error);
+        Alert.alert('Error', 'Failed to take picture. Please try again.');
+      } finally {
+        setIsCapturing(false);
       }
-    } catch (error) {
-      console.error('❌ Camera capture error:', error);
-      Alert.alert(
-        'Capture Error',
-        'Failed to capture photo. Please try again.',
-        [{ text: 'OK' }]
-      );
-    } finally {
-      setIsCapturing(false);
     }
   };
 
   const toggleCameraType = () => {
-    setCameraType(current => 
-      current === CameraType.back ? CameraType.front : CameraType.back
-    );
+    setCameraType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
   };
 
-  const toggleFlash = () => {
+  const toggleFlashMode = () => {
     setFlashMode(current => {
       switch (current) {
-        case FlashMode.off:
-          return FlashMode.on;
-        case FlashMode.on:
-          return FlashMode.auto;
-        case FlashMode.auto:
-          return FlashMode.off;
-        default:
-          return FlashMode.off;
+        case FlashMode.off: return FlashMode.on;
+        case FlashMode.on: return FlashMode.auto;
+        case FlashMode.auto: return FlashMode.off;
+        default: return FlashMode.off;
       }
     });
   };
 
   const getFlashIcon = () => {
     switch (flashMode) {
-      case FlashMode.on:
-        return 'zap';
-      case FlashMode.auto:
-        return 'zap';
-      case FlashMode.off:
-      default:
-        return 'zap-off';
+      case FlashMode.on: return 'zap';
+      case FlashMode.auto: return 'zap-off';
+      case FlashMode.off: return 'slash';
+      default: return 'slash';
     }
   };
 
-  if (hasPermission === null) {
+  const handlePickFromGallery = async () => {
+    try {
+      const { ImagePickerService } = await import('../src/services/imagePickerService');
+      const result = await ImagePickerService.pickImageFromLibrary();
+      if (result?.uri) {
+        router.push({
+          pathname: '/upload-mode',
+          params: { selectedImage: result.uri },
+        });
+      }
+    } catch (error) {
+      console.error('Failed to pick image from gallery:', error);
+      Alert.alert('Error', 'Failed to pick image from gallery.');
+    }
+  };
+
+  if (!permission) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>Requesting camera permission...</Text>
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ffffff" />
+        <Text style={styles.loadingText}>Loading camera...</Text>
       </View>
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>Camera permission denied</Text>
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Go Back</Text>
+      <View style={styles.permissionContainer}>
+        <Feather name="camera-off" size={80} color="#666666" />
+        <Text style={styles.permissionText}>We need your permission to show the camera</Text>
+        <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
+          <Text style={styles.permissionButtonText}>Grant Permission</Text>
         </TouchableOpacity>
       </View>
     );
@@ -139,60 +127,51 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={styles.camera}
-        type={cameraType}
+        facing={cameraType}
         flashMode={flashMode}
-        ratio="4:3"
       >
-        {/* Header */}
+        {/* Header Overlay */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.headerButton} onPress={() => router.back()}>
-            <Feather name="x" size={24} color="#ffffff" />
+          <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
+            <Feather name="arrow-left" size={24} color="#ffffff" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Take Photo</Text>
-          <View style={styles.headerButton} />
+          <Text style={styles.headerTitle}>Camera</Text>
+          <TouchableOpacity style={styles.headerButton} onPress={toggleFlashMode}>
+            <Feather name={getFlashIcon()} size={24} color="#ffffff" />
+          </TouchableOpacity>
         </View>
 
-        {/* Controls */}
-        <View style={styles.controls}>
-          {/* Top controls */}
-          <View style={styles.topControls}>
-            <TouchableOpacity style={styles.controlButton} onPress={toggleFlash}>
-              <Feather name={getFlashIcon()} size={24} color="#ffffff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.controlButton} onPress={toggleCameraType}>
-              <Feather name="refresh-cw" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Bottom controls */}
-          <View style={styles.bottomControls}>
-            <TouchableOpacity 
-              style={styles.galleryButton} 
-              onPress={() => router.push('/main')}
-            >
-              <Feather name="image" size={24} color="#ffffff" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={[styles.captureButton, isCapturing && styles.captureButtonDisabled]} 
-              onPress={handleCapture}
-              disabled={isCapturing}
-            >
-              <View style={styles.captureButtonInner} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.galleryButton} 
-              onPress={() => router.push('/main')}
-            >
-              <Feather name="upload" size={24} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
+        {/* Camera Controls */}
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity style={styles.controlButton} onPress={toggleCameraType}>
+            <Feather name="refresh-cw" size={24} color="#ffffff" />
+          </TouchableOpacity>
         </View>
-      </Camera>
+
+        {/* Bottom Controls */}
+        <View style={styles.bottomControls}>
+          <TouchableOpacity style={styles.galleryButton} onPress={handlePickFromGallery}>
+            <Feather name="image" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.captureButton}
+            onPress={handleCapture}
+            disabled={isCapturing}
+          >
+            {isCapturing ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <View style={styles.captureInnerCircle} />
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.placeholderButton} />
+        </View>
+      </CameraView>
     </View>
   );
 }
@@ -205,32 +184,52 @@ const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  message: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+  },
+  loadingText: {
+    color: '#ffffff',
+    marginTop: 16,
+    fontSize: 16,
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    paddingHorizontal: 40,
+  },
+  permissionText: {
     color: '#ffffff',
     fontSize: 18,
     textAlign: 'center',
-    marginTop: 100,
-  },
-  button: {
-    backgroundColor: '#ff6b35',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 8,
     marginTop: 20,
-    alignSelf: 'center',
+    marginBottom: 30,
   },
-  buttonText: {
+  permissionButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 15,
+    borderRadius: 25,
+  },
+  permissionButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
   header: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 50,
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    zIndex: 1,
   },
   headerButton: {
     width: 40,
@@ -241,19 +240,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#ffffff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
-  controls: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  topControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 20,
+  controlsContainer: {
+    position: 'absolute',
+    top: 120,
+    right: 20,
+    zIndex: 1,
   },
   controlButton: {
     width: 50,
@@ -262,13 +257,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 10,
   },
   bottomControls: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 40,
-    paddingBottom: 50,
+    zIndex: 1,
   },
   galleryButton: {
     width: 50,
@@ -288,13 +288,14 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: '#ffffff',
   },
-  captureButtonDisabled: {
-    opacity: 0.6,
-  },
-  captureButtonInner: {
+  captureInnerCircle: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#ff6b35',
+    backgroundColor: '#ffffff',
+  },
+  placeholderButton: {
+    width: 50,
+    height: 50,
   },
 });

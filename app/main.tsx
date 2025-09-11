@@ -9,7 +9,8 @@ import {
   Image,
   SectionList,
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
@@ -102,7 +103,7 @@ export default function MainScreen() {
         console.log('Selected image:', result.uri);
         // Navigate to generation screen with selected image
         router.push({
-          pathname: '/generate',
+          pathname: '/upload-mode',
           params: { selectedImage: result.uri }
         });
       } else {
@@ -195,9 +196,9 @@ export default function MainScreen() {
     router.push('/profile');
   };
 
-  const renderFolderItem = ({ section }: { section: any }) => {
+  // Component for folder items that can use hooks
+  const FolderItem = ({ section }: { section: any }) => {
     const handleFolderPress = () => {
-      // Navigate to folder view with all photos of this generation type
       router.push({
         pathname: '/generation-folder',
         params: { 
@@ -207,7 +208,6 @@ export default function MainScreen() {
       });
     };
 
-    // Get the most recent image as folder cover
     const coverImage = section.data[0];
 
     return (
@@ -217,14 +217,13 @@ export default function MainScreen() {
             <Image 
               source={{ uri: coverImage.cloudUrl }} 
               style={styles.folderImageContent}
-              resizeMode="contain"
+              resizeMode="cover"
             />
           ) : (
             <View style={styles.folderImagePlaceholder}>
               <Feather name="folder" size={40} color="#666666" />
             </View>
           )}
-          {/* Transparent overlay with folder name and count */}
           <View style={styles.folderOverlay}>
             <Text style={styles.folderTitleOverlay}>{section.title}</Text>
             <Text style={styles.folderCountOverlay}>{section.data.length} photos</Text>
@@ -232,6 +231,10 @@ export default function MainScreen() {
         </View>
       </TouchableOpacity>
     );
+  };
+
+  const renderFolderItem = ({ section }: { section: any }) => {
+    return <FolderItem section={section} />;
   };
 
   return (
@@ -245,22 +248,11 @@ export default function MainScreen() {
         <FlatList
           data={sections}
           keyExtractor={(section) => section.title}
-          renderItem={({ item: section, index }) => {
-            // 2-column layout for folders
-            const isLeft = index % 2 === 0;
-            return (
-              <View style={[
-                styles.sectionItemWrapper, 
-                styles.twoColumnItem,
-                isLeft ? styles.leftColumn : styles.rightColumn
-              ]}>
-                {renderFolderItem({ section })}
-              </View>
-            );
-          }}
+          renderItem={({ item: section }) => renderFolderItem({ section })}
           contentContainerStyle={styles.galleryContainer}
           showsVerticalScrollIndicator={false}
           numColumns={2}
+          columnWrapperStyle={styles.row}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -339,9 +331,11 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingHorizontal: 16,
     paddingTop: 20,
     paddingBottom: 100, // Space for floating footer
+  },
+  row: {
+    justifyContent: 'space-between',
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
@@ -380,7 +374,8 @@ const styles = StyleSheet.create({
   },
   folderImage: {
     position: 'relative',
-    aspectRatio: 1, // Square aspect ratio
+    width: '100%',
+    aspectRatio: 1, // Square folders
   },
   folderImageContent: {
     width: '100%',
@@ -399,7 +394,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Less transparent (was 0.8)
     paddingHorizontal: 12,
     paddingVertical: 10,
     justifyContent: 'center',

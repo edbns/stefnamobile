@@ -7,6 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 
 export default function CommunityGuidelinesScreen() {
@@ -16,7 +17,7 @@ export default function CommunityGuidelinesScreen() {
     <View style={styles.container}>
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBackButton}>
+        <TouchableOpacity onPress={() => navigateBack.toProfile()} style={styles.iconBackButton}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>

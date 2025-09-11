@@ -102,7 +102,7 @@ export const mediaService = {
       console.error('Load user media error:', error);
       return {
         media: [],
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   },

@@ -210,7 +210,7 @@ export class ImagePickerService {
       
       if (flipHorizontal || flipVertical) {
         manipulatorActions.push({ 
-          flip: flipHorizontal && flipVertical ? ImageManipulator.FlipType.Both 
+          flip: flipHorizontal && flipVertical ? ImageManipulator.FlipType.Horizontal 
               : flipHorizontal ? ImageManipulator.FlipType.Horizontal 
               : ImageManipulator.FlipType.Vertical 
         });

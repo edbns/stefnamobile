@@ -4,14 +4,13 @@ import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import { config } from '../src/config/environment';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 
 interface StudioPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
-  isGenerating: boolean;
 }
 
-function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
+function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
   const [customPrompt, setCustomPrompt] = useState('');
   const [magicWandAnim] = useState(new Animated.Value(1));
   const [generateAnim] = useState(new Animated.Value(1));
@@ -90,27 +89,25 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
           <Text style={styles.title}>Studio</Text>
           <Text style={styles.subtitle}>Tools for precision.</Text>
           
-          <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
-            <View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f' }]}>
-              {/* Tech grid pattern overlay */}
-              <View style={styles.techGridOverlay} />
-              
-              {/* Camera frame overlay */}
-              <View style={styles.cameraFrameOverlay} />
-              
-              <TextInput
-                style={styles.promptInput}
-                value={customPrompt}
-                onChangeText={setCustomPrompt}
-                placeholder="Change something, add something — your call ... tap ✨ for a little magic."
-                placeholderTextColor="#666"
-                multiline
-                numberOfLines={3}
-                textAlignVertical="top"
-                returnKeyType="done"
-                blurOnSubmit={false}
-              />
-            </View>
+          <Animated.View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f', transform: [{ scale: promptAnim }] }]}>
+            {/* Tech grid pattern overlay */}
+            <View style={styles.techGridOverlay} />
+            
+            {/* Camera frame overlay */}
+            <View style={styles.cameraFrameOverlay} />
+            
+            <TextInput
+              style={styles.promptInput}
+              value={customPrompt}
+              onChangeText={setCustomPrompt}
+              placeholder="Change something, add something — your call ... tap ✨ for a little magic."
+              placeholderTextColor="#666"
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+              returnKeyType="done"
+              blurOnSubmit={false}
+            />
           </Animated.View>
 
           {/* Action Buttons */}
@@ -118,7 +115,7 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
             <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
               <TouchableOpacity
                 onPress={handleMagicWand}
-                disabled={!customPrompt.trim() || isGenerating}
+                disabled={!customPrompt.trim()}
                 style={styles.magicWandTouchable}
               >
                 <Text style={styles.magicWandIcon}>✨</Text>
@@ -130,19 +127,15 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
               <TouchableOpacity
                 style={[
                   styles.generateTouchable,
-                  (!customPrompt.trim() || isGenerating) && styles.generateButtonDisabled
+                  (!customPrompt.trim()) && styles.generateButtonDisabled
                 ]}
                 onPress={handleGenerate}
-                disabled={!customPrompt.trim() || isGenerating}
+                disabled={!customPrompt.trim()}
               >
-                {isGenerating ? (
-                  <View style={styles.spinner} />
-                ) : (
-                  <>
-                    <ArrowUp size={20} color="#000000" />
-                    <Text style={styles.generateText}>Generate</Text>
-                  </>
-                )}
+                <>
+                  <ArrowUp size={20} color="#000000" />
+                  <Text style={styles.generateText}>Generate</Text>
+                </>
               </TouchableOpacity>
             </Animated.View>
           </View>
@@ -156,8 +149,8 @@ export default function GenerateStudioScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "edit-photo"}>
-      {({ onGenerate, isGenerating }) => (
-        <StudioPromptMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      {({ onGenerate }) => (
+        <StudioPromptMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );
@@ -193,10 +186,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  promptContainer: {
-    marginTop: 8,
-    marginBottom: 12,
-  },
   promptInputWrapper: {
     position: 'relative',
     borderRadius: 16,
@@ -208,6 +197,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    marginTop: 8,
+    marginBottom: 12,
   },
   techGridOverlay: {
     position: 'absolute',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
@@ -132,7 +133,7 @@ export default function GenerationFolderScreen() {
       exitSelectionMode();
     } catch (error) {
       console.error('❌ Bulk download error:', error);
-      Alert.alert('Download Error', `Unable to download images: ${error.message}`);
+      Alert.alert('Download Error', `Unable to download images: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -153,7 +154,7 @@ export default function GenerationFolderScreen() {
               }
             }
             exitSelectionMode();
-            router.back(); // Go back to refresh main page
+            navigateBack.toMain(); // Go back to refresh main page
           }
         }
       ]
@@ -173,14 +174,15 @@ export default function GenerationFolderScreen() {
             for (const item of folderData) {
               await deleteMedia(item.id, item.cloudId);
             }
-            router.back(); // Go back to refresh main page
+            navigateBack.toMain(); // Go back to refresh main page
           }
         }
       ]
     );
   };
 
-  const renderMediaItem = ({ item }: { item: any }) => {
+  // Component for media items that can use hooks
+  const MediaItem = ({ item }: { item: any }) => {
     const isSelected = selectedItems.has(item.id);
     
     const handleDelete = () => {
@@ -194,7 +196,7 @@ export default function GenerationFolderScreen() {
             style: 'destructive',
             onPress: async () => {
               await deleteMedia(item.id, item.cloudId);
-              router.back(); // Go back to refresh main page
+              navigateBack.toMain(); // Go back to refresh main page
             }
           }
         ]
@@ -211,6 +213,7 @@ export default function GenerationFolderScreen() {
         <Image 
           source={{ uri: item.cloudUrl || item.localUri }} 
           style={styles.mediaImage}
+          resizeMode="cover"
         />
         {/* Individual delete button - only show when not in selection mode */}
         {!isSelectionMode && (
@@ -230,11 +233,15 @@ export default function GenerationFolderScreen() {
     );
   };
 
+  const renderMediaItem = ({ item }: { item: any }) => {
+    return <MediaItem item={item} />;
+  };
+
   return (
     <View style={styles.container}>
       {/* Transparent Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigateBack.toMain()}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -349,7 +356,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   gridContainer: {
-    padding: 16,
     paddingTop: 100,
     paddingBottom: 100, // Space for action bar when in selection mode
   },
@@ -357,14 +363,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mediaItem: {
-    width: '49%',
-    marginBottom: 8,
+    width: '50%',
     position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: 1, // Square aspect ratio
-    resizeMode: 'contain', // Show full image without cropping
+    aspectRatio: 1, // Square images
   },
   deleteButton: {
     position: 'absolute',
@@ -372,8 +378,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 28,
     height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Less transparent overlay
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -389,10 +394,9 @@ const styles = StyleSheet.create({
   selectionIndicator: {
     width: 24,
     height: 24,
-    borderRadius: 12,
     borderWidth: 2,
     borderColor: '#ffffff',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Less transparent
     justifyContent: 'center',
     alignItems: 'center',
   },

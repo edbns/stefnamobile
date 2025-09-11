@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { useAuthStore } from '../src/stores/authStore';
 import { useGenerationStore } from '../src/stores/generationStore';
 import GenerationModes, { GenerationMode } from '../src/components/GenerationModes';
@@ -11,7 +12,6 @@ export default function GenerateScreen() {
   const params = useLocalSearchParams();
   const { user } = useAuthStore();
   const {
-    isGenerating,
     startGeneration,
   } = useGenerationStore();
 
@@ -69,39 +69,25 @@ export default function GenerateScreen() {
 
     // Start the generation process in the background
     try {
-      const result = await startGeneration({
+      await startGeneration({
         imageUri: selectedImage,
         mode: generationMode,
         presetId: presetId || undefined,
         customPrompt: customPrompt.trim() || undefined,
       });
 
-      console.log('🚀 [Generate] Generation started in background:', result);
+      console.log('🚀 [Generate] Generation started in background');
 
-      // Update the progress screen with real job details
-      router.replace({
-        pathname: '/generation-progress',
-        params: {
-          jobId: result.jobId,
-          runId: result.runId
-        }
-      });
+      // Navigate back to main screen - generation runs in background
+      router.replace('/main');
     } catch (error) {
       console.error('❌ [Generate] Generation failed:', error);
-      // Navigate back to show error
-      router.replace({
-        pathname: '/generation-progress',
-        params: {
-          jobId: tempJobId,
-          runId: tempRunId,
-          error: error instanceof Error ? error.message : 'Generation failed'
-        }
-      });
+      Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
   const handleBack = () => {
-    router.back();
+    navigateBack.toMain();
   };
 
   if (!selectedImage) {
@@ -142,7 +128,7 @@ export default function GenerateScreen() {
               onGenerate={handleGenerate}
               customPrompt={customPrompt}
               onCustomPromptChange={setCustomPrompt}
-              isGenerating={isGenerating}
+              isGenerating={false}
             />
           </View>
         )}

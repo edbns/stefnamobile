@@ -12,7 +12,6 @@ interface GhibliPreset {
 
 interface GhibliReactionModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
-  isGenerating: boolean;
 }
 
 function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
@@ -181,8 +180,8 @@ export default function GenerateGhibliScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "ghibli-reaction"}>
-      {({ onGenerate, isGenerating }) => (
-        <GhibliReactionMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      {({ onGenerate }) => (
+        <GhibliReactionMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );

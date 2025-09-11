@@ -3,6 +3,7 @@
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { config } from '../config/environment';
 import { creditsService, CreditReservationResponse, CreditFinalizationResponse } from '../services/creditsService';
 import { creditsUtils } from '../services/creditsService';
 
@@ -242,8 +243,57 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         }
       }
 
-      // Fetch fresh data in background (silently)
-      console.log('🔄 Fetching fresh credit balance...');
+      // Try get-quota endpoint first (like website), fallback to get-user-profile
+      console.log('🔄 Trying get-quota endpoint first...');
+      try {
+        const quotaResponse = await fetch(config.apiUrl('get-quota'), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (quotaResponse.ok) {
+          const quotaData = await quotaResponse.json();
+          console.log('📱 Quota response:', JSON.stringify(quotaData, null, 2));
+          
+          if (quotaData.balance !== undefined) {
+            const newBalance = quotaData.balance;
+            set({
+              balance: newBalance,
+              dailyCap: quotaData.dailyCap || 30,
+              error: null
+            });
+            
+            console.log(`✅ Credits loaded from get-quota: ${newBalance}`);
+            
+            // Update cached user credits
+            const cachedUser = await AsyncStorage.getItem('user_profile');
+            if (cachedUser) {
+              try {
+                const user = JSON.parse(cachedUser);
+                user.credits = newBalance;
+                await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+                console.log('📱 Updated cached user credits:', newBalance);
+              } catch (e) {
+                console.error('Failed to update cached credits:', e);
+              }
+            }
+            return; // Success, exit early
+          }
+        } else {
+          console.log('⚠️ get-quota failed, trying get-user-profile...');
+        }
+      } catch (quotaError) {
+        console.log('⚠️ get-quota error, trying get-user-profile:', quotaError);
+      }
+      
+      // Fallback to get-user-profile
+      console.log('🔄 Fallback: Fetching fresh credit balance from get-user-profile...');
+      console.log('🔍 Token being used:', token.substring(0, 20) + '...');
+      console.log('🔍 API URL:', config.apiUrl('get-user-profile'));
+      
       const { userService } = await import('../services/userService');
       
       try {

@@ -12,7 +12,6 @@ interface NeoPreset {
 
 interface NeoTokyoModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
-  isGenerating: boolean;
 }
 
 function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
@@ -175,8 +174,8 @@ export default function GenerateNeoScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "neo-glitch"}>
-      {({ onGenerate, isGenerating }) => (
-        <NeoTokyoMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      {({ onGenerate }) => (
+        <NeoTokyoMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );

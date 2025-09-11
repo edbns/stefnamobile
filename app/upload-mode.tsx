@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import { ImagePickerService } from '../src/services/imagePickerService';
 
@@ -91,7 +92,7 @@ export default function UploadModeScreen() {
   };
 
   const handleBack = () => {
-    router.push('/edit');
+    navigateBack.toMain();
   };
 
   return (

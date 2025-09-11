@@ -12,7 +12,6 @@ interface EmotionPreset {
 
 interface EmotionMaskModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
-  isGenerating: boolean;
 }
 
 function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
@@ -181,8 +180,8 @@ export default function GenerateEmotionScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "emotion-mask"}>
-      {({ onGenerate, isGenerating }) => (
-        <EmotionMaskMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      {({ onGenerate }) => (
+        <EmotionMaskMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );

@@ -1,11 +1,14 @@
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions, PanResponder } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { useMediaStore } from '../src/stores/mediaStore';
+import { PinchGestureHandler, PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 'react-native-reanimated';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
@@ -20,37 +23,69 @@ export default function MediaViewerScreen() {
   const mediaId = (params.id as string) || '';
   const cloudId = (params.cloudId as string) || '';
 
-  // Simple zoom functionality
-  const [scale, setScale] = useState(1);
-  const [isZoomed, setIsZoomed] = useState(false);
+  // Pinch-to-zoom functionality
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
 
-  // Double tap to zoom
-  const handleDoubleTap = () => {
-    if (scale === 1) {
-      setScale(2);
-      setIsZoomed(true);
-    } else {
-      setScale(1);
-      setIsZoomed(false);
-    }
-  };
+  const pinchGestureHandler = useAnimatedGestureHandler({
+    onStart: (_, context: any) => {
+      context.startScale = savedScale.value;
+    },
+    onActive: (event: any, context: any) => {
+      scale.value = context.startScale * event.scale;
+    },
+    onEnd: () => {
+      savedScale.value = scale.value;
+      
+      // Reset to 1 if zoomed out too much
+      if (scale.value < 1) {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+      }
+      
+      // Limit maximum zoom
+      if (scale.value > 3) {
+        scale.value = withSpring(3);
+        savedScale.value = 3;
+      }
+    },
+  });
 
-  // PanResponder for pan when zoomed
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => isZoomed,
-      onMoveShouldSetPanResponder: () => isZoomed,
-      onPanResponderGrant: () => {
-        // Allow panning when zoomed
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        // Simple pan implementation could be added here if needed
-      },
-      onPanResponderRelease: () => {
-        // Reset pan if needed
-      },
-    })
-  ).current;
+  const panGestureHandler = useAnimatedGestureHandler({
+    onStart: (_, context: any) => {
+      context.startX = savedTranslateX.value;
+      context.startY = savedTranslateY.value;
+    },
+    onActive: (event: any, context: any) => {
+      // Only allow panning when zoomed in
+      if (savedScale.value > 1) {
+        translateX.value = context.startX + event.translationX;
+        translateY.value = context.startY + event.translationY;
+      }
+    },
+    onEnd: () => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { scale: scale.value },
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+      ],
+    };
+  });
 
   const handleDownload = async () => {
     try {
@@ -102,7 +137,7 @@ export default function MediaViewerScreen() {
       
     } catch (error) {
       console.error('❌ Download error:', error);
-      Alert.alert('Download Error', `Unable to download image: ${error.message}`);
+      Alert.alert('Download Error', `Unable to download image: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsDownloading(false);
     }
@@ -135,13 +170,13 @@ export default function MediaViewerScreen() {
   };
 
   const handleClose = () => {
-    router.back();
+    navigateBack.toMain();
   };
 
   const handleDelete = async () => {
     try {
       await deleteMedia(mediaId, cloudId);
-      router.back();
+      navigateBack.toMain();
     } catch (e) {
       Alert.alert('Delete Error', 'Unable to delete this image.');
     }
@@ -149,25 +184,21 @@ export default function MediaViewerScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Fullscreen Image with Zoom */}
+      {/* Fullscreen Image with Pinch-to-Zoom */}
       <View style={styles.imageContainer}>
-        <TouchableOpacity 
-          style={styles.imageWrapper}
-          onPress={handleDoubleTap}
-          activeOpacity={1}
-          {...panResponder.panHandlers}
-        >
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={[
-              styles.fullscreenImage,
-              {
-                transform: [{ scale: scale }],
-              },
-            ]}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+        <PanGestureHandler onGestureEvent={panGestureHandler}>
+          <Animated.View style={styles.imageWrapper}>
+            <PinchGestureHandler onGestureEvent={pinchGestureHandler}>
+              <Animated.View style={styles.imageWrapper}>
+                <Animated.Image 
+                  source={{ uri: imageUrl }} 
+                  style={[styles.fullscreenImage, animatedStyle]}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            </PinchGestureHandler>
+          </Animated.View>
+        </PanGestureHandler>
       </View>
       
       {/* Top Controls */}

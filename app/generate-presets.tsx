@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
-import { PresetsService, DatabasePreset } from '../src/services/presetsService';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import PresetsService, { DatabasePreset } from '../src/services/presetsService';
 
 interface PresetsModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
-  isGenerating: boolean;
 }
 
-function PresetsMode({ onGenerate, isGenerating }: PresetsModeProps) {
+function PresetsMode({ onGenerate }: PresetsModeProps) {
   const [availablePresets, setAvailablePresets] = useState<DatabasePreset[]>([]);
   const [presetsLoading, setPresetsLoading] = useState(false);
   const [presetsError, setPresetsError] = useState<string | null>(null);
@@ -206,8 +205,8 @@ export default function GeneratePresetsScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "presets"}>
-      {({ onGenerate, isGenerating }) => (
-        <PresetsMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      {({ onGenerate }) => (
+        <PresetsMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );

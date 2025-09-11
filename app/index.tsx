@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 
@@ -8,40 +7,16 @@ export default function SplashScreen() {
   const { isAuthenticated, isLoading } = useAuthStore();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Don't add artificial delay - let the app load naturally
+    if (!isLoading) {
       if (isAuthenticated) {
-        router.replace('/edit');
+        router.replace('/main');
       } else {
         router.replace('/welcome');
       }
-    }, 1500);
+    }
+  }, [isAuthenticated, isLoading, router]);
 
-    return () => clearTimeout(timer);
-  }, [router]);
-
-  return (
-    <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-    </View>
-  );
+  // Show nothing - let Expo's splash screen handle the loading
+  return null;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 20,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginTop: 10,
-  },
-});

@@ -3,19 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } fr
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
-import GenerationProgress from './GenerationProgress';
 import { Feather } from '@expo/vector-icons';
 
 interface BaseGenerationScreenProps {
   mode: string;
-  children: (props: { onGenerate: (presetId?: string, customPrompt?: string) => void; isGenerating: boolean }) => React.ReactNode;
+  children: (props: { onGenerate: (presetId?: string, customPrompt?: string) => void }) => React.ReactNode;
 }
 
 export default function BaseGenerationScreen({ mode, children }: BaseGenerationScreenProps) {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuthStore();
-  const { isGenerating, startGeneration, currentJob, clearCurrentJob } = useGenerationStore();
+  const { startGeneration } = useGenerationStore();
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
@@ -67,16 +66,34 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return;
     }
 
-    // Start the generation process using the simplified service
+    // Start the generation process (non-blocking)
     try {
-      const result = await startGeneration({
+      await startGeneration({
         imageUri: selectedImage,
         mode: mode as any,
         presetId: presetId || undefined,
         customPrompt: customPrompt?.trim() || undefined,
       });
 
-      console.log('🚀 [BaseGenerationScreen] Generation completed:', result);
+      console.log('🚀 [BaseGenerationScreen] Generation started in background');
+      
+      // Show brief success message and navigate back
+      Alert.alert(
+        'Generation Started', 
+        'Your image is being processed. You can check your gallery for progress.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navigate back to upload-mode screen
+              router.push({
+                pathname: '/upload-mode',
+                params: { mode: mode }
+              });
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('❌ [BaseGenerationScreen] Generation failed:', error);
       Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');
@@ -127,37 +144,13 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         {/* Mode-specific content */}
         <View style={styles.section}>
           {children({ 
-            onGenerate: handleGenerate,
-            isGenerating 
+            onGenerate: handleGenerate
           })}
         </View>
 
         {/* Bottom spacing */}
         <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* Generation Progress Modal */}
-      <GenerationProgress
-        isVisible={isGenerating || (currentJob?.status === 'completed') || (currentJob?.status === 'failed')}
-        result={currentJob?.result}
-        onComplete={() => {
-          clearCurrentJob();
-        }}
-        onError={() => {
-          clearCurrentJob();
-        }}
-        onViewResult={(result) => {
-          // Navigate to media viewer
-          router.push({
-            pathname: '/media-viewer',
-            params: { 
-              imageUrl: result.imageUrl,
-              title: 'Generated Image'
-            }
-          });
-          clearCurrentJob();
-        }}
-      />
     </View>
   );
 }

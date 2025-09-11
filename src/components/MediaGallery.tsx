@@ -8,10 +8,12 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { StorageService, StoredMedia } from '../services/storageService';
 import { useMediaStore } from '../stores/mediaStore';
 import { useAuthStore } from '../stores/authStore';
+import { useGenerationStore } from '../stores/generationStore';
 
 interface MediaGalleryProps {
   onMediaSelect?: (media: StoredMedia) => void;
@@ -34,6 +36,7 @@ export default function MediaGallery({
   } = useMediaStore();
 
   const { user } = useAuthStore();
+  const { activeGenerations } = useGenerationStore();
 
   // Filter and sort media based on props
   const media = React.useMemo(() => {
@@ -114,31 +117,50 @@ export default function MediaGallery({
     }
   };
 
-  const renderMediaItem = ({ item }: { item: StoredMedia }) => (
-    <TouchableOpacity
-      style={styles.mediaItem}
-      onPress={() => handleMediaPress(item)}
-      onLongPress={showDeleteOption ? () => handleDeleteMedia(item) : undefined}
-    >
-      <Image
-        source={{ uri: item.localUri }}
-        style={styles.mediaImage}
-        resizeMode="contain"
-      />
-      <View style={styles.mediaOverlay}>
-        <View style={styles.mediaInfo}>
-          <Text style={styles.mediaDate}>
-            {item.createdAt.toLocaleDateString()}
-          </Text>
-          {!item.synced && (
-            <View style={styles.syncIndicator}>
-              <Text style={styles.syncText}>Not synced</Text>
-            </View>
-          )}
-        </View>
+  const renderActiveGeneration = (generation: any) => (
+    <View style={styles.generationItem}>
+      <View style={styles.generationPlaceholder}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.generationText}>
+          {generation.status === 'pending' ? 'Starting...' : 'Processing...'}
+        </Text>
+        <Text style={styles.generationMode}>{generation.mode}</Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
+
+  // Component for media items that can use hooks
+  const MediaItem = ({ item }: { item: StoredMedia }) => {
+    return (
+      <TouchableOpacity
+        style={styles.mediaItem}
+        onPress={() => handleMediaPress(item)}
+        onLongPress={showDeleteOption ? () => handleDeleteMedia(item) : undefined}
+      >
+        <Image
+          source={{ uri: item.localUri }}
+          style={styles.mediaImage}
+          resizeMode="cover"
+        />
+        <View style={styles.mediaOverlay}>
+          <View style={styles.mediaInfo}>
+            <Text style={styles.mediaDate}>
+              {item.createdAt.toLocaleDateString()}
+            </Text>
+            {!item.synced && (
+              <View style={styles.syncIndicator}>
+                <Text style={styles.syncText}>Not synced</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderMediaItem = ({ item }: { item: StoredMedia }) => {
+    return <MediaItem item={item} />;
+  };
 
   if (isLoading) {
     return (
@@ -160,17 +182,47 @@ export default function MediaGallery({
     );
   }
 
+  // Combine media with active generations
+  const combinedData = React.useMemo(() => {
+    const generationItems = activeGenerations.map(gen => ({
+      type: 'generation',
+      id: gen.id,
+      data: gen
+    }));
+    
+    const mediaItems = media.map(item => ({
+      type: 'media',
+      id: item.id,
+      data: item
+    }));
+    
+    return [...generationItems, ...mediaItems];
+  }, [activeGenerations, media]);
+
+  const renderItem = ({ item }: { item: any }) => {
+    if (item.type === 'generation') {
+      return renderActiveGeneration(item.data);
+    } else {
+      return renderMediaItem({ item: item.data });
+    }
+  };
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={media}
-        renderItem={renderMediaItem}
+        data={combinedData}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
         numColumns={3}
         showsVerticalScrollIndicator={false}
         refreshing={isLoading}
         onRefresh={handleRefresh}
         contentContainerStyle={styles.gridContainer}
+        columnWrapperStyle={styles.row}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        removeClippedSubviews={true}
       />
     </View>
   );
@@ -209,15 +261,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   gridContainer: {
-    padding: 4,
+    padding: 0,
+  },
+  row: {
+    justifyContent: 'space-between',
   },
   mediaItem: {
     flex: 1,
-    height: 200, // Fixed height to ensure images display
-    margin: 4,
-    borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
+    aspectRatio: 1, // Square images
   },
   mediaImage: {
     width: '100%',
@@ -250,5 +303,35 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: '#ffffff',
     fontWeight: 'bold',
+  },
+  generationItem: {
+    flex: 1,
+    margin: 4,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a',
+    minHeight: 150,
+    maxHeight: 400,
+    height: 200, // Default height for generation placeholders
+  },
+  generationPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#2a2a2a',
+    padding: 16,
+  },
+  generationText: {
+    fontSize: 12,
+    color: '#ffffff',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  generationMode: {
+    fontSize: 10,
+    color: '#007AFF',
+    marginTop: 4,
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

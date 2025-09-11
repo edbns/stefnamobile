@@ -57,7 +57,7 @@ export default function VerifyScreen() {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../assets/logo.png')} 
+            source={require('../assets/splash-icon.png')} 
             style={styles.logo}
             resizeMode="contain"
           />

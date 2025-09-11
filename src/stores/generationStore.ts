@@ -8,19 +8,20 @@ import { useCreditsStore } from './creditsStore';
 import { useAuthStore } from './authStore';
 
 interface GenerationState {
-  // Simple state like website
-  isGenerating: boolean;
-  currentJob: {
+  // Background processing state
+  activeGenerations: {
     id: string;
     mode: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
+    progress?: number;
     result?: GenerationResult;
     error?: string;
-  } | null;
+    startedAt: number;
+  }[];
   
   // Simple actions
-  startGeneration: (request: GenerationRequest) => Promise<GenerationResult>;
-  clearCurrentJob: () => void;
+  startGeneration: (request: GenerationRequest) => Promise<void>;
+  clearCompletedJobs: () => void;
   
   // Legacy compatibility (for existing screens)
   presets: any[];
@@ -28,113 +29,34 @@ interface GenerationState {
 }
 
 export const useGenerationStore = create<GenerationState>((set, get) => ({
-  isGenerating: false,
-  currentJob: null,
+  activeGenerations: [],
   presets: [],
 
   startGeneration: async (request: GenerationRequest) => {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Set generating state
-    set({ 
-      isGenerating: true,
-      currentJob: {
-        id: jobId,
-        mode: request.mode,
-        status: 'pending'
-      }
-    });
+    // Add to active generations
+    const newGeneration = {
+      id: jobId,
+      mode: request.mode,
+      status: 'pending' as const,
+      startedAt: Date.now()
+    };
+    
+    set(state => ({
+      activeGenerations: [...state.activeGenerations, newGeneration]
+    }));
 
-    try {
-      // Get user from auth store
-      const { user } = useAuthStore.getState();
-      if (!user) {
-        throw new Error('Not authenticated');
-      }
-
-      // Reserve credits using creditsStore
-      const creditCost = 2; // Standard cost for image generation
-      const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
-
-      if (!creditsReserved) {
-        const { error } = useCreditsStore.getState();
-        throw new Error(error || 'Insufficient credits');
-      }
-
-      console.log(`💰 Reserved ${creditCost} credits for generation`);
-
-      // Call the generation service
-      const result = await GenerationService.generate(request);
-
-      if (result.success) {
-        // Update job with success
-        set({ 
-          currentJob: {
-            id: jobId,
-            mode: request.mode,
-            status: 'completed',
-            result: result
-          }
-        });
-
-        // Finalize credits on success
-        await useCreditsStore.getState().finalizeCredits('consume');
-        console.log('💰 Credits consumed for successful generation');
-
-        return result;
-      } else {
-        // Refund credits on generation failure
-        await useCreditsStore.getState().finalizeCredits('refund');
-        console.log('💰 Refunded credits due to generation failure');
-
-        // Update job with failure
-        set({ 
-          currentJob: {
-            id: jobId,
-            mode: request.mode,
-            status: 'failed',
-            error: result.error
-          }
-        });
-
-        return result;
-      }
-    } catch (error) {
-      console.error('Generation error:', error);
-
-      // Refund credits on any error
-      try {
-        await useCreditsStore.getState().finalizeCredits('refund');
-        console.log('💰 Refunded credits due to generation error');
-      } catch (refundError) {
-        console.error('Failed to refund credits:', refundError);
-      }
-
-      // Update job with error
-      set({ 
-        currentJob: {
-          id: jobId,
-          mode: request.mode,
-          status: 'failed',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
-      });
-
-      // Return error result
-      return {
-        success: false,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        type: request.mode
-      };
-    } finally {
-      // Always clear generating state
-      set({ isGenerating: false });
-    }
+    // Start background processing
+    processGenerationInBackground(jobId, request);
   },
 
-  clearCurrentJob: () => {
-    set({ currentJob: null });
+  clearCompletedJobs: () => {
+    set(state => ({
+      activeGenerations: state.activeGenerations.filter(job => 
+        job.status === 'pending' || job.status === 'processing'
+      )
+    }));
   },
 
   loadPresets: async () => {
@@ -143,3 +65,121 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     // No-op for compatibility
   }
 }));
+
+// Background processing function
+async function processGenerationInBackground(jobId: string, request: GenerationRequest) {
+  try {
+    // Update status to processing
+    useGenerationStore.setState(state => ({
+      activeGenerations: state.activeGenerations.map(job =>
+        job.id === jobId ? { ...job, status: 'processing' as const } : job
+      )
+    }));
+
+    // Get user from auth store
+    const { user } = useAuthStore.getState();
+    if (!user) {
+      throw new Error('Not authenticated');
+    }
+
+    // Reserve credits using creditsStore
+    const creditCost = 2; // Standard cost for image generation
+    const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
+
+    if (!creditsReserved) {
+      const { error } = useCreditsStore.getState();
+      throw new Error(error || 'Insufficient credits');
+    }
+
+    console.log(`💰 Reserved ${creditCost} credits for generation`);
+
+    // Call the generation service
+    const result = await GenerationService.generate(request);
+
+    if (result.success) {
+      // Update job with success
+      useGenerationStore.setState(state => ({
+        activeGenerations: state.activeGenerations.map(job =>
+          job.id === jobId ? { 
+            ...job, 
+            status: 'completed' as const,
+            result: result
+          } : job
+        )
+      }));
+
+      // Finalize credits on success
+      await useCreditsStore.getState().finalizeCredits('commit');
+      console.log('💰 Credits consumed for successful generation');
+
+      // Show completion notification
+      showCompletionNotification(jobId, request.mode, true);
+    } else {
+      // Refund credits on generation failure
+      await useCreditsStore.getState().finalizeCredits('refund');
+      console.log('💰 Refunded credits due to generation failure');
+
+      // Update job with failure
+      useGenerationStore.setState(state => ({
+        activeGenerations: state.activeGenerations.map(job =>
+          job.id === jobId ? { 
+            ...job, 
+            status: 'failed' as const,
+            error: result.error
+          } : job
+        )
+      }));
+
+      // Show failure notification
+      showCompletionNotification(jobId, request.mode, false, result.error);
+    }
+  } catch (error) {
+    console.error('Generation error:', error);
+
+    // Refund credits on any error
+    try {
+      await useCreditsStore.getState().finalizeCredits('refund');
+      console.log('💰 Refunded credits due to generation error');
+    } catch (refundError) {
+      console.error('Failed to refund credits:', refundError);
+    }
+
+    // Update job with error
+    useGenerationStore.setState(state => ({
+      activeGenerations: state.activeGenerations.map(job =>
+        job.id === jobId ? { 
+          ...job, 
+          status: 'failed' as const,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        } : job
+      )
+    }));
+
+    // Show error notification
+    showCompletionNotification(jobId, request.mode, false, error instanceof Error ? error.message : 'Unknown error');
+  }
+}
+
+// Simple notification function
+function showCompletionNotification(jobId: string, mode: string, success: boolean, error?: string) {
+  const message = success 
+    ? `${mode} generation completed!` 
+    : `Generation failed: ${error || 'Unknown error'}`;
+  
+  console.log(`📱 Notification: ${message}`);
+  
+  // Dispatch custom event for notification
+  const event = new CustomEvent('generationNotification', {
+    detail: {
+      message,
+      type: success ? 'success' : 'error',
+      jobId,
+      mode
+    }
+  });
+  
+  // Dispatch to window (for React Native, this will be handled by the app)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(event);
+  }
+}
