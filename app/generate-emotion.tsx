@@ -18,6 +18,7 @@ interface EmotionMaskModeProps {
 function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Real Emotion Mask presets from website (exact same data)
   const emotionPresets: EmotionPreset[] = [
@@ -54,7 +55,14 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   ];
 
   const handlePresetClick = (preset: EmotionPreset) => {
+    // Prevent double-click
+    if (isProcessing) {
+      console.log('Emotion preset click ignored - already processing');
+      return;
+    }
+    
     console.log('Emotion preset clicked:', preset.id);
+    setIsProcessing(true);
     
     // Initialize animation if not exists
     if (!presetAnims[preset.id]) {
@@ -80,9 +88,15 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-    
-    onGenerate(preset.id, preset.prompt);
+    ]).start(() => {
+      // Call onGenerate after animation completes
+      onGenerate(preset.id, preset.prompt);
+      
+      // Reset processing state after a delay
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 1000);
+    });
   };
 
   return (
@@ -92,35 +106,71 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
       
       <View style={styles.presetContainer}>
         <View style={styles.presetGrid}>
-          {emotionPresets.map((preset) => (
-            <Animated.View 
-              key={preset.id}
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims[preset.id] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick(preset)}
-                style={styles.presetTouchable}
+          {/* First row - 3 presets */}
+          <View style={styles.presetRow}>
+            {emotionPresets.slice(0, 3).map((preset) => (
+              <Animated.View 
+                key={preset.id}
+                style={[
+                  styles.presetButtonWrapper,
+                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+                ]}
               >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === preset.id && styles.presetTextSelected
+                <TouchableOpacity 
+                  onPress={() => handlePresetClick(preset)}
+                  style={styles.presetTouchable}
+                >
+                  <View style={[
+                    styles.presetButton,
+                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
                   ]}>
-                    {preset.label}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+                    {/* Magical glow overlay */}
+                    <View style={styles.magicalGlowOverlay} />
+                    
+                    <Text style={[
+                      styles.presetText,
+                      selectedPreset === preset.id && styles.presetTextSelected
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
+          
+          {/* Second row - remaining presets */}
+          <View style={styles.presetRow}>
+            {emotionPresets.slice(3).map((preset) => (
+              <Animated.View 
+                key={preset.id}
+                style={[
+                  styles.presetButtonWrapper,
+                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+                ]}
+              >
+                <TouchableOpacity 
+                  onPress={() => handlePresetClick(preset)}
+                  style={styles.presetTouchable}
+                >
+                  <View style={[
+                    styles.presetButton,
+                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                  ]}>
+                    {/* Magical glow overlay */}
+                    <View style={styles.magicalGlowOverlay} />
+                    
+                    <Text style={[
+                      styles.presetText,
+                      selectedPreset === preset.id && styles.presetTextSelected
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
         </View>
       </View>
     </View>

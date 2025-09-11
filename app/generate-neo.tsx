@@ -18,6 +18,7 @@ interface NeoTokyoModeProps {
 function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Real Neo Tokyo presets from website (exact same data)
   const neoPresets: NeoPreset[] = [
@@ -48,7 +49,14 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
   ];
 
   const handlePresetClick = (preset: NeoPreset) => {
+    // Prevent double-click
+    if (isProcessing) {
+      console.log('Neo Tokyo preset click ignored - already processing');
+      return;
+    }
+    
     console.log('Neo Tokyo preset clicked:', preset.id);
+    setIsProcessing(true);
     
     // Initialize animation if not exists
     if (!presetAnims[preset.id]) {
@@ -74,9 +82,15 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
-    
-    onGenerate(preset.id, preset.prompt);
+    ]).start(() => {
+      // Call onGenerate after animation completes
+      onGenerate(preset.id, preset.prompt);
+      
+      // Reset processing state after a delay
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 1000);
+    });
   };
 
   return (
@@ -86,35 +100,71 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
       
       <View style={styles.presetContainer}>
         <View style={styles.presetGrid}>
-          {neoPresets.map((preset) => (
-            <Animated.View 
-              key={preset.id}
-              style={[
-                styles.presetButtonWrapper,
-                { transform: [{ scale: presetAnims[preset.id] || 1 }] }
-              ]}
-            >
-              <TouchableOpacity 
-                onPress={() => handlePresetClick(preset)}
-                style={styles.presetTouchable}
+          {/* First row - 3 presets */}
+          <View style={styles.presetRow}>
+            {neoPresets.slice(0, 3).map((preset) => (
+              <Animated.View 
+                key={preset.id}
+                style={[
+                  styles.presetButtonWrapper,
+                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+                ]}
               >
-                <View style={[
-                  styles.presetButton,
-                  { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
-                ]}>
-                  {/* Magical glow overlay */}
-                  <View style={styles.magicalGlowOverlay} />
-                  
-                  <Text style={[
-                    styles.presetText,
-                    selectedPreset === preset.id && styles.presetTextSelected
+                <TouchableOpacity 
+                  onPress={() => handlePresetClick(preset)}
+                  style={styles.presetTouchable}
+                >
+                  <View style={[
+                    styles.presetButton,
+                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
                   ]}>
-                    {preset.label}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+                    {/* Magical glow overlay */}
+                    <View style={styles.magicalGlowOverlay} />
+                    
+                    <Text style={[
+                      styles.presetText,
+                      selectedPreset === preset.id && styles.presetTextSelected
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
+          
+          {/* Second row - remaining presets */}
+          <View style={styles.presetRow}>
+            {neoPresets.slice(3).map((preset) => (
+              <Animated.View 
+                key={preset.id}
+                style={[
+                  styles.presetButtonWrapper,
+                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+                ]}
+              >
+                <TouchableOpacity 
+                  onPress={() => handlePresetClick(preset)}
+                  style={styles.presetTouchable}
+                >
+                  <View style={[
+                    styles.presetButton,
+                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                  ]}>
+                    {/* Magical glow overlay */}
+                    <View style={styles.magicalGlowOverlay} />
+                    
+                    <Text style={[
+                      styles.presetText,
+                      selectedPreset === preset.id && styles.presetTextSelected
+                    ]}>
+                      {preset.label}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </View>
         </View>
       </View>
     </View>
