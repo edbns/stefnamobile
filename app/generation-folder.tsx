@@ -14,6 +14,12 @@ export default function GenerationFolderScreen() {
   const folderName = params.folderName as string;
   const folderData = JSON.parse(params.folderData as string);
   
+  console.log('🔍 [GenerationFolder] Debug info:', {
+    folderName,
+    folderDataLength: folderData?.length || 0,
+    folderData: folderData?.slice(0, 2), // Show first 2 items for debugging
+  });
+  
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 

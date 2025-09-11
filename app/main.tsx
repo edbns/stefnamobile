@@ -277,19 +277,19 @@ export default function MainScreen() {
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-            <Feather name="user" size={28} color="#ffffff" />
+            <Feather name="user" size={20} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: mediaAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
-            <Feather name="image" size={28} color="#ffffff" />
+            <Feather name="image" size={20} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: editAnim }] }]}>
           <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
-            <Feather name="edit-3" size={28} color="#ffffff" />
+            <Feather name="edit-3" size={20} color="#ffffff" />
           </TouchableOpacity>
         </Animated.View>
         </View>
@@ -472,29 +472,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // Floating Footer
+  // Floating Footer - No background, just floating icons
   floatingFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 100,
-    borderRadius: 24,
-    backgroundColor: 'rgba(15, 15, 15, 0.95)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 60,
     position: 'relative',
-    overflow: 'hidden',
-    minWidth: 500,
-    maxWidth: 600,
+    minWidth: 300,
+    maxWidth: 400,
   },
   techGridOverlay: {
     position: 'absolute',
@@ -522,21 +509,21 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   footerButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

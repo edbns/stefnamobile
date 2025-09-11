@@ -138,27 +138,27 @@ export default function GenerateGhibliScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 12,
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
     textShadowColor: 'rgba(255, 255, 255, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#cccccc',
-    marginBottom: 20,
+    marginBottom: 16,
     textAlign: 'center',
   },
   presetContainer: {
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
   presetGrid: {
     flexDirection: 'column',
@@ -181,10 +181,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   presetButton: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     alignItems: 'center',
-    minHeight: 60,
+    minHeight: 50,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
