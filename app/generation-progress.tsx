@@ -29,32 +29,6 @@ export default function GenerationProgressScreen() {
     const jobId = params.jobId as string;
     const runId = params.runId as string;
 
-    // Handle error state
-    if (jobId === 'error' || runId === 'error') {
-      console.error('Generation error state detected');
-      setGenerationStatus({
-        status: 'failed',
-        progress: 0,
-        message: 'Generation failed',
-        error: params.error as string || 'Unknown error occurred',
-        estimatedTime: 0
-      });
-      return;
-    }
-
-    // Handle pending state - show processing immediately
-    if (jobId === 'pending' || runId === 'pending') {
-      console.log('🚀 [GenerationProgress] Pending state - showing processing UI');
-      setGenerationStatus({
-        status: 'processing',
-        progress: 5,
-        message: 'Starting generation...',
-        estimatedTime: 45
-      });
-      setTimeRemaining(45);
-      return;
-    }
-
     if (!jobId || !runId) {
       console.error('Missing jobId or runId for polling');
       setGenerationStatus(prev => ({

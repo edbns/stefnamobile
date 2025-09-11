@@ -181,7 +181,9 @@ export default function GenerateEmotionScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "emotion-mask"}>
-      <EmotionMaskMode onGenerate={() => {}} isGenerating={false} />
+      {({ onGenerate, isGenerating }) => (
+        <EmotionMaskMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      )}
     </BaseGenerationScreen>
   );
 }

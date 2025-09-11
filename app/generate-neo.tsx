@@ -175,7 +175,9 @@ export default function GenerateNeoScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "neo-glitch"}>
-      <NeoTokyoMode onGenerate={() => {}} isGenerating={false} />
+      {({ onGenerate, isGenerating }) => (
+        <NeoTokyoMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      )}
     </BaseGenerationScreen>
   );
 }

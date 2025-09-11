@@ -181,7 +181,9 @@ export default function GenerateGhibliScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "ghibli-reaction"}>
-      <GhibliReactionMode onGenerate={() => {}} isGenerating={false} />
+      {({ onGenerate, isGenerating }) => (
+        <GhibliReactionMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      )}
     </BaseGenerationScreen>
   );
 }

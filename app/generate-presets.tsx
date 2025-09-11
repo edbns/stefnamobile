@@ -206,7 +206,9 @@ export default function GeneratePresetsScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "presets"}>
-      <PresetsMode />
+      {({ onGenerate, isGenerating }) => (
+        <PresetsMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      )}
     </BaseGenerationScreen>
   );
 }
