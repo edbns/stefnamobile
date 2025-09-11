@@ -55,7 +55,9 @@ class GenerationService {
       mode: request.mode,
       hasImage: !!request.imageUri,
       hasPreset: !!request.presetId,
-      hasCustomPrompt: !!request.customPrompt
+      hasCustomPrompt: !!request.customPrompt,
+      customPrompt: request.customPrompt?.substring(0, 50) + '...',
+      presetId: request.presetId
     });
 
     // Store the request for polling fallback
@@ -110,7 +112,7 @@ class GenerationService {
       }
 
       // Prepare request payload based on mode
-      const payload = this.buildPayload(request, cloudinaryUrl);
+      const payload = await this.buildPayload(request, cloudinaryUrl);
 
       console.log('📡 [Mobile Generation] Calling unified-generate endpoint');
 
@@ -470,7 +472,7 @@ class GenerationService {
    * Build payload for unified generation endpoint
    * Based on website's SimpleGenerationService.buildPayload()
    */
-  private buildPayload(request: GenerationRequest, cloudinaryUrl: string): any {
+  private async buildPayload(request: GenerationRequest, cloudinaryUrl: string): Promise<any> {
     // Convert mode names to match unified function expectations
     const modeMap: Record<GenerationMode, string> = {
       'presets': 'presets',
@@ -533,12 +535,15 @@ class GenerationService {
       console.log('✨ [Mobile Generation] Negative:', negativePrompt.substring(0, 100) + '...');
     }
 
+    // Get user ID synchronously
+    const userId = await getUserFromToken();
+
     const basePayload = {
       mode: modeMap[request.mode],
       prompt: ultraEnhancedPrompt,
       negative_prompt: negativePrompt,
       sourceAssetId: cloudinaryUrl,
-      userId: getUserFromToken(),
+      userId: userId,
       runId: runId,
       meta: {},
       // IPA parameters (matching website defaults)
