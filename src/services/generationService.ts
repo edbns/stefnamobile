@@ -259,11 +259,11 @@ export class GenerationService {
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
         'presets': 'presets',
-        'custom-prompt': 'custom-prompt',
-        'edit-photo': 'edit-photo',
-        'emotion-mask': 'emotion-mask',
-        'ghibli-reaction': 'ghibli-reaction',
-        'neo-glitch': 'neo-glitch',
+        'custom-prompt': 'custom',
+        'edit-photo': 'edit',
+        'emotion-mask': 'emotion_mask',
+        'ghibli-reaction': 'ghibli_reaction',
+        'neo-glitch': 'neo_glitch',
       };
 
       // Apply complete prompt enhancement pipeline (matching website)
@@ -540,11 +540,11 @@ export class GenerationService {
     // Convert mobile mode names to website's expected format
     const modeMap: Record<string, string> = {
       'presets': 'presets',
-      'custom-prompt': 'custom-prompt',
-      'edit-photo': 'edit-photo',
-      'emotion-mask': 'emotion-mask',
-      'ghibli-reaction': 'ghibli-reaction',
-      'neo-glitch': 'neo-glitch',
+      'custom-prompt': 'custom',
+      'edit-photo': 'edit',
+      'emotion-mask': 'emotion_mask',
+      'ghibli-reaction': 'ghibli_reaction',
+      'neo-glitch': 'neo_glitch',
     };
 
     // Apply complete prompt enhancement pipeline (matching website)
