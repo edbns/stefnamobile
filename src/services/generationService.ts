@@ -98,120 +98,6 @@ export class GenerationService {
     });
   }
 
-  // Upload image to backend media_assets table and get UUID
-  private static async uploadToMediaAssets(imageUri: string): Promise<string> {
-    try {
-      console.log('🖼️ [Mobile] Uploading image to media_assets table:', imageUri);
-      
-      // Compress image before upload
-      const compressedImage = await ImageManipulator.manipulateAsync(
-        imageUri,
-        [
-          { resize: { width: 1024, height: 1024 } } // Resize to max 1024px
-        ],
-        { 
-          compress: 0.8, 
-          format: ImageManipulator.SaveFormat.JPEG 
-        }
-      );
-      
-      console.log('✅ [Mobile] Image compressed successfully');
-      
-      // Get Cloudinary signature
-      const signatureData = await cloudinaryService.getSignature({
-        folder: 'stefna/sources'
-      });
-      
-      // Upload to Cloudinary
-      const uploadResult = await cloudinaryService.uploadImage(
-        compressedImage.uri,
-        signatureData
-      );
-      
-      console.log('☁️ [Mobile] Image uploaded to Cloudinary:', uploadResult.secure_url);
-      
-      // Now upload to backend media_assets table to get UUID
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('No auth token found');
-      }
-      
-      const mediaAssetResponse = await fetch(config.apiUrl('create-media-asset'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          cloudinaryUrl: uploadResult.secure_url,
-          cloudinaryId: uploadResult.public_id,
-          filename: uploadResult.original_filename || 'image.jpg',
-          folder: 'stefna/sources'
-        })
-      });
-      
-      if (!mediaAssetResponse.ok) {
-        throw new Error(`Failed to create media asset: ${mediaAssetResponse.statusText}`);
-      }
-      
-      const mediaAssetData = await mediaAssetResponse.json();
-      console.log('📋 [Mobile] Media asset created with UUID:', mediaAssetData.id);
-      
-      return mediaAssetData.id; // Return the UUID from media_assets table
-      
-    } catch (error) {
-      console.error('❌ [Mobile] Upload to media_assets failed, trying fallback:', error);
-      
-      // Fallback: try uploading original image
-      try {
-        const signatureData = await cloudinaryService.getSignature({
-          folder: 'stefna/sources'
-        });
-        
-        const uploadResult = await cloudinaryService.uploadImage(
-          imageUri,
-          signatureData
-        );
-        
-        console.log('☁️ [Mobile] Fallback upload successful:', uploadResult.secure_url);
-        
-        // Try to create media asset with fallback upload
-        const token = await AsyncStorage.getItem('auth_token');
-        if (!token) {
-          throw new Error('No auth token found');
-        }
-        
-        const mediaAssetResponse = await fetch(config.apiUrl('create-media-asset'), {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            cloudinaryUrl: uploadResult.secure_url,
-            cloudinaryId: uploadResult.public_id,
-            filename: uploadResult.original_filename || 'image.jpg',
-            folder: 'stefna/sources'
-          })
-        });
-        
-        if (!mediaAssetResponse.ok) {
-          throw new Error(`Failed to create media asset: ${mediaAssetResponse.statusText}`);
-        }
-        
-        const mediaAssetData = await mediaAssetResponse.json();
-        console.log('📋 [Mobile] Fallback media asset created with UUID:', mediaAssetData.id);
-        
-        return mediaAssetData.id;
-        
-      } catch (fallbackError) {
-        console.error('❌ [Mobile] Fallback upload failed:', fallbackError);
-        throw new Error('Failed to upload image to media_assets table');
-      }
-    }
-  }
-
-  // Image compression and Cloudinary upload (legacy - kept for compatibility)
   private static async compressAndUploadImage(imageUri: string): Promise<string> {
     try {
       console.log('🖼️ [Mobile] Compressing and uploading image:', imageUri);
@@ -367,7 +253,7 @@ export class GenerationService {
       console.log('🔗 [Mobile] Cloudinary URL type:', typeof cloudinaryUrl);
       console.log('🔗 [Mobile] Cloudinary URL length:', cloudinaryUrl?.length);
       
-      // Send the actual Cloudinary URL for IPA check
+      // Send Cloudinary URL directly as sourceAssetId (like website does)
       const sourceAssetId = cloudinaryUrl;
 
       // Convert mobile mode names to website's expected format
