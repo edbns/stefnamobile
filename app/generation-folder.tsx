@@ -327,12 +327,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#ffffff',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   headerSubtitle: {
     color: '#888888',
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 4,
   },
   headerActions: {
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   actionBarText: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     marginTop: 4,
   },

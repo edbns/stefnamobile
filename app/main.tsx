@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     color: '#ffffff',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     marginRight: 8,
   },
   sectionCount: {
     color: '#888888',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
   },
   twoColumnItem: {
@@ -411,13 +411,13 @@ const styles = StyleSheet.create({
   },
   folderTitleOverlay: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 2,
   },
   folderCountOverlay: {
     color: '#cccccc',
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '500',
   },
   row: {

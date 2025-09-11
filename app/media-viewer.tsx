@@ -288,18 +288,18 @@ const styles = StyleSheet.create({
   },
   presetText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     flex: 1,
   },
   promptText: {
     color: '#cccccc',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     marginBottom: 8,
   },
   dateText: {
     color: '#888888',
-    fontSize: 11,
+    fontSize: 10,
   },
 });
