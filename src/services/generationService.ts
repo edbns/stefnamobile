@@ -402,12 +402,6 @@ export class GenerationService {
         });
 
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('❌ [Mobile Generation] Non-JSON response:', {
-          contentType,
-          status: response.status,
-          responsePreview: responseText.substring(0, 500)
-        });
-        
         // Handle 202 Accepted responses (async processing started)
         if (response.status === 202) {
           console.log('✅ [Mobile Generation] Request accepted (202), processing started');
@@ -426,6 +420,13 @@ export class GenerationService {
             estimatedTime: 45, // Default estimate
           };
         }
+        
+        // Only log as error for non-202 responses
+        console.error('❌ [Mobile Generation] Non-JSON response:', {
+          contentType,
+          status: response.status,
+          responsePreview: responseText.substring(0, 500)
+        });
         
         // Check for common error patterns
         if (responseText.includes('Internal Error') && responseText.includes('ID:')) {
