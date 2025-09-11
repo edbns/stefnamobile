@@ -76,8 +76,12 @@ export default function GenerationFolderScreen() {
 
   const downloadSelected = async () => {
     try {
+      console.log('📱 Starting bulk download for', selectedItems.size, 'items');
+      
       // Request media library permissions
       const { status } = await MediaLibrary.requestPermissionsAsync();
+      console.log('📱 Media library permission status:', status);
+      
       if (status !== 'granted') {
         Alert.alert('Permission Required', 'Please allow access to your photo library to download images.');
         return;
@@ -93,21 +97,30 @@ export default function GenerationFolderScreen() {
             const imageUrl = item.cloudUrl || item.localUri;
             const fileName = `stefna_${Date.now()}_${itemId}.jpg`;
             const localPath = FileSystem.cacheDirectory + fileName;
+            
+            console.log('📱 Downloading item:', itemId, 'from:', imageUrl);
 
             // Download image
             const download = await FileSystem.downloadAsync(imageUrl, localPath);
+            console.log('📱 Download result for', itemId, ':', download);
+            
             if (download.status === 200) {
               // Save to photo library
-              await MediaLibrary.createAssetAsync(localPath);
+              const asset = await MediaLibrary.createAssetAsync(localPath);
+              console.log('📱 Saved to photo library:', asset.id);
               successCount++;
             } else {
+              console.error('❌ Download failed for', itemId, 'with status:', download.status);
               errorCount++;
             }
           } catch (error) {
+            console.error('❌ Error downloading', itemId, ':', error);
             errorCount++;
           }
         }
       }
+
+      console.log('📱 Download complete - Success:', successCount, 'Errors:', errorCount);
 
       if (successCount > 0) {
         Alert.alert('Success', `${successCount} images saved to your photo library!`);
@@ -118,7 +131,8 @@ export default function GenerationFolderScreen() {
 
       exitSelectionMode();
     } catch (error) {
-      Alert.alert('Download Error', 'Unable to download images. Please try again.');
+      console.error('❌ Bulk download error:', error);
+      Alert.alert('Download Error', `Unable to download images: ${error.message}`);
     }
   };
 

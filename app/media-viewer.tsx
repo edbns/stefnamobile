@@ -55,9 +55,12 @@ export default function MediaViewerScreen() {
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
+      console.log('📱 Starting download for:', imageUrl);
       
       // Request media library permissions
       const { status } = await MediaLibrary.requestPermissionsAsync();
+      console.log('📱 Media library permission status:', status);
+      
       if (status !== 'granted') {
         Alert.alert('Permission Required', 'Please allow access to your photo library to download images.');
         return;
@@ -67,20 +70,27 @@ export default function MediaViewerScreen() {
       const isRemote = imageUrl.startsWith('http');
       const fileName = `stefna_${Date.now()}.jpg`;
       const localPath = FileSystem.cacheDirectory + fileName;
+      
+      console.log('📱 Local path:', localPath);
+      console.log('📱 Is remote:', isRemote);
 
       if (isRemote) {
         console.log('📱 Downloading image from:', imageUrl);
         const download = await FileSystem.downloadAsync(imageUrl, localPath);
+        console.log('📱 Download result:', download);
+        
         if (download.status !== 200) {
-          throw new Error('Download failed');
+          throw new Error(`Download failed with status: ${download.status}`);
         }
         console.log('📱 Image downloaded to:', localPath);
       } else {
         // If it's already local, copy it to cache with new name
+        console.log('📱 Copying local file...');
         await FileSystem.copyAsync({
           from: imageUrl,
           to: localPath
         });
+        console.log('📱 File copied to:', localPath);
       }
 
       // Save to photo library
@@ -91,8 +101,8 @@ export default function MediaViewerScreen() {
       Alert.alert('Success', 'Image saved to your photo library!');
       
     } catch (error) {
-      console.error('Download error:', error);
-      Alert.alert('Download Error', 'Unable to download image. Please try again.');
+      console.error('❌ Download error:', error);
+      Alert.alert('Download Error', `Unable to download image: ${error.message}`);
     } finally {
       setIsDownloading(false);
     }
