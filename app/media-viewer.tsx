@@ -7,44 +7,8 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import { useMediaStore } from '../src/stores/mediaStore';
-
-// Conditional imports for gesture handler (web fallback)
-let PinchGestureHandler: any;
-let PanGestureHandler: any;
-let State: any;
-let Animated: any;
-let useAnimatedGestureHandler: any;
-let useAnimatedStyle: any;
-let useSharedValue: any;
-let withSpring: any;
-let runOnJS: any;
-
-try {
-  const gestureHandler = require('react-native-gesture-handler');
-  const reanimated = require('react-native-reanimated');
-  
-  PinchGestureHandler = gestureHandler.PinchGestureHandler;
-  PanGestureHandler = gestureHandler.PanGestureHandler;
-  State = gestureHandler.State;
-  Animated = reanimated.default;
-  useAnimatedGestureHandler = reanimated.useAnimatedGestureHandler;
-  useAnimatedStyle = reanimated.useAnimatedStyle;
-  useSharedValue = reanimated.useSharedValue;
-  withSpring = reanimated.withSpring;
-  runOnJS = reanimated.runOnJS;
-} catch (error) {
-  console.warn('Gesture handler not available, using fallback');
-  // Fallback components
-  PinchGestureHandler = ({ children }: any) => children;
-  PanGestureHandler = ({ children }: any) => children;
-  State = { BEGAN: 0, ACTIVE: 1, END: 2 };
-  Animated = { View: View };
-  useAnimatedGestureHandler = () => {};
-  useAnimatedStyle = () => ({});
-  useSharedValue = (value: any) => ({ value });
-  withSpring = (value: any) => value;
-  runOnJS = (fn: any) => fn;
-}
+import { PinchGestureHandler, PanGestureHandler, State } from 'react-native-gesture-handler';
+import Animated, { useAnimatedGestureHandler, useAnimatedStyle, useSharedValue, withSpring, runOnJS } from 'react-native-reanimated';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
