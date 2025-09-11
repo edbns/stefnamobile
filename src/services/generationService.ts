@@ -412,20 +412,11 @@ export class GenerationService {
         if (response.status === 202) {
           console.log('✅ [Mobile Generation] Request accepted (202), processing started');
           
-          // Try to extract jobId from response if it's JSON-like
-          let jobId = payload.runId;
-          let runId = payload.runId;
+          // For 202 responses, use the runId as both jobId and runId
+          const jobId = payload.runId;
+          const runId = payload.runId;
           
-          if (responseText.trim()) {
-            try {
-              const parsedResponse = JSON.parse(responseText);
-              if (parsedResponse.jobId) jobId = parsedResponse.jobId;
-              if (parsedResponse.runId) runId = parsedResponse.runId;
-              console.log('📋 [Mobile Generation] Extracted job info from 202 response:', { jobId, runId });
-            } catch (parseError) {
-              console.log('📋 [Mobile Generation] 202 response not JSON, using fallback jobId');
-            }
-          }
+          console.log('📋 [Mobile Generation] Using runId for polling:', { jobId, runId });
           
           return {
             success: true,

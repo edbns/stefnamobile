@@ -478,10 +478,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 60,
+    paddingHorizontal: 40,
     position: 'relative',
-    minWidth: 300,
-    maxWidth: 400,
+    minWidth: 280,
+    maxWidth: 350,
   },
   techGridOverlay: {
     position: 'absolute',
