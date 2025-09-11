@@ -45,6 +45,11 @@ export default function MainScreen() {
 
   // Group media by mode/type
   useEffect(() => {
+    console.log('📁 [MainScreen] Grouping media:', {
+      totalMedia: media?.length || 0,
+      mediaTypes: media?.map(m => ({ type: m.type, presetKey: m.presetKey, prompt: m.prompt?.substring(0, 50) })) || []
+    });
+
     const normalizeType = (item: any): string => {
       const rawType = (item.type || '').toString().toLowerCase().replace(/-/g, '_');
       if (rawType) return rawType;
@@ -85,6 +90,12 @@ export default function MainScreen() {
     const s = Object.keys(groups)
       .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))
       .map(title => ({ title, data: groups[title] }));
+    
+    console.log('📁 [MainScreen] Final folders:', {
+      folderCount: s.length,
+      folders: s.map(f => ({ title: f.title, count: f.data.length }))
+    });
+    
     setSections(s);
   }, [media]);
 
@@ -333,9 +344,11 @@ const styles = StyleSheet.create({
   galleryContainer: {
     paddingTop: 20,
     paddingBottom: 100, // Space for floating footer
+    paddingHorizontal: 8, // Add horizontal padding for better spacing
   },
   row: {
     justifyContent: 'space-between',
+    paddingHorizontal: 4, // Reduce margin between columns
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
@@ -371,6 +384,7 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
+    marginBottom: 8, // Add small margin between rows
   },
   folderImage: {
     position: 'relative',

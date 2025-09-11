@@ -9,7 +9,7 @@ export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'emoti
 interface GenerationModesProps {
   selectedMode: GenerationMode;
   onModeChange: (mode: GenerationMode) => void;
-  onGenerate: (presetId?: string) => void;
+  onGenerate: (presetId?: string, mode?: GenerationMode) => void;
   customPrompt: string;
   onCustomPromptChange: (text: string) => void;
   isGenerating: boolean;
@@ -84,13 +84,13 @@ export default function GenerationModes({
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
       return;
     }
-    onGenerate();
+    onGenerate(undefined, selectedMode);
   };
 
   const handlePresetClick = (presetId: string) => {
     console.log('Preset clicked:', presetId);
     // Auto-run generation immediately when preset is clicked
-    onGenerate(presetId);
+    onGenerate(presetId, selectedMode);
   };
 
   // Get current week's presets from database

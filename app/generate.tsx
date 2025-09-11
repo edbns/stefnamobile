@@ -35,7 +35,7 @@ export default function GenerateScreen() {
     }
   }, [selectedImage]);
 
-  const handleGenerate = async (presetId?: string) => {
+  const handleGenerate = async (presetId?: string, mode?: GenerationMode) => {
     if (!selectedImage) {
       Alert.alert('Error', 'No image selected');
       return;
@@ -46,40 +46,38 @@ export default function GenerateScreen() {
       return;
     }
 
+    // Use the mode passed from GenerationModes, or fall back to current generationMode
+    const actualMode = mode || generationMode;
+
     // Validation based on mode
-    if ((generationMode === 'custom-prompt' || generationMode === 'edit-photo') && !customPrompt.trim()) {
+    if ((actualMode === 'custom-prompt' || actualMode === 'edit-photo') && !customPrompt.trim()) {
       Alert.alert('Error', 'Please enter a prompt');
       return;
     }
 
-    // Navigate immediately to progress screen with pending state
-    const tempJobId = `pending_${Date.now()}`;
-    const tempRunId = `pending_${Date.now()}`;
-    
-    console.log('🚀 [Generate] Navigating immediately to progress screen');
-    
-    router.push({
-      pathname: '/generation-progress',
-      params: {
-        jobId: tempJobId,
-        runId: tempRunId,
-        pending: 'true' // Flag to indicate this is a pending generation
-      }
-    });
-
-    // Start the generation process in the background
     try {
-      await startGeneration({
-        imageUri: selectedImage,
-        mode: generationMode,
-        presetId: presetId || undefined,
-        customPrompt: customPrompt.trim() || undefined,
-      });
-
-      console.log('🚀 [Generate] Generation started in background');
-
-      // Navigate back to main screen - generation runs in background
-      router.replace('/main');
+      // Show popup that generation started
+      Alert.alert(
+        'Generation Started!', 
+        'Your image is being generated. You can continue using the app while it processes in the background.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Start generation and navigate to main screen
+              startGeneration({
+                imageUri: selectedImage,
+                mode: actualMode,
+                presetId: presetId || undefined,
+                customPrompt: customPrompt.trim() || undefined,
+              });
+              
+              // Navigate to main screen where user can see the generation progress
+              router.replace('/main');
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('❌ [Generate] Generation failed:', error);
       Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');

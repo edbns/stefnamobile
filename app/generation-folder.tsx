@@ -40,10 +40,10 @@ export default function GenerationFolderScreen() {
       router.push({
         pathname: '/media-viewer',
         params: { 
-          imageUrl: item.cloudUrl || item.localUri,
-          prompt: item.prompt || '',
-          preset: folderName,
-          date: new Date(item.createdAt).toLocaleDateString()
+          mediaUri: item.cloudUrl || item.localUri,
+          mediaId: item.id,
+          cloudId: item.cloudId,
+          mediaType: 'image'
         }
       });
     }
@@ -72,6 +72,11 @@ export default function GenerationFolderScreen() {
 
   const selectAll = () => {
     const allIds = folderData.map((item: any) => item.id);
+    console.log('🔍 [SelectAll] Debug info:', {
+      folderDataLength: folderData.length,
+      allIds: allIds,
+      currentSelected: Array.from(selectedItems)
+    });
     setSelectedItems(new Set(allIds));
   };
 

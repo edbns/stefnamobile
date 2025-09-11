@@ -19,6 +19,9 @@ export default function MediaViewerScreen() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Debug logging
+  console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType });
+
   const handleClose = () => {
     navigateBack.toMain();
   };

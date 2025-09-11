@@ -63,8 +63,8 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         }
       } catch {}
 
-      // Development bypass - load test media
-      if (__DEV__) {
+      // Development bypass - load test media (DISABLED for production testing)
+      if (false && __DEV__) {
         console.log('🔧 Development mode: Loading test media');
         const testMedia: MediaItem[] = [
           {
@@ -134,7 +134,14 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       }
 
       // Fetch cloud media in background
+      console.log('🌐 [MediaStore] Fetching user media from server...');
       const response: UserMediaResponse = await mediaService.getUserMedia(token);
+
+      console.log('🌐 [MediaStore] Server response:', {
+        hasError: !!response.error,
+        mediaCount: response.media?.length || 0,
+        error: response.error
+      });
 
       if (!response.error) {
         // Transform cloud media to local format and merge with local storage
@@ -151,6 +158,12 @@ export const useMediaStore = create<MediaState>((set, get) => ({
           prompt: item.prompt,
           presetKey: item.presetKey,
         }));
+
+        console.log('🌐 [MediaStore] Transformed cloud media:', {
+          count: cloudMedia.length,
+          types: cloudMedia.map(m => m.type).filter(Boolean),
+          sample: cloudMedia.slice(0, 2)
+        });
 
         // Load local media (may already be displayed)
         const localMedia = await StorageService.getStoredMedia();
@@ -178,6 +191,12 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         const sortedMedia = mergedMedia.sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
+
+        console.log('🌐 [MediaStore] Final merged media:', {
+          totalCount: sortedMedia.length,
+          types: sortedMedia.map(m => m.type).filter(Boolean),
+          folders: [...new Set(sortedMedia.map(m => m.type).filter(Boolean))]
+        });
 
         set({ media: sortedMedia, isLoading: false });
       } else {

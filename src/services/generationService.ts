@@ -596,6 +596,12 @@ class GenerationService {
    * Get prompt for the generation mode
    */
   private getPromptForMode(request: GenerationRequest): string {
+    // Handle undefined mode
+    if (!request.mode) {
+      console.warn('⚠️ [Mobile Generation] Mode is undefined, defaulting to presets');
+      return 'Transform the image with artistic enhancement';
+    }
+
     // For custom-prompt and edit-photo modes, always use the custom prompt
     if (request.mode === 'custom-prompt' || request.mode === 'edit-photo') {
       if (request.customPrompt) {
