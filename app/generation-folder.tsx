@@ -6,31 +6,6 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useMediaStore } from '../src/stores/mediaStore';
 
-// Simple Masonry Grid Component
-const MasonryGrid = ({ data, renderItem, numColumns = 2, spacing = 4 }) => {
-  const { width } = Dimensions.get('window');
-  const itemWidth = (width - (spacing * (numColumns + 1))) / numColumns;
-  
-  // Simple approach: distribute items evenly across columns
-  const columns = Array.from({ length: numColumns }, () => []);
-  data.forEach((item, index) => {
-    columns[index % numColumns].push({ ...item, index });
-  });
-
-  return (
-    <View style={styles.masonryContainer}>
-      {columns.map((column, columnIndex) => (
-        <View key={columnIndex} style={[styles.masonryColumn, { width: itemWidth }]}>
-          {column.map((item) => (
-            <View key={item.id} style={{ marginBottom: spacing }}>
-              {renderItem({ item, index: item.index })}
-            </View>
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-};
 
 export default function GenerationFolderScreen() {
   const router = useRouter();
@@ -261,12 +236,15 @@ export default function GenerationFolderScreen() {
         )}
       </View>
 
-      {/* Photo Masonry Grid */}
-      <MasonryGrid
+      {/* Photo Grid */}
+      <FlatList
         data={folderData}
+        keyExtractor={(item) => item.id}
         renderItem={renderMediaItem}
         numColumns={2}
-        spacing={4}
+        contentContainerStyle={styles.gridContainer}
+        showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.row}
       />
 
       {/* Action Bar - appears when in selection mode */}
@@ -364,25 +342,16 @@ const styles = StyleSheet.create({
   row: {
     justifyContent: 'space-between',
   },
-  masonryContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    paddingTop: 100,
-    paddingBottom: 100,
-  },
-  masonryColumn: {
-    flex: 1,
-    marginHorizontal: 2,
-  },
   mediaItem: {
-    width: '100%',
+    width: '49.5%',
+    marginBottom: 4,
     overflow: 'hidden',
     borderRadius: 8,
     backgroundColor: '#1a1a1a',
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: undefined, // Let images determine their own height
+    height: 300, // Larger height to accommodate different aspect ratios
     resizeMode: 'contain', // Show full image in original proportions
   },
   deleteButton: {
