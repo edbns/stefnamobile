@@ -289,6 +289,7 @@ export class GenerationService {
       
       // Send Cloudinary URL directly as sourceAssetId (like website does)
       const sourceAssetId = cloudinaryUrl;
+      console.log('🔗 [Mobile] SourceAssetId set to:', sourceAssetId);
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -296,7 +297,7 @@ export class GenerationService {
         'custom-prompt': 'custom',
         'edit-photo': 'edit',
         'emotion-mask': 'emotion_mask',
-        'ghibli-reaction': 'ghibli_reaction',
+        'ghibli-reaction': 'ghibli',
         'neo-glitch': 'neo_glitch',
       };
 
@@ -306,8 +307,9 @@ export class GenerationService {
 
       // Handle preset-based modes - map presetId to actual prompt
       if (!processedPrompt && request.presetId && request.mode !== 'presets') {
+        console.log('🔍 [Mobile] Looking up preset prompt:', { mode: request.mode, presetId: request.presetId });
         processedPrompt = getPresetPrompt(request.mode, request.presetId);
-        console.log('🎨 [Mobile] Using preset prompt:', { mode: request.mode, presetId: request.presetId });
+        console.log('🎨 [Mobile] Using preset prompt:', { mode: request.mode, presetId: request.presetId, prompt: processedPrompt });
       }
 
       console.log('🔍 [Mobile] Prompt processing:', {
