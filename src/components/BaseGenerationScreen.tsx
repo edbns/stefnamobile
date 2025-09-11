@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 
 interface BaseGenerationScreenProps {
   mode: string;
-  children: React.ReactNode;
+  children: (props: { onGenerate: (presetId?: string, customPrompt?: string) => void; isGenerating: boolean }) => React.ReactNode;
 }
 
 export default function BaseGenerationScreen({ mode, children }: BaseGenerationScreenProps) {
@@ -127,7 +127,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
         {/* Mode-specific content */}
         <View style={styles.section}>
-          {React.cloneElement(children as React.ReactElement<any>, { 
+          {children({ 
             onGenerate: handleGenerate,
             isGenerating 
           })}

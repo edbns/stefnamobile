@@ -153,7 +153,9 @@ export default function GenerateCustomScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "custom-prompt"}>
-      <CustomPromptMode />
+      {({ onGenerate, isGenerating }) => (
+        <CustomPromptMode onGenerate={onGenerate} isGenerating={isGenerating} />
+      )}
     </BaseGenerationScreen>
   );
 }
