@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../src/stores/authStore';
 import { AuthService } from '../src/services/authService';
+import { TestAccountService } from '../src/utils/testAccount';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -68,6 +69,19 @@ export default function AuthScreen() {
     }
   };
 
+  const handleTestLogin = async () => {
+    try {
+      const success = await TestAccountService.loginAsTestUser('developer');
+      if (success) {
+        // Trigger auth store initialization to pick up the test session
+        await useAuthStore.getState().initialize();
+        router.replace('/main');
+      }
+    } catch (error) {
+      console.error('Test login failed:', error);
+    }
+  };
+
 
   return (
     <KeyboardAvoidingView
@@ -111,6 +125,15 @@ export default function AuthScreen() {
             )}
           </TouchableOpacity>
 
+          {/* Development Test Login Button */}
+          {__DEV__ && (
+            <TouchableOpacity
+              style={styles.testButton}
+              onPress={handleTestLogin}
+            >
+              <Text style={styles.testButtonText}>🧪 Quick Test Login</Text>
+            </TouchableOpacity>
+          )}
 
         </View>
 
@@ -183,6 +206,20 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: '#666666',
+  },
+  testButton: {
+    backgroundColor: '#ff9500',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#ff9500',
+  },
+  testButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   resendButton: {
     marginTop: 16,
