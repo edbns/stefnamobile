@@ -156,47 +156,56 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           if (isValid.ok && isValid.user) {
             console.log('✅ [Mobile Auth] Token is valid');
             
-            // Update or create user profile
-            let user: User;
-            if (userString[1]) {
-              // Update existing user with fresh data
-              user = JSON.parse(userString[1]);
-              user.id = isValid.user.id;
-              user.email = isValid.user.email;
-            } else {
-              // Create new user profile
-              user = {
-                id: isValid.user.id,
-                email: isValid.user.email,
-                credits: 0,
+            // Get full user profile data
+            console.log('📋 [Mobile Auth] Fetching full user profile...');
+            const profileData = await userService.fetchUserProfile(token[1]);
+            
+            if (profileData.ok && profileData.user) {
+              console.log('✅ [Mobile Auth] Full profile fetched successfully');
+              
+              // Create user object from full profile data
+              const user: User = {
+                id: profileData.user.id,
+                email: profileData.user.email,
+                credits: profileData.credits.balance,
                 loginTime: Date.now(),
               };
-            }
             
-            // Check session age
-            const loginTime = user.loginTime || Date.now();
-            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-            
-            if (loginTime > thirtyDaysAgo) {
-              // Save updated user and restore session
-              await AsyncStorage.setItem('user_profile', JSON.stringify(user));
-              set({
-                user,
-                token: token[1],
-                isAuthenticated: true,
-                isLoading: false
-              });
-              console.log('✅ [Mobile Auth] Session restored successfully');
+              // Check session age
+              const loginTime = user.loginTime || Date.now();
+              const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
               
-              // Initialize credits from cache immediately, then refresh in background
-              setTimeout(async () => {
-                const creditsStore = useCreditsStore.getState();
-                await creditsStore.initializeFromCache();
-                creditsStore.refreshBalance().catch(console.error);
-              }, 100);
+              if (loginTime > thirtyDaysAgo) {
+                // Save updated user and restore session
+                await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+                set({
+                  user,
+                  token: token[1],
+                  isAuthenticated: true,
+                  isLoading: false
+                });
+                console.log('✅ [Mobile Auth] Session restored successfully');
+                
+                // Initialize credits from cache immediately, then refresh in background
+                setTimeout(async () => {
+                  const creditsStore = useCreditsStore.getState();
+                  await creditsStore.initializeFromCache();
+                  creditsStore.refreshBalance().catch(console.error);
+                }, 100);
+              } else {
+                // Session too old
+                console.log('⏰ [Mobile Auth] Session expired (>30 days)');
+                await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
+                set({
+                  user: null,
+                  token: null,
+                  isAuthenticated: false,
+                  isLoading: false
+                });
+              }
             } else {
-              // Session too old
-              console.log('⏰ [Mobile Auth] Session expired (>30 days)');
+              // Profile fetch failed
+              console.log('❌ [Mobile Auth] Failed to fetch user profile');
               await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
               set({
                 user: null,
