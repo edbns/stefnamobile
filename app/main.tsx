@@ -8,7 +8,8 @@ import {
   Alert, 
   Image,
   SectionList,
-  Animated
+  Animated,
+  ActivityIndicator
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
@@ -238,7 +239,7 @@ export default function MainScreen() {
       {/* Media Gallery - Full Screen */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading your creations...</Text>
+          <ActivityIndicator size="large" color="#ffffff" />
         </View>
       ) : media && media.length > 0 ? (
         <FlatList
@@ -310,11 +311,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#cccccc',
-    textAlign: 'center',
   },
 
   // Empty State
