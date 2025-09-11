@@ -251,13 +251,13 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Space for floating footer
   },
   row: {
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   modeCard: {
-    width: '45%',
-    aspectRatio: 0.9,
-    marginBottom: 12,
-    borderRadius: 12,
+    width: '42%',
+    aspectRatio: 1,
+    marginBottom: 16,
+    borderRadius: 16,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
