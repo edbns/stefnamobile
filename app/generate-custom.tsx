@@ -107,37 +107,42 @@ function CustomPromptMode({ onGenerate, isGenerating }: CustomPromptModeProps) {
                 returnKeyType="done"
                 blurOnSubmit={false}
               />
-              
-              {/* Magic Wand Button */}
-              <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
-                <TouchableOpacity
-                  onPress={handleMagicWand}
-                  disabled={!customPrompt.trim() || isGenerating}
-                  style={styles.magicWandTouchable}
-                >
-                  <Text style={styles.magicWandIcon}>✨</Text>
-                </TouchableOpacity>
-              </Animated.View>
-              
-              {/* Generate Button */}
-              <Animated.View style={[styles.generateIconButton, { transform: [{ scale: generateAnim }] }]}>
-                <TouchableOpacity
-                  style={[
-                    styles.generateTouchable,
-                    (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
-                  ]}
-                  onPress={handleGenerate}
-                  disabled={!customPrompt.trim() || isGenerating}
-                >
-                  {isGenerating ? (
-                    <View style={styles.spinner} />
-                  ) : (
-                    <ArrowUp size={16} color="#000000" />
-                  )}
-                </TouchableOpacity>
-              </Animated.View>
             </View>
           </Animated.View>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
+              <TouchableOpacity
+                onPress={handleMagicWand}
+                disabled={!customPrompt.trim() || isGenerating}
+                style={styles.magicWandTouchable}
+              >
+                <Text style={styles.magicWandIcon}>✨</Text>
+                <Text style={styles.magicWandText}>Enhance</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View style={[styles.generateButton, { transform: [{ scale: generateAnim }] }]}>
+              <TouchableOpacity
+                style={[
+                  styles.generateTouchable,
+                  (!customPrompt.trim() || isGenerating) && styles.generateButtonDisabled
+                ]}
+                onPress={handleGenerate}
+                disabled={!customPrompt.trim() || isGenerating}
+              >
+                {isGenerating ? (
+                  <View style={styles.spinner} />
+                ) : (
+                  <>
+                    <ArrowUp size={20} color="#000000" />
+                    <Text style={styles.generateText}>Generate</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -215,57 +220,72 @@ const styles = StyleSheet.create({
   promptInput: {
     backgroundColor: 'transparent',
     padding: 20,
-    paddingRight: 80,
     fontSize: 14,
     color: '#ffffff',
     minHeight: 120,
     zIndex: 2,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
   magicWandButton: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 3,
+    flex: 1,
+    marginRight: 8,
   },
   magicWandTouchable: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
   magicWandIcon: {
     fontSize: 18,
     color: '#ffffff',
+    marginRight: 8,
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  generateIconButton: {
-    position: 'absolute',
-    bottom: 12,
-    right: 12,
-    zIndex: 3,
+  magicWandText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '500',
+  },
+  generateButton: {
+    flex: 1,
+    marginLeft: 8,
   },
   generateTouchable: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 4,
   },
-  generateIconButtonDisabled: {
+  generateButtonDisabled: {
     backgroundColor: '#cccccc',
     opacity: 0.6,
+  },
+  generateText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '600',
+    marginLeft: 8,
   },
   spinner: {
     width: 16,
