@@ -345,14 +345,10 @@ const styles = StyleSheet.create({
   mediaItem: {
     width: '49.5%',
     marginBottom: 4,
-    overflow: 'hidden',
-    borderRadius: 8,
-    backgroundColor: '#1a1a1a',
   },
   mediaImage: {
     width: '100%',
-    height: 300, // Larger height to accommodate different aspect ratios
-    resizeMode: 'contain', // Show full image in original proportions
+    resizeMode: 'cover', // Fill the width, crop height as needed
   },
   deleteButton: {
     position: 'absolute',
