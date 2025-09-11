@@ -750,11 +750,20 @@ export class GenerationService {
           'Content-Type': 'application/json',
         },
       });
+      
       const ct = response.headers.get('content-type');
       const raw = await response.text();
+      
+      // Handle non-JSON responses gracefully - treat as "not ready yet"
       if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
-        throw new Error('Invalid status response');
+        console.log('📊 [GenerationService] Non-JSON response received, treating as not ready');
+        return {
+          jobId,
+          status: 'processing',
+          progress: 0,
+        };
       }
+      
       const data = JSON.parse(raw);
       if (!response.ok) {
         throw new Error(data.error || 'Failed to get status');

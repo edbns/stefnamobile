@@ -108,7 +108,90 @@ class GenerationPollingService {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
+        // Handle non-JSON responses gracefully
+        const contentType = response.headers.get('content-type');
+        const responseText = await response.text();
+        
+        let data;
+        try {
+          if (!contentType || !contentType.includes('application/json') || !responseText.trim().startsWith('{')) {
+            console.log('📊 [GenerationPolling] Non-JSON response received, treating as not ready');
+            // Treat non-JSON as "not ready yet"
+            const timeElapsed = attempts * (pollInterval / 1000);
+            const progress = Math.min((timeElapsed / estimatedTime) * 100, 95);
+            
+            let message = 'Getting it ready';
+            if (progress < 20) message = 'Getting it ready';
+            else if (progress < 50) message = 'Processing your image';
+            else if (progress < 80) message = 'Adding artistic touches';
+            else message = 'Finalizing your creation';
+
+            const pollingStatus: GenerationPollingStatus = {
+              status: 'processing',
+              progress: Math.round(progress),
+              message,
+              estimatedTime: Math.max(estimatedTime - (attempts * 2), 0),
+              jobId,
+              runId
+            };
+
+            if (onProgress) {
+              onProgress(pollingStatus);
+            }
+
+            // Continue polling if under max attempts
+            if (attempts < maxAttempts) {
+              const timeoutId = setTimeout(poll, pollInterval);
+              this.activePolls.set(jobId, timeoutId);
+            } else {
+              const error = new Error('Edit timeout - please try again');
+              if (onError) {
+                onError(error);
+              }
+              this.stopPolling(jobId);
+            }
+            return;
+          }
+          
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.log('📊 [GenerationPolling] Failed to parse response, treating as not ready');
+          // Treat parse error as "not ready yet"
+          const timeElapsed = attempts * (pollInterval / 1000);
+          const progress = Math.min((timeElapsed / estimatedTime) * 100, 95);
+          
+          let message = 'Getting it ready';
+          if (progress < 20) message = 'Getting it ready';
+          else if (progress < 50) message = 'Processing your image';
+          else if (progress < 80) message = 'Adding artistic touches';
+          else message = 'Finalizing your creation';
+
+          const pollingStatus: GenerationPollingStatus = {
+            status: 'processing',
+            progress: Math.round(progress),
+            message,
+            estimatedTime: Math.max(estimatedTime - (attempts * 2), 0),
+            jobId,
+            runId
+          };
+
+          if (onProgress) {
+            onProgress(pollingStatus);
+          }
+
+          // Continue polling if under max attempts
+          if (attempts < maxAttempts) {
+            const timeoutId = setTimeout(poll, pollInterval);
+            this.activePolls.set(jobId, timeoutId);
+          } else {
+            const error = new Error('Edit timeout - please try again');
+            if (onError) {
+              onError(error);
+            }
+            this.stopPolling(jobId);
+          }
+          return;
+        }
         console.log('📊 [GenerationPolling] Status response:', data);
 
         // Calculate progress based on status
