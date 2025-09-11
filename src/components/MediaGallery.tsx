@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   mediaItem: {
     flex: 1,
-    aspectRatio: 1,
+    height: 200, // Fixed height to ensure images display
     margin: 4,
     borderRadius: 8,
     overflow: 'hidden',

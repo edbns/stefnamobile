@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   folderImage: {
     position: 'relative',
-    aspectRatio: 1, // Square containers
+    height: 200, // Fixed height to ensure images display
   },
   folderImageContent: {
     width: '100%',
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: 1,
+    height: 200, // Fixed height to ensure images display
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',

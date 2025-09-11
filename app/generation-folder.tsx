@@ -348,8 +348,8 @@ const styles = StyleSheet.create({
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: undefined, // Allow natural aspect ratio
-    resizeMode: 'contain', // Show full image in original proportions
+    height: 200, // Fixed height to ensure images display
+    resizeMode: 'cover', // Cover the container while maintaining aspect ratio
   },
   deleteButton: {
     position: 'absolute',
