@@ -65,6 +65,8 @@ export default function GenerateScreen() {
       customPrompt: customPrompt.trim() || undefined,
     });
 
+    console.log('🚀 [Generate] Generation started, navigating to progress screen:', result);
+
     // Navigate to generation progress screen with job details
     router.push({
       pathname: '/generation-progress',

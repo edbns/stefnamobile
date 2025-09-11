@@ -155,11 +155,21 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         // Load local media (may already be displayed)
         const localMedia = await StorageService.getStoredMedia();
 
-        // Merge and deduplicate (prefer existing entry by id)
+        // Merge and deduplicate (prefer cloud entry, match by generationJobId or id)
         const mergedMedia = [...(localMedia || []), ...cloudMedia].reduce((acc: MediaItem[], item) => {
-          const existing = acc.find(m => m.id === item.id);
+          // First try to match by generationJobId (for generated media)
+          const existing = acc.find(m => 
+            (m.generationJobId && item.generationJobId && m.generationJobId === item.generationJobId) ||
+            m.id === item.id
+          );
           if (!existing) {
             acc.push(item);
+          } else if (item.cloudUrl && !existing.cloudUrl) {
+            // If cloud item has URL but local doesn't, replace with cloud version
+            const index = acc.findIndex(m => m === existing);
+            if (index !== -1) {
+              acc[index] = item;
+            }
           }
           return acc;
         }, []);
