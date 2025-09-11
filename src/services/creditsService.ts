@@ -49,38 +49,91 @@ export const creditsService = {
       request_id: request.request_id,
     };
 
-    const response = await fetch(config.apiUrl('credits-reserve'), {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    console.log('🔄 [CreditsService] Reserving credits:', {
+      cost: request.cost,
+      action: request.action,
+      url: config.apiUrl('credits-reserve')
     });
 
-    const data = await response.json();
+    try {
+      const response = await fetch(config.apiUrl('credits-reserve'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        // Add timeout and retry logic
+        signal: AbortSignal.timeout(10000), // 10 second timeout
+      });
 
-    if (!response.ok) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('❌ [CreditsService] Reserve failed:', {
+          status: response.status,
+          error: data.error || data.message
+        });
+        return {
+          ok: false,
+          request_id: request.request_id || '',
+          balance: 0,
+          cost: request.cost,
+          action: request.action,
+          error: data.error || data.message || 'Failed to reserve credits',
+          message: data.message,
+          currentBalance: data.currentBalance,
+          requiredCredits: data.requiredCredits,
+        };
+      }
+
+      console.log('✅ [CreditsService] Credits reserved successfully:', {
+        request_id: data.request_id,
+        balance: data.balance
+      });
+
+      return {
+        ok: true,
+        request_id: data.request_id,
+        balance: data.balance,
+        cost: data.cost,
+        action: data.action,
+      };
+    } catch (error) {
+      console.error('❌ [CreditsService] Network error:', error);
+      
+      // Handle different types of errors
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          return {
+            ok: false,
+            request_id: request.request_id || '',
+            balance: 0,
+            cost: request.cost,
+            action: request.action,
+            error: 'Request timeout - please check your internet connection',
+          };
+        } else if (error.message.includes('Network request failed')) {
+          return {
+            ok: false,
+            request_id: request.request_id || '',
+            balance: 0,
+            cost: request.cost,
+            action: request.action,
+            error: 'Network error - please check your internet connection',
+          };
+        }
+      }
+      
       return {
         ok: false,
         request_id: request.request_id || '',
         balance: 0,
         cost: request.cost,
         action: request.action,
-        error: data.error || data.message || 'Failed to reserve credits',
-        message: data.message,
-        currentBalance: data.currentBalance,
-        requiredCredits: data.requiredCredits,
+        error: error instanceof Error ? error.message : 'Unknown network error',
       };
     }
-
-    return {
-      ok: true,
-      request_id: data.request_id,
-      balance: data.balance,
-      cost: data.cost,
-      action: data.action,
-    };
   },
 
   // Finalize credits after generation

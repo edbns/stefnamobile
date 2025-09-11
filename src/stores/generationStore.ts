@@ -84,11 +84,28 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
 
     // Reserve credits using creditsStore
     const creditCost = 2; // Standard cost for image generation
+    console.log('💰 [GenerationStore] Attempting to reserve credits...');
+    
     const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
 
     if (!creditsReserved) {
       const { error } = useCreditsStore.getState();
-      throw new Error(error || 'Insufficient credits');
+      console.error('❌ [GenerationStore] Credit reservation failed:', error);
+      
+      // Update job with credit failure
+      useGenerationStore.setState(state => ({
+        activeGenerations: state.activeGenerations.map(job =>
+          job.id === jobId ? { 
+            ...job, 
+            status: 'failed' as const,
+            error: error || 'Insufficient credits'
+          } : job
+        )
+      }));
+      
+      // Show error notification
+      showCompletionNotification(jobId, request.mode, false, error || 'Insufficient credits');
+      return; // Exit early
     }
 
     console.log(`💰 Reserved ${creditCost} credits for generation`);

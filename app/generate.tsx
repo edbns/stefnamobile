@@ -75,7 +75,7 @@ export default function GenerateScreen() {
           {
             text: 'OK',
             onPress: () => {
-              // Start generation and navigate to main screen
+              // Start generation first
               startGeneration({
                 imageUri: selectedImage,
                 mode: actualMode,
@@ -83,8 +83,10 @@ export default function GenerateScreen() {
                 customPrompt: customPrompt.trim() || undefined,
               });
               
-              // Navigate to main screen where user can see the generation progress
-              router.replace('/main');
+              // Navigate to main screen after a short delay to ensure generation starts
+              setTimeout(() => {
+                router.push('/main');
+              }, 100);
             }
           }
         ]
