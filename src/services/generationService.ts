@@ -358,45 +358,59 @@ export class GenerationService {
         }
       }
 
-      // Build payload matching website's unified-generate-background format
+      // Build payload matching website's simple generation service format
       const runId = `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Get user ID from token (like website does)
+      const user = await this.getUserFromToken(token);
+      if (!user?.id) {
+        throw new Error('User not found in token');
+      }
+
       const payload: any = {
         mode: modeMap[request.mode] || request.mode,
         prompt: processedPrompt,
-        sourceAssetId: sourceAssetId, // Using 'present' like website
-        cloudinaryUrl: cloudinaryUrl, // Include Cloudinary URL for backend
-        // userId removed - backend will extract from JWT token
+        sourceAssetId: sourceAssetId,
+        sourceWidth: undefined, // Will be detected by backend
+        sourceHeight: undefined, // Will be detected by backend
+        userId: user.id,
         runId,
-        additionalImages: 0,
-        editImages: 0,
-        storyTimePresetId: undefined,
-
-        // Mode-specific parameters (matching backend expectations)
-        ...(request.mode === 'presets' && request.presetId && { presetKey: request.presetId }),
-        ...(request.mode === 'ghibli-reaction' && request.presetId && { ghibliReactionPresetId: request.presetId }),
-        ...(request.mode === 'emotion-mask' && request.presetId && { emotionMaskPresetId: request.presetId }),
-        ...(request.mode === 'neo-glitch' && request.presetId && { neoGlitchPresetId: request.presetId }),
-        ...(request.mode === 'custom-prompt' && { customPrompt: processedPrompt }),
-        ...(request.mode === 'edit-photo' && { editPrompt: processedPrompt }),
-
-        // Prompt enhancement results
-        ...(negativePrompt && { negative_prompt: negativePrompt }),
-
-        // Mode-specific settings (matching website)
-        aspect_ratio: this.getAspectRatioForMode(request.mode),
-        image_prompt_strength: this.getImageStrengthForMode(request.mode),
-        guidance_scale: this.getGuidanceScaleForMode(request.mode),
-
-        // Quality settings
-        prompt_upsampling: true,
-        safety_tolerance: 3,
-        output_format: 'jpeg',
-
-        // IPA (Identity Preservation Analysis) settings
+        meta: {},
+        // IPA parameters
         ipaThreshold: 0.8,
         ipaRetries: 2,
         ipaBlocking: false,
       };
+
+      // Add mode-specific parameters (matching website's simple generation service)
+      switch (request.mode) {
+        case 'presets':
+          if (request.presetId) {
+            payload.presetKey = request.presetId;
+          }
+          break;
+        case 'emotion-mask':
+          if (request.presetId) {
+            payload.emotionMaskPresetId = request.presetId;
+          }
+          break;
+        case 'ghibli-reaction':
+          if (request.presetId) {
+            payload.ghibliReactionPresetId = request.presetId;
+          }
+          break;
+        case 'neo-glitch':
+          if (request.presetId) {
+            payload.neoGlitchPresetId = request.presetId;
+          }
+          break;
+        case 'custom-prompt':
+          // No additional parameters needed
+          break;
+        case 'edit-photo':
+          payload.editPrompt = processedPrompt;
+          break;
+      }
 
       console.log('🚀 [Mobile Generation] Sending payload:', {
         mode: payload.mode,
@@ -405,7 +419,7 @@ export class GenerationService {
         sourceAssetId: payload.sourceAssetId,
         cloudinaryUrl: payload.cloudinaryUrl ? payload.cloudinaryUrl.substring(0, 50) + '...' : 'MISSING',
         runId: payload.runId,
-        url: config.apiUrl('unified-generate-background'),
+        url: config.apiUrl('unified-generate'),
         payloadSize: JSON.stringify(payload).length,
         // Show mode-specific parameters
         presetKey: payload.presetKey,
@@ -428,7 +442,7 @@ export class GenerationService {
       let response: Response | undefined;
       let responseText = '';
       try {
-        response = await fetch(config.apiUrl('unified-generate-background'), {
+        response = await fetch(config.apiUrl('unified-generate'), {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -991,6 +1005,17 @@ export class GenerationService {
         return 8.0;
       default:
         return 7.5;
+    }
+  }
+
+  private static async getUserFromToken(token: string): Promise<{ id: string } | null> {
+    try {
+      // Decode JWT token to get user info
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return { id: payload.userId };
+    } catch (error) {
+      console.error('Failed to decode token:', error);
+      return null;
     }
   }
 }
