@@ -384,6 +384,20 @@ export class GenerationService {
       let processedPrompt = request.customPrompt || '';
       let negativePrompt = '';
 
+      console.log('🔍 [Mobile] Prompt processing:', {
+        mode: request.mode,
+        presetId: request.presetId,
+        customPrompt: request.customPrompt,
+        processedPrompt: processedPrompt,
+        promptLength: processedPrompt.length
+      });
+
+      // Ensure we have a prompt for non-preset modes
+      if (!processedPrompt && request.mode !== 'presets') {
+        console.warn('⚠️ [Mobile] No prompt provided for non-preset mode');
+        processedPrompt = 'Transform the image with artistic enhancement';
+      }
+
       if (processedPrompt) {
         // Step 1: Detect gender, animals, groups from original prompt
         const detectedGender = detectGenderFromPrompt(processedPrompt);
@@ -432,10 +446,9 @@ export class GenerationService {
         storyTimePresetId: undefined,
 
         // Mode-specific parameters (matching website's database table structure)
+        // Only Presets Mode uses database presets - others use hardcoded system prompts
         ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
-        ...(request.presetId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.presetId }),
-        ...(request.presetId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.presetId }),
-        ...(request.presetId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.presetId }),
+        // For hardcoded modes, we don't send presetId - the prompt is already processed
 
         // Prompt enhancement results
         ...(negativePrompt && { negative_prompt: negativePrompt }),
@@ -707,10 +720,9 @@ export class GenerationService {
       storyTimePresetId: undefined,
 
       // Mode-specific parameters (matching website's database table structure)
+      // Only Presets Mode uses database presets - others use hardcoded system prompts
       ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
-      ...(request.presetId && request.mode === 'emotion-mask' && { emotionMaskPresetId: request.presetId }),
-      ...(request.presetId && request.mode === 'ghibli-reaction' && { ghibliReactionPresetId: request.presetId }),
-      ...(request.presetId && request.mode === 'neo-glitch' && { neoGlitchPresetId: request.presetId }),
+      // For hardcoded modes, we don't send presetId - the prompt is already processed
 
       // Prompt enhancement results
       ...(negativePrompt && { negative_prompt: negativePrompt }),

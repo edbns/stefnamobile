@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
-import PresetsService, { DatabasePreset } from '../src/services/presetsService';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+
+interface NeoPreset {
+  id: string;
+  label: string;
+  description: string;
+  prompt: string;
+}
 
 interface NeoTokyoModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -12,33 +18,36 @@ interface NeoTokyoModeProps {
 function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
-  const [presets, setPresets] = useState<DatabasePreset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load neo tokyo glitch presets from database
-  useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await PresetsService.getInstance().getModeSpecificPresets('neo-glitch');
-        if (response.success && response.data) {
-          setPresets(response.data.presets.filter(preset => preset.isActive));
-        } else {
-          setError(response.error || 'Failed to load presets');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load presets');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Real Neo Tokyo presets from website (exact same data)
+  const neoPresets: NeoPreset[] = [
+    {
+      id: 'neo_tokyo_base',
+      label: 'Base',
+      description: 'Cyberpunk portrait with Neo Tokyo aesthetics',
+      prompt: 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.'
+    },
+    {
+      id: 'neo_tokyo_visor',
+      label: 'Glitch Visor',
+      description: 'Glowing glitch visor covering the eyes',
+      prompt: 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.'
+    },
+    {
+      id: 'neo_tokyo_tattoos',
+      label: 'Tech Tattoos',
+      description: 'Vivid neon tattoos and holographic overlays',
+      prompt: 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.'
+    },
+    {
+      id: 'neo_tokyo_scanlines',
+      label: 'Scanline FX',
+      description: 'CRT scanline effects and VHS noise',
+      prompt: 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
+    }
+  ];
 
-    loadPresets();
-  }, []);
-
-  const handlePresetClick = (preset: DatabasePreset) => {
+  const handlePresetClick = (preset: NeoPreset) => {
     console.log('Neo Tokyo preset clicked:', preset.id);
     
     // Initialize animation if not exists
@@ -67,7 +76,7 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
       }),
     ]).start();
     
-    onGenerate(preset.id);
+    onGenerate(preset.id, preset.prompt);
   };
 
   return (
@@ -75,50 +84,39 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
       <Text style={styles.title}>Neo Tokyo</Text>
       <Text style={styles.subtitle}>Future meets the face.</Text>
       
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>Loading presets...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : (
-        <View style={styles.presetContainer}>
-          <View style={styles.presetGrid}>
-            {presets.map((preset) => (
-              <Animated.View 
-                key={preset.id}
-                style={[
-                  styles.presetButtonWrapper,
-                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
-                ]}
+      <View style={styles.presetContainer}>
+        <View style={styles.presetGrid}>
+          {neoPresets.map((preset) => (
+            <Animated.View 
+              key={preset.id}
+              style={[
+                styles.presetButtonWrapper,
+                { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+              ]}
+            >
+              <TouchableOpacity 
+                onPress={() => handlePresetClick(preset)}
+                style={styles.presetTouchable}
               >
-                <TouchableOpacity 
-                  onPress={() => handlePresetClick(preset)}
-                  style={styles.presetTouchable}
-                >
-                  <View style={[
-                    styles.presetButton,
-                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                ]}>
+                  {/* Magical glow overlay */}
+                  <View style={styles.magicalGlowOverlay} />
+                  
+                  <Text style={[
+                    styles.presetText,
+                    selectedPreset === preset.id && styles.presetTextSelected
                   ]}>
-                    {/* Magical glow overlay */}
-                    <View style={styles.magicalGlowOverlay} />
-                    
-                    <Text style={[
-                      styles.presetText,
-                      selectedPreset === preset.id && styles.presetTextSelected
-                    ]}>
-                      {preset.label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </View>
+                    {preset.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -127,7 +125,7 @@ export default function GenerateNeoScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "neo-glitch"}>
-      <NeoTokyoMode />
+      <NeoTokyoMode onGenerate={() => {}} isGenerating={false} />
     </BaseGenerationScreen>
   );
 }
@@ -218,26 +216,5 @@ const styles = StyleSheet.create({
   presetTextSelected: {
     color: '#000000',
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  // Loading and error states
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginTop: 16,
-  },
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 16,
-    textAlign: 'center',
   },
 });

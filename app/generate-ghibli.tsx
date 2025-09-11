@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
-import PresetsService, { DatabasePreset } from '../src/services/presetsService';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+
+interface GhibliPreset {
+  id: string;
+  label: string;
+  description: string;
+  prompt: string;
+}
 
 interface GhibliReactionModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -12,33 +18,42 @@ interface GhibliReactionModeProps {
 function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
-  const [presets, setPresets] = useState<DatabasePreset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load ghibli reaction presets from database
-  useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await PresetsService.getInstance().getModeSpecificPresets('ghibli-reaction');
-        if (response.success && response.data) {
-          setPresets(response.data.presets.filter(preset => preset.isActive));
-        } else {
-          setError(response.error || 'Failed to load presets');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load presets');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Real Ghibli reaction presets from website (exact same data)
+  const ghibliPresets: GhibliPreset[] = [
+    {
+      id: 'ghibli_tears',
+      label: 'Tears',
+      description: 'Delicate tears and trembling expression',
+      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.'
+    },
+    {
+      id: 'ghibli_shock',
+      label: 'Shock',
+      description: 'Wide eyes and parted lips showing surprise',
+      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.'
+    },
+    {
+      id: 'ghibli_sparkle',
+      label: 'Sparkle',
+      description: 'Medium sparkles around cheeks with golden highlights',
+      prompt: 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.'
+    },
+    {
+      id: 'ghibli_sadness',
+      label: 'Sadness',
+      description: 'Melancholic emotion with glossy eyes and distant gaze',
+      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.'
+    },
+    {
+      id: 'ghibli_love',
+      label: 'Love',
+      description: 'Soft pink blush, warm sparkle in eyes, gentle smile',
+      prompt: 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
+    }
+  ];
 
-    loadPresets();
-  }, []);
-
-  const handlePresetClick = (preset: DatabasePreset) => {
+  const handlePresetClick = (preset: GhibliPreset) => {
     console.log('Ghibli preset clicked:', preset.id);
     
     // Initialize animation if not exists
@@ -67,7 +82,7 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
       }),
     ]).start();
     
-    onGenerate(preset.id);
+    onGenerate(preset.id, preset.prompt);
   };
 
   return (
@@ -75,50 +90,39 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
       <Text style={styles.title}>Ghibli Reaction</Text>
       <Text style={styles.subtitle}>Animated emotions.</Text>
       
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>Loading presets...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : (
-        <View style={styles.presetContainer}>
-          <View style={styles.presetGrid}>
-            {presets.map((preset) => (
-              <Animated.View 
-                key={preset.id}
-                style={[
-                  styles.presetButtonWrapper,
-                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
-                ]}
+      <View style={styles.presetContainer}>
+        <View style={styles.presetGrid}>
+          {ghibliPresets.map((preset) => (
+            <Animated.View 
+              key={preset.id}
+              style={[
+                styles.presetButtonWrapper,
+                { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+              ]}
+            >
+              <TouchableOpacity 
+                onPress={() => handlePresetClick(preset)}
+                style={styles.presetTouchable}
               >
-                <TouchableOpacity 
-                  onPress={() => handlePresetClick(preset)}
-                  style={styles.presetTouchable}
-                >
-                  <View style={[
-                    styles.presetButton,
-                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                ]}>
+                  {/* Magical glow overlay */}
+                  <View style={styles.magicalGlowOverlay} />
+                  
+                  <Text style={[
+                    styles.presetText,
+                    selectedPreset === preset.id && styles.presetTextSelected
                   ]}>
-                    {/* Magical glow overlay */}
-                    <View style={styles.magicalGlowOverlay} />
-                    
-                    <Text style={[
-                      styles.presetText,
-                      selectedPreset === preset.id && styles.presetTextSelected
-                    ]}>
-                      {preset.label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </View>
+                    {preset.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -127,7 +131,7 @@ export default function GenerateGhibliScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "ghibli-reaction"}>
-      <GhibliReactionMode />
+      <GhibliReactionMode onGenerate={() => {}} isGenerating={false} />
     </BaseGenerationScreen>
   );
 }
@@ -218,26 +222,5 @@ const styles = StyleSheet.create({
   presetTextSelected: {
     color: '#000000',
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  // Loading and error states
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginTop: 16,
-  },
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 16,
-    textAlign: 'center',
   },
 });

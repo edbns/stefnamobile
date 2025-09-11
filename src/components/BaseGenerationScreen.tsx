@@ -49,6 +49,13 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   }, [selectedImage, imageAspect]);
 
   const handleGenerate = async (presetId?: string, customPrompt?: string) => {
+    console.log('🔍 [BaseGenerationScreen] handleGenerate called:', {
+      mode,
+      presetId,
+      customPrompt: customPrompt?.substring(0, 100) + (customPrompt?.length > 100 ? '...' : ''),
+      customPromptLength: customPrompt?.length || 0
+    });
+
     if (!selectedImage) {
       Alert.alert('Error', 'No image selected');
       return;

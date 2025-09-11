@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
-import PresetsService, { DatabasePreset } from '../src/services/presetsService';
+import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+
+interface EmotionPreset {
+  id: string;
+  label: string;
+  description: string;
+  prompt: string;
+}
 
 interface EmotionMaskModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -12,33 +18,42 @@ interface EmotionMaskModeProps {
 function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
-  const [presets, setPresets] = useState<DatabasePreset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load emotion mask presets from database
-  useEffect(() => {
-    const loadPresets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await PresetsService.getInstance().getModeSpecificPresets('emotion-mask');
-        if (response.success && response.data) {
-          setPresets(response.data.presets.filter(preset => preset.isActive));
-        } else {
-          setError(response.error || 'Failed to load presets');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load presets');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Real Emotion Mask presets from website (exact same data)
+  const emotionPresets: EmotionPreset[] = [
+    {
+      id: 'emotion_mask_nostalgia_distance',
+      label: 'Nostalgia + Distance',
+      description: 'Soft memory lens with contemplative expression',
+      prompt: 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    },
+    {
+      id: 'emotion_mask_joy_sadness',
+      label: 'Joy + Sadness',
+      description: 'Smile-through-tears with hopeful eyes',
+      prompt: 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    },
+    {
+      id: 'emotion_mask_conf_loneliness',
+      label: 'Confidence + Loneliness',
+      description: 'Powerful pose with solitary atmosphere',
+      prompt: 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    },
+    {
+      id: 'emotion_mask_peace_fear',
+      label: 'Peace + Fear',
+      description: 'Calm expression under tense atmosphere',
+      prompt: 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    },
+    {
+      id: 'emotion_mask_strength_vuln',
+      label: 'Strength + Vulnerability',
+      description: 'Inner strength with subtle vulnerability',
+      prompt: 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    }
+  ];
 
-    loadPresets();
-  }, []);
-
-  const handlePresetClick = (preset: DatabasePreset) => {
+  const handlePresetClick = (preset: EmotionPreset) => {
     console.log('Emotion preset clicked:', preset.id);
     
     // Initialize animation if not exists
@@ -67,7 +82,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
       }),
     ]).start();
     
-    onGenerate(preset.id);
+    onGenerate(preset.id, preset.prompt);
   };
 
   return (
@@ -75,50 +90,39 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
       <Text style={styles.title}>Emotion Mask</Text>
       <Text style={styles.subtitle}>Faces that feel.</Text>
       
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>Loading presets...</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : (
-        <View style={styles.presetContainer}>
-          <View style={styles.presetGrid}>
-            {presets.map((preset) => (
-              <Animated.View 
-                key={preset.id}
-                style={[
-                  styles.presetButtonWrapper,
-                  { transform: [{ scale: presetAnims[preset.id] || 1 }] }
-                ]}
+      <View style={styles.presetContainer}>
+        <View style={styles.presetGrid}>
+          {emotionPresets.map((preset) => (
+            <Animated.View 
+              key={preset.id}
+              style={[
+                styles.presetButtonWrapper,
+                { transform: [{ scale: presetAnims[preset.id] || 1 }] }
+              ]}
+            >
+              <TouchableOpacity 
+                onPress={() => handlePresetClick(preset)}
+                style={styles.presetTouchable}
               >
-                <TouchableOpacity 
-                  onPress={() => handlePresetClick(preset)}
-                  style={styles.presetTouchable}
-                >
-                  <View style={[
-                    styles.presetButton,
-                    { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                <View style={[
+                  styles.presetButton,
+                  { backgroundColor: selectedPreset === preset.id ? '#ffffff' : '#0f0f0f' }
+                ]}>
+                  {/* Magical glow overlay */}
+                  <View style={styles.magicalGlowOverlay} />
+                  
+                  <Text style={[
+                    styles.presetText,
+                    selectedPreset === preset.id && styles.presetTextSelected
                   ]}>
-                    {/* Magical glow overlay */}
-                    <View style={styles.magicalGlowOverlay} />
-                    
-                    <Text style={[
-                      styles.presetText,
-                      selectedPreset === preset.id && styles.presetTextSelected
-                    ]}>
-                      {preset.label}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            ))}
-          </View>
+                    {preset.label}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -127,7 +131,7 @@ export default function GenerateEmotionScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode={mode as string || "emotion-mask"}>
-      <EmotionMaskMode />
+      <EmotionMaskMode onGenerate={() => {}} isGenerating={false} />
     </BaseGenerationScreen>
   );
 }
@@ -218,26 +222,5 @@ const styles = StyleSheet.create({
   presetTextSelected: {
     color: '#000000',
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
-  },
-  // Loading and error states
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 16,
-    marginTop: 16,
-  },
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 40,
-  },
-  errorText: {
-    color: '#ff4444',
-    fontSize: 16,
-    textAlign: 'center',
   },
 });
