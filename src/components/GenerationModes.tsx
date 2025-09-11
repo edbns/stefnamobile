@@ -84,11 +84,12 @@ export default function GenerationModes({
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
       return;
     }
+    console.log('🔍 [GenerationModes] Calling onGenerate with mode:', selectedMode);
     onGenerate(undefined, selectedMode);
   };
 
   const handlePresetClick = (presetId: string) => {
-    console.log('Preset clicked:', presetId);
+    console.log('Preset clicked:', presetId, 'with mode:', selectedMode);
     // Auto-run generation immediately when preset is clicked
     onGenerate(presetId, selectedMode);
   };

@@ -60,6 +60,12 @@ class GenerationService {
       presetId: request.presetId
     });
 
+    // Validate mode is not undefined
+    if (!request.mode) {
+      console.error('❌ [Mobile Generation] Mode is undefined! Request:', request);
+      throw new Error('Generation mode is required');
+    }
+
     // Store the request for polling fallback
     this.lastGenerationRequest = request;
 

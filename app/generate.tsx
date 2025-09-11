@@ -20,6 +20,9 @@ export default function GenerateScreen() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
   const [customPrompt, setCustomPrompt] = useState('');
 
+  // Force rebuild marker - v2
+  console.log('🔄 [Generate] Screen loaded - v2 with mode fixes');
+
   // Presets are now loaded by GenerationModes component
 
   // Compute original aspect ratio of the selected image
@@ -48,6 +51,14 @@ export default function GenerateScreen() {
 
     // Use the mode passed from GenerationModes, or fall back to current generationMode
     const actualMode = mode || generationMode;
+
+    console.log('🔍 [Generate] Debug generation request:', {
+      passedMode: mode,
+      currentGenerationMode: generationMode,
+      actualMode: actualMode,
+      presetId: presetId,
+      hasCustomPrompt: !!customPrompt.trim()
+    });
 
     // Validation based on mode
     if ((actualMode === 'custom-prompt' || actualMode === 'edit-photo') && !customPrompt.trim()) {
