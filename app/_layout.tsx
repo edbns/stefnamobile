@@ -1,9 +1,18 @@
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
 import { useAuthStore } from '../src/stores/authStore';
+
+// Conditional import for gesture handler (web fallback)
+let GestureHandlerRootView: any;
+try {
+  const gestureHandler = require('react-native-gesture-handler');
+  GestureHandlerRootView = gestureHandler.GestureHandlerRootView;
+} catch (error) {
+  console.warn('Gesture handler not available, using fallback');
+  GestureHandlerRootView = ({ children }: any) => children;
+}
 
 export default function Layout() {
   const router = useRouter();
