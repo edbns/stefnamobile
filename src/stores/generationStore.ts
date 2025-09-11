@@ -8,39 +8,20 @@ import { useMediaStore } from './mediaStore';
 import { useAuthStore } from './authStore';
 import { useErrorStore, errorHelpers } from './errorStore';
 import { useNotificationsStore, notificationHelpers } from './notificationsStore';
-
-interface GenerationJob {
-  id: string;
-  imageUri: string;
-  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
-  presetId?: string; // Now used for all modes - maps to correct database table
-  customPrompt?: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress?: number;
-  resultUrl?: string;
-  error?: string;
-  createdAt: Date;
-  estimatedTime?: number;
-  storedMedia?: StoredMedia;
-}
+import type { GenerationJob } from '../types/generation';
 
 interface GenerationState {
-  // Current generation
   currentJob: GenerationJob | null;
   isGenerating: boolean;
-
-  // Queue management
   jobQueue: GenerationJob[];
-
-  // Data
   presets: Preset[];
-
-  // Actions
-  startGeneration: (job: Omit<GenerationJob, 'id' | 'status' | 'createdAt' | 'storedMedia'>) => Promise<GenerationResponse>;
-  cancelGeneration: () => void;
-  clearCompletedJobs: () => void;
+  startGeneration: (jobData: {
+    imageUri: string;
+    mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
+    presetId?: string;
+    customPrompt?: string;
+  }) => Promise<GenerationResponse>;
   loadPresets: () => Promise<void>;
-  pollJobStatus: (jobId: string) => Promise<void>;
   loadJobHistory: () => Promise<void>;
   saveJobHistory: () => Promise<void>;
 }
@@ -101,10 +82,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
           )
         );
 
-        // Start polling for status
-        get().pollJobStatus(response.jobId);
-        
-        // Return the response for navigation
+        // Return the response for navigation (polling handled by generation-progress screen)
         return response;
       } else {
         // Refund credits on generation failure
@@ -144,7 +122,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       // Refund credits on any error
       try {
         await useCreditsStore.getState().finalizeCredits('refund');
-        console.log('💰 Refunded credits due to error');
+        console.log('💰 Refunded credits due to generation error');
       } catch (refundError) {
         console.error('Failed to refund credits:', refundError);
       }
@@ -152,16 +130,17 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       // Use centralized error handling
       useErrorStore.getState().setError(
         errorHelpers.generation(
-          error instanceof Error ? error.message : 'Generation failed',
+          error instanceof Error ? error.message : 'Unknown error',
           { jobData },
           async () => { await get().startGeneration(jobData); } // Retry action
         )
       );
 
+      // Handle error
       const failedJob = {
         ...job,
         status: 'failed' as const,
-        error: error instanceof Error ? error.message : 'Network error',
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
       set({
         currentJob: failedJob,
@@ -172,31 +151,9 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       // Return error response
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-  },
-
-  cancelGeneration: () => {
-    const { currentJob } = get();
-    if (currentJob) {
-      const cancelledJob = {
-        ...currentJob,
-        status: 'failed' as const,
-        error: 'Cancelled by user',
-      };
-      set({
-        currentJob: null,
-        isGenerating: false,
-        jobQueue: [...get().jobQueue, cancelledJob]
-      });
-    }
-  },
-
-  clearCompletedJobs: () => {
-    const { jobQueue } = get();
-    const activeJobs = jobQueue.filter(job => job.status !== 'completed');
-    set({ jobQueue: activeJobs });
   },
 
   loadPresets: async () => {
@@ -206,115 +163,6 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     } catch (error) {
       console.error('Load presets error:', error);
       // Presets will remain empty, component will handle fallback
-    }
-  },
-
-  pollJobStatus: async (jobId: string) => {
-    try {
-      // Use adaptive polling from GenerationService
-      const status = await GenerationService.pollGenerationStatus(jobId);
-      const { currentJob } = get();
-
-      if (currentJob && currentJob.id === jobId) {
-        if (status.status === 'completed' || status.status === 'failed') {
-          // Finalize credits using creditsStore
-          try {
-            const disposition = status.status === 'completed' ? 'commit' : 'refund';
-            await useCreditsStore.getState().finalizeCredits(disposition);
-            console.log(`💰 ${disposition === 'commit' ? 'Committed' : 'Refunded'} credits for generation ${status.status}`);
-
-            // Refresh user balance after credit changes
-            await useUserStore.getState().loadUserProfile();
-
-            // Show appropriate notification
-            if (status.status === 'completed') {
-              useNotificationsStore.getState().addNotification(
-                notificationHelpers.generationComplete(currentJob.mode)
-              );
-            } else {
-              useErrorStore.getState().setError(
-                errorHelpers.generation(
-                  status.error || 'Generation failed',
-                  { jobId, status }
-                )
-              );
-            }
-          } catch (creditError) {
-            console.error('Failed to finalize credits:', creditError);
-            useErrorStore.getState().setError(
-              errorHelpers.credits('Failed to finalize credits', creditError)
-            );
-          }
-
-          // Job finished
-          let storedMedia: StoredMedia | undefined;
-
-          if (status.status === 'completed' && status.resultUrl) {
-            try {
-              // Download and save the result image
-              const filename = `generated_${jobId}.jpg`;
-              storedMedia = await StorageService.saveGeneratedImage(
-                status.resultUrl,
-                filename,
-                jobId
-              );
-
-              // Sync to cloud if enabled
-              if (storedMedia) {
-                await StorageService.syncMediaToCloud(storedMedia);
-              }
-
-              // Update media store
-              await useMediaStore.getState().syncWithLocalStorage();
-            } catch (error) {
-              console.error('Failed to save generated image:', error);
-            }
-          }
-
-          const completedJob = {
-            ...currentJob,
-            status: status.status,
-            resultUrl: status.resultUrl,
-            error: status.error,
-            storedMedia,
-          };
-
-          set({
-            currentJob: null,
-            isGenerating: false,
-            jobQueue: [...get().jobQueue, completedJob]
-          });
-
-          // Save to history
-          get().saveJobHistory();
-        }
-      }
-    } catch (error) {
-      console.error('Poll status error:', error);
-      
-      // Handle polling error
-      const { currentJob } = get();
-      if (currentJob && currentJob.id === jobId) {
-        const failedJob = {
-          ...currentJob,
-          status: 'failed' as const,
-          error: error instanceof Error ? error.message : 'Polling failed',
-        };
-        
-        set({
-          currentJob: null,
-          isGenerating: false,
-          jobQueue: [...get().jobQueue, failedJob]
-        });
-        
-        // Refund credits on polling failure
-        try {
-          await useCreditsStore.getState().finalizeCredits('refund');
-          console.log('💰 Refunded credits due to polling failure');
-        } catch (refundError) {
-          console.error('Failed to refund credits:', refundError);
-        }
-      }
     }
   },
 

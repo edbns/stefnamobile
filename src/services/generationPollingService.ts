@@ -193,20 +193,32 @@ class GenerationPollingService {
           return;
         }
         console.log('📊 [GenerationPolling] Status response:', data);
+        console.log('📊 [GenerationPolling] Response structure:', {
+          hasSuccess: 'success' in data,
+          hasMedia: 'media' in data,
+          hasUrl: data.media?.url ? 'yes' : 'no',
+          hasStatus: 'status' in data,
+          statusValue: data.status,
+          keys: Object.keys(data)
+        });
 
         // Calculate progress based on status
         let progress = 0;
         let message = 'Getting it ready';
         let status: 'processing' | 'completed' | 'failed' = 'processing';
 
-        if (data.success && data.media && data.media.url) {
+        // Check for completion in multiple possible formats
+        if ((data.success && data.media && data.media.url) || 
+            (data.status === 'completed' && data.url) ||
+            (data.status === 'completed' && data.imageUrl) ||
+            (data.status === 'completed' && data.finalUrl)) {
           progress = 100;
           message = 'Complete!';
           status = 'completed';
           
           // Normalize shape to shared interface
           data.status = 'completed';
-          data.image_url = data.media.url;
+          data.image_url = data.media?.url || data.url || data.imageUrl || data.finalUrl;
         } else if (data.status === 'failed') {
           progress = 0;
           message = 'Edit failed';

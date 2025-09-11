@@ -28,6 +28,8 @@ export default function GenerationProgressScreen() {
   useEffect(() => {
     const jobId = params.jobId as string;
     const runId = params.runId as string;
+    const isPending = params.pending === 'true';
+    const hasError = params.error as string;
 
     if (!jobId || !runId) {
       console.error('Missing jobId or runId for polling');
@@ -36,6 +38,32 @@ export default function GenerationProgressScreen() {
         status: 'failed',
         error: 'Missing generation parameters'
       }));
+      return;
+    }
+
+    // Handle error state
+    if (hasError) {
+      console.error('Generation error received:', hasError);
+      setGenerationStatus(prev => ({
+        ...prev,
+        status: 'failed',
+        error: hasError
+      }));
+      return;
+    }
+
+    // Handle pending state - show immediate feedback
+    if (isPending) {
+      console.log('🚀 [GenerationProgress] Pending generation - showing immediate feedback');
+      setGenerationStatus({
+        status: 'processing',
+        progress: 5,
+        message: 'Starting generation...',
+        estimatedTime: 45,
+        jobId,
+        runId
+      });
+      setTimeRemaining(45);
       return;
     }
 
@@ -69,7 +97,7 @@ export default function GenerationProgressScreen() {
     return () => {
       pollingService.stopPolling(jobId);
     };
-  }, [params.jobId, params.runId]);
+  }, [params.jobId, params.runId, params.pending, params.error]);
 
   const handleClose = () => {
     router.back();

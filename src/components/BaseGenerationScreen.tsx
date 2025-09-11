@@ -52,7 +52,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
     console.log('🔍 [BaseGenerationScreen] handleGenerate called:', {
       mode,
       presetId,
-      customPrompt: customPrompt?.substring(0, 100) + (customPrompt?.length > 100 ? '...' : ''),
+      customPrompt: customPrompt?.substring(0, 100) + (customPrompt && customPrompt.length > 100 ? '...' : ''),
       customPromptLength: customPrompt?.length || 0
     });
 
@@ -66,22 +66,52 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return;
     }
 
-    // Start the generation process
-    const result = await startGeneration({
-      imageUri: selectedImage,
-      mode: mode as any,
-      presetId: presetId || undefined,
-      customPrompt: customPrompt?.trim() || undefined,
-    });
-
-    // Navigate to generation progress screen with job details
+    // Navigate immediately to progress screen with pending state
+    const tempJobId = `pending_${Date.now()}`;
+    const tempRunId = `pending_${Date.now()}`;
+    
+    console.log('🚀 [BaseGenerationScreen] Navigating immediately to progress screen');
+    
     router.push({
       pathname: '/generation-progress',
       params: {
-        jobId: result.jobId,
-        runId: result.runId
+        jobId: tempJobId,
+        runId: tempRunId,
+        pending: 'true' // Flag to indicate this is a pending generation
       }
     });
+
+    // Start the generation process in the background
+    try {
+      const result = await startGeneration({
+        imageUri: selectedImage,
+        mode: mode as any,
+        presetId: presetId || undefined,
+        customPrompt: customPrompt?.trim() || undefined,
+      });
+
+      console.log('🚀 [BaseGenerationScreen] Generation started in background:', result);
+
+      // Update the progress screen with real job details
+      router.replace({
+        pathname: '/generation-progress',
+        params: {
+          jobId: result.jobId,
+          runId: result.runId
+        }
+      });
+    } catch (error) {
+      console.error('❌ [BaseGenerationScreen] Generation failed:', error);
+      // Navigate back to show error
+      router.replace({
+        pathname: '/generation-progress',
+        params: {
+          jobId: tempJobId,
+          runId: tempRunId,
+          error: error instanceof Error ? error.message : 'Generation failed'
+        }
+      });
+    }
   };
 
   const handleBack = () => {

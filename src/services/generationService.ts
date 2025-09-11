@@ -371,10 +371,13 @@ export class GenerationService {
         editImages: 0,
         storyTimePresetId: undefined,
 
-        // Mode-specific parameters (matching website's database table structure)
-        // Only Presets Mode uses database presets - others use hardcoded system prompts
-        ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
-        // For hardcoded modes, we don't send presetId - the prompt is already processed
+        // Mode-specific parameters (matching backend expectations)
+        ...(request.mode === 'presets' && request.presetId && { presetKey: request.presetId }),
+        ...(request.mode === 'ghibli-reaction' && request.presetId && { ghibliReactionPresetId: request.presetId }),
+        ...(request.mode === 'emotion-mask' && request.presetId && { emotionMaskPresetId: request.presetId }),
+        ...(request.mode === 'neo-glitch' && request.presetId && { neoGlitchPresetId: request.presetId }),
+        ...(request.mode === 'custom-prompt' && { customPrompt: processedPrompt }),
+        ...(request.mode === 'edit-photo' && { editPrompt: processedPrompt }),
 
         // Prompt enhancement results
         ...(negativePrompt && { negative_prompt: negativePrompt }),
@@ -403,7 +406,14 @@ export class GenerationService {
         cloudinaryUrl: payload.cloudinaryUrl ? payload.cloudinaryUrl.substring(0, 50) + '...' : 'MISSING',
         runId: payload.runId,
         url: config.apiUrl('unified-generate-background'),
-        payloadSize: JSON.stringify(payload).length
+        payloadSize: JSON.stringify(payload).length,
+        // Show mode-specific parameters
+        presetKey: payload.presetKey,
+        ghibliReactionPresetId: payload.ghibliReactionPresetId,
+        emotionMaskPresetId: payload.emotionMaskPresetId,
+        neoGlitchPresetId: payload.neoGlitchPresetId,
+        customPrompt: payload.customPrompt ? 'present' : 'missing',
+        editPrompt: payload.editPrompt ? 'present' : 'missing'
       });
       
       // Debug: Show full payload structure
