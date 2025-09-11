@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
+import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen.tsx';
 
 interface StudioPromptModeProps {
@@ -74,60 +75,75 @@ function StudioPromptMode({ onGenerate, isGenerating }: StudioPromptModeProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Studio</Text>
-      <Text style={styles.subtitle}>Tools for precision.</Text>
-      
-      <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
-        <View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f' }]}>
-          {/* Tech grid pattern overlay */}
-          <View style={styles.techGridOverlay} />
+    <KeyboardAvoidingView 
+      style={styles.keyboardAvoidingView}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Studio</Text>
+          <Text style={styles.subtitle}>Tools for precision.</Text>
           
-          {/* Camera frame overlay */}
-          <View style={styles.cameraFrameOverlay} />
-          
-          <TextInput
-            style={styles.promptInput}
-            value={customPrompt}
-            onChangeText={setCustomPrompt}
-            placeholder="Change something, add something — your call ... tap ✨ for a little magic."
-            placeholderTextColor="#666"
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-          />
-          
-          {/* Magic Wand Button */}
-          <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
-            <TouchableOpacity
-              onPress={handleMagicWand}
-              disabled={!customPrompt.trim() || isGenerating}
-              style={styles.magicWandTouchable}
-            >
-              <Text style={styles.magicWandIcon}>✨</Text>
-            </TouchableOpacity>
-          </Animated.View>
-          
-          {/* Generate Button */}
-          <Animated.View style={[styles.generateIconButton, { transform: [{ scale: generateAnim }] }]}>
-            <TouchableOpacity
-              style={[
-                styles.generateTouchable,
-                (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
-              ]}
-              onPress={handleGenerate}
-              disabled={!customPrompt.trim() || isGenerating}
-            >
-              {isGenerating ? (
-                <View style={styles.spinner} />
-              ) : (
-                <ArrowUp size={16} color="#000000" />
-              )}
-            </TouchableOpacity>
+          <Animated.View style={[styles.promptContainer, { transform: [{ scale: promptAnim }] }]}>
+            <View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f' }]}>
+              {/* Tech grid pattern overlay */}
+              <View style={styles.techGridOverlay} />
+              
+              {/* Camera frame overlay */}
+              <View style={styles.cameraFrameOverlay} />
+              
+              <TextInput
+                style={styles.promptInput}
+                value={customPrompt}
+                onChangeText={setCustomPrompt}
+                placeholder="Change something, add something — your call ... tap ✨ for a little magic."
+                placeholderTextColor="#666"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+                returnKeyType="done"
+                blurOnSubmit={false}
+              />
+              
+              {/* Magic Wand Button */}
+              <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
+                <TouchableOpacity
+                  onPress={handleMagicWand}
+                  disabled={!customPrompt.trim() || isGenerating}
+                  style={styles.magicWandTouchable}
+                >
+                  <Text style={styles.magicWandIcon}>✨</Text>
+                </TouchableOpacity>
+              </Animated.View>
+              
+              {/* Generate Button */}
+              <Animated.View style={[styles.generateIconButton, { transform: [{ scale: generateAnim }] }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.generateTouchable,
+                    (!customPrompt.trim() || isGenerating) && styles.generateIconButtonDisabled
+                  ]}
+                  onPress={handleGenerate}
+                  disabled={!customPrompt.trim() || isGenerating}
+                >
+                  {isGenerating ? (
+                    <View style={styles.spinner} />
+                  ) : (
+                    <ArrowUp size={16} color="#000000" />
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
           </Animated.View>
         </View>
-      </Animated.View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -141,6 +157,16 @@ export default function GenerateStudioScreen() {
 }
 
 const styles = StyleSheet.create({
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 50,
+  },
   container: {
     padding: 20,
   },
