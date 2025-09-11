@@ -89,8 +89,8 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Call onGenerate after animation completes
-      onGenerate(preset.id, preset.prompt);
+      // Call onGenerate with presetId only - let unified system handle the generation
+      onGenerate(preset.id);
       
       // Reset processing state after a delay
       setTimeout(() => {

@@ -39,6 +39,40 @@ const applyAdvancedPromptEnhancements = (prompt: string): string => {
   return prompt + ' high quality, detailed, professional photography, sharp focus';
 };
 
+// Map preset IDs to their actual prompts for preset-based modes
+const getPresetPrompt = (mode: string, presetId: string): string => {
+  const presetMaps: Record<string, Record<string, string>> = {
+    'neo-glitch': {
+      'neo_tokyo_base': 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.',
+      'neo_tokyo_visor': 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.',
+      'neo_tokyo_tattoos': 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.',
+      'neo_tokyo_scanlines': 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
+    },
+    'ghibli-reaction': {
+      'ghibli_tears': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.',
+      'ghibli_shock': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.',
+      'ghibli_sparkle': 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.',
+      'ghibli_sadness': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.',
+      'ghibli_love': 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
+    },
+    'emotion-mask': {
+      'emotion_mask_nostalgia_distance': 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+      'emotion_mask_joy_sadness': 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+      'emotion_mask_conf_loneliness': 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+      'emotion_mask_peace_fear': 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+      'emotion_mask_strength_vuln': 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+    }
+  };
+
+  const modePresets = presetMaps[mode];
+  if (modePresets && modePresets[presetId]) {
+    return modePresets[presetId];
+  }
+
+  console.warn('⚠️ [Mobile] Unknown preset:', { mode, presetId });
+  return 'Transform the image with artistic enhancement';
+};
+
 export interface GenerationRequest {
   imageUri: string;
   mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
@@ -269,6 +303,12 @@ export class GenerationService {
       // Apply complete prompt enhancement pipeline (matching website)
       let processedPrompt = request.customPrompt || '';
       let negativePrompt = '';
+
+      // Handle preset-based modes - map presetId to actual prompt
+      if (!processedPrompt && request.presetId && request.mode !== 'presets') {
+        processedPrompt = getPresetPrompt(request.mode, request.presetId);
+        console.log('🎨 [Mobile] Using preset prompt:', { mode: request.mode, presetId: request.presetId });
+      }
 
       console.log('🔍 [Mobile] Prompt processing:', {
         mode: request.mode,
