@@ -411,6 +411,7 @@ export class GenerationService {
         // Handle 202 Accepted responses (async processing started)
         if (response.status === 202) {
           console.log('✅ [Mobile Generation] Request accepted (202), processing started');
+          console.log('📋 [Mobile Generation] 202 Response body:', responseText.substring(0, 200));
           
           // For 202 responses, use the runId as both jobId and runId
           const jobId = payload.runId;
