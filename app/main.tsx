@@ -381,6 +381,7 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
+    borderRadius: 8,
   },
   folderImage: {
     position: 'relative',
@@ -402,19 +403,22 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
   },
   folderTitleOverlay: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 2,
   },
   folderCountOverlay: {
     color: '#cccccc',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
   },
   row: {
     justifyContent: 'space-between',
