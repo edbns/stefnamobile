@@ -1,140 +1,655 @@
-// Mobile generation service - integrates with existing Netlify Functions
-// This mirrors the website's complete unified generation pipeline
+// Mobile Generation Service - Simplified version based on website's SimpleGenerationService
+// Uses the same unified-generate endpoint and polling logic as the website
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import NetInfo from '@react-native-community/netinfo';
 import { config } from '../config/environment';
 import { cloudinaryService } from './cloudinaryService';
+import { 
+  enhancePromptForSpecificity, 
+  detectGenderFromPrompt, 
+  detectAnimalsFromPrompt, 
+  detectGroupsFromPrompt, 
+  applyAdvancedPromptEnhancements 
+} from '../utils/promptEnhancement';
 
-// Import prompt enhancement utilities (need to copy from website)
-const enhancePromptForSpecificity = (originalPrompt: string, options: any = {}) => {
-  // Simplified version - in production, copy the full function from website
-  return {
-    enhancedPrompt: originalPrompt + ' high quality, detailed, professional',
-    negativePrompt: 'blurry, low quality, distorted, ugly, deformed'
-  };
-};
-
-const detectGenderFromPrompt = (prompt: string): string => {
-  const lowerPrompt = prompt.toLowerCase();
-  if (lowerPrompt.includes('man') || lowerPrompt.includes('male')) return 'male';
-  if (lowerPrompt.includes('woman') || lowerPrompt.includes('female')) return 'female';
-  return 'unknown';
-};
-
-const detectAnimalsFromPrompt = (prompt: string): string[] => {
-  const animals = ['dog', 'cat', 'horse', 'bird'];
-  return animals.filter(animal => prompt.toLowerCase().includes(animal));
-};
-
-const detectGroupsFromPrompt = (prompt: string): string[] => {
-  const groups = ['family', 'couple', 'friends', 'group'];
-  return groups.filter(group => prompt.toLowerCase().includes(group));
-};
-
-const applyAdvancedPromptEnhancements = (prompt: string): string => {
-  // Simplified version - in production, copy the full function from website
-  if (prompt.includes('(') && prompt.includes(')')) return prompt;
-  return prompt + ' high quality, detailed, professional photography, sharp focus';
-};
-
-// Map preset IDs to their actual prompts for preset-based modes
-const getPresetPrompt = (mode: string, presetId: string): string => {
-  const presetMaps: Record<string, Record<string, string>> = {
-    'neo-glitch': {
-      'neo_tokyo_base': 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.',
-      'neo_tokyo_visor': 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.',
-      'neo_tokyo_tattoos': 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.',
-      'neo_tokyo_scanlines': 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
-    },
-    'ghibli-reaction': {
-      'ghibli_tears': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.',
-      'ghibli_shock': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.',
-      'ghibli_sparkle': 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.',
-      'ghibli_sadness': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.',
-      'ghibli_love': 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
-    },
-    'emotion-mask': {
-      'emotion_mask_nostalgia_distance': 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-      'emotion_mask_joy_sadness': 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-      'emotion_mask_conf_loneliness': 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-      'emotion_mask_peace_fear': 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-      'emotion_mask_strength_vuln': 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    }
-  };
-
-  const modePresets = presetMaps[mode];
-  if (modePresets && modePresets[presetId]) {
-    return modePresets[presetId];
-  }
-
-  console.warn('⚠️ [Mobile] Unknown preset:', { mode, presetId });
-  return 'Transform the image with artistic enhancement';
-};
+export type GenerationMode = 'presets' | 'custom-prompt' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo';
 
 export interface GenerationRequest {
   imageUri: string;
-  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
-  presetId?: string; // Now used for all modes - maps to correct database table
+  mode: GenerationMode;
+  presetId?: string;
   customPrompt?: string;
-  // userId removed - backend will extract from JWT token
 }
 
-export interface GenerationResponse {
+export interface GenerationResult {
   success: boolean;
   jobId?: string;
   runId?: string;
-  estimatedTime?: number;
+  status: 'completed' | 'processing' | 'failed';
+  imageUrl?: string;
   error?: string;
-  offline?: boolean;
+  type: GenerationMode;
 }
 
-export interface GenerationStatus {
-  jobId: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  resultUrl?: string;
-  progress?: number;
-  error?: string;
-}
+class GenerationService {
+  private static instance: GenerationService;
+  private lastGenerationRequest?: GenerationRequest;
 
-export interface Preset {
-  id: string;
-  key: string;
-  label: string;
-  description: string;
-  category: string;
-  prompt: string;
-  negativePrompt: string;
-  strength: number;
-}
+  private constructor() {}
 
-export class GenerationService {
-  // Network detection
-  static async isOnline(): Promise<boolean> {
+  static getInstance(): GenerationService {
+    if (!GenerationService.instance) {
+      GenerationService.instance = new GenerationService();
+    }
+    return GenerationService.instance;
+  }
+
+  /**
+   * Generate content using direct function calls with automatic polling
+   * Based on website's SimpleGenerationService.generate()
+   */
+  async generate(request: GenerationRequest): Promise<GenerationResult> {
+    console.log('🚀 [Mobile Generation] Starting generation:', {
+      mode: request.mode,
+      hasImage: !!request.imageUri,
+      hasPreset: !!request.presetId,
+      hasCustomPrompt: !!request.customPrompt
+    });
+
+    // Store the request for polling fallback
+    this.lastGenerationRequest = request;
+
     try {
-      const state = await NetInfo.fetch();
-      return state.isConnected ?? false;
+      // Check network connection
+      const isOnline = await this.isOnline();
+      if (!isOnline) {
+        console.log('📱 [Mobile Generation] Offline mode - queuing generation');
+        await this.queueOfflineGeneration(request);
+        return {
+          success: true,
+          jobId: `offline_${Date.now()}`,
+          runId: `offline_${Date.now()}`,
+          status: 'processing',
+          type: request.mode
+        };
+      }
+
+      // Upload image to Cloudinary first (like website)
+      const cloudinaryUrl = await this.uploadImageToCloudinary(request.imageUri);
+      console.log('☁️ [Mobile Generation] Image uploaded to Cloudinary:', cloudinaryUrl);
+
+      // Preflight: check user quota before calling background function
+      try {
+        console.log('💰 [Mobile Generation] Preflight quota check before generation');
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) throw new Error('No auth token found');
+
+        const quotaResp = await fetch(config.apiUrl('getQuota'), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (quotaResp.ok) {
+          const quota = await quotaResp.json();
+          const remaining = typeof quota.remaining === 'number' ? quota.remaining : 0;
+          if (remaining < 2) {
+            console.warn('🚫 [Mobile Generation] Insufficient credits detected in preflight, aborting');
+            throw new Error('INSUFFICIENT_CREDITS');
+          }
+        }
+      } catch (preflightError) {
+        if (preflightError instanceof Error && preflightError.message === 'INSUFFICIENT_CREDITS') {
+          throw preflightError;
+        }
+        console.debug('ℹ️ [Mobile Generation] Preflight quota check skipped due to error:', preflightError);
+      }
+
+      // Prepare request payload based on mode
+      const payload = this.buildPayload(request, cloudinaryUrl);
+
+      console.log('📡 [Mobile Generation] Calling unified-generate endpoint');
+
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
+      const response = await fetch(config.apiUrl('unified-generate'), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      // Read response body first to check for early failures
+      let result;
+      let hasJsonBody = false;
+      try {
+        result = await response.json();
+        hasJsonBody = true;
+      } catch (parseError) {
+        result = null;
+        hasJsonBody = false;
+      }
+
+      // If this is a Netlify background function, it responds 202 with no body
+      if (response.status === 202) {
+        console.log('ℹ️ [Mobile Generation] Background accepted (202), starting polling...');
+        
+        // Start polling for completion
+        return await this.pollForCompletion(payload.runId, request.mode);
+      }
+
+      // Check for early failure only if we have a JSON body and it indicates failure
+      if (hasJsonBody && result && result.success === false && result.status === 'failed') {
+        console.warn(`🚨 [Mobile Generation] Early failure detected: ${result.error}`);
+        
+        // Special handling for insufficient credits
+        if (result.error && (result.error.includes('INSUFFICIENT_CREDITS') || result.error.includes('credits but only have'))) {
+          console.log('🚨 [Mobile Generation] Throwing INSUFFICIENT_CREDITS error for frontend handling');
+          throw new Error('INSUFFICIENT_CREDITS');
+        }
+        
+        // For other failures, throw the error message
+        const errorMessage = result.error || result.message || 'Generation failed';
+        console.log('🚨 [Mobile Generation] Throwing early failure error:', errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      if (!response.ok) {
+        // Use the parsed result if available, otherwise create error message
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        if (result && result.error) {
+          errorMessage = result.error;
+        } else if (result && result.message) {
+          errorMessage = result.message;
+        }
+        
+        // Special handling for insufficient credits
+        if (result && result.error && (result.error.includes('INSUFFICIENT_CREDITS') || result.error.includes('credits but only have'))) {
+          console.log('🚨 [Mobile Generation] Detected INSUFFICIENT_CREDITS, throwing error');
+          throw new Error('INSUFFICIENT_CREDITS');
+        }
+        
+        console.log('🚨 [Mobile Generation] Throwing error:', errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      // Normalize backend unified-generate-background response
+      const normalized = {
+        success: !!result.success,
+        jobId: result.jobId || result.runId || undefined,
+        runId: result.runId || undefined,
+        status: result.status === 'done' ? 'completed' : result.status,
+        imageUrl: result.imageUrl || result.outputUrl || undefined,
+        error: result.error,
+        type: request.mode as GenerationMode
+      } as GenerationResult;
+
+      // Ensure failed-but-with-output is not treated as timeout
+      if (normalized.status === 'failed' && normalized.imageUrl) {
+        normalized.status = 'completed'; // let polling exit
+        normalized.success = false;      // still mark as a failure (e.g. IPA fail)
+      }
+
+      console.log('✅ [Mobile Generation] Generation completed (normalized):', {
+        success: normalized.success,
+        status: normalized.status,
+        hasImage: !!normalized.imageUrl
+      });
+
+      return normalized;
+
     } catch (error) {
-      console.error('Network check failed:', error);
-      return false;
+      console.error('❌ [Mobile Generation] Generation failed:', error);
+
+      // Re-throw INSUFFICIENT_CREDITS errors so frontend can handle them properly
+      if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
+        console.log('🚨 [Mobile Generation] Re-throwing INSUFFICIENT_CREDITS error for frontend handling');
+        throw error;
+      }
+
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        type: request.mode
+      };
     }
   }
 
-  static async waitForConnection(): Promise<void> {
-    return new Promise((resolve) => {
-      const unsubscribe = NetInfo.addEventListener(state => {
-        if (state.isConnected) {
-          unsubscribe();
-          resolve();
+  /**
+   * Poll for generation completion with intelligent detection
+   * Based on website's SimpleGenerationService.pollForCompletion()
+   */
+  private async pollForCompletion(runId: string, mode: GenerationMode): Promise<GenerationResult> {
+    const maxAttempts = 72; // 6 minutes with 5-second intervals (increased for longer generations)
+    const pollInterval = 5000; // 5 seconds
+    const startTime = Date.now()
+    
+    console.log(`🔄 [Mobile Generation] Starting intelligent polling for runId: ${runId}`);
+    
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const elapsed = Date.now() - startTime
+        console.log(`📡 [Mobile Generation] Polling attempt ${attempt}/${maxAttempts} (${Math.round(elapsed/1000)}s elapsed) for runId: ${runId}`);
+        
+        const statusResult = await this.checkStatus(runId, mode);
+        
+        // Backup check: If we detect a failure response, stop polling immediately
+        if (statusResult.success === false && statusResult.status === 'failed' && !statusResult.imageUrl) {
+          console.warn(`🚨 [Polling] Generation failed during polling: ${statusResult.error}`);
+          console.warn(`🚨 [Polling] Stopping polling and returning failure`);
+          return statusResult;
         }
-      });
-    });
+        
+        if (statusResult.status === 'completed') {
+          console.log(`✅ [Mobile Generation] Generation completed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
+          return statusResult;
+        }
+        
+        if (statusResult.status === 'failed') {
+          // If there's an image, treat as "soft fail" (IPA failure)
+          if (statusResult.imageUrl) {
+            console.warn(`⚠️ [Mobile Generation] Generation failed but has output. Returning as completed with warning.`);
+            return {
+              ...statusResult,
+              status: 'completed', // force status to completed
+              success: false,      // retain false for UI to show IPA warning
+            };
+          }
+
+          // No output at all — real failure
+          console.log(`❌ [Mobile Generation] Generation failed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
+          return statusResult;
+        }
+        
+        // Still processing, wait before next poll
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+        
+      } catch (error) {
+        console.warn(`⚠️ [Mobile Generation] Polling attempt ${attempt} failed:`, error);
+        
+        // Don't fail immediately on polling errors, continue trying
+        if (attempt < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        }
+      }
+    }
+    
+    // Timeout reached
+    const totalElapsed = Date.now() - startTime
+    console.log(`⏰ [Mobile Generation] Polling timeout reached for runId: ${runId} after ${Math.round(totalElapsed/1000)}s`);
+    return {
+      success: false,
+      status: 'failed',
+      error: 'Generation timed out. Please try again.',
+      type: mode
+    };
   }
 
-  private static async compressAndUploadImage(imageUri: string): Promise<string> {
+  /**
+   * Check generation status using exact runId matching with fallback
+   * Based on website's SimpleGenerationService.checkStatus()
+   */
+  async checkStatus(runId: string, mode: GenerationMode): Promise<GenerationResult> {
     try {
-      console.log('🖼️ [Mobile] Compressing and uploading image:', imageUri);
+      console.log(`🔍 [Mobile Generation] Checking status for runId: ${runId}`);
+      
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+      
+      // Try the new getMediaByRunId endpoint first
+      try {
+        const response = await fetch(config.apiUrl(`getMediaByRunId?runId=${runId}`), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.status === 404) {
+          // Media not found yet, still processing
+          console.log(`⏳ [Mobile Generation] Media not found yet, still processing... (runId: ${runId})`);
+          return {
+            success: true,
+            jobId: runId,
+            runId: runId,
+            status: 'processing',
+            error: undefined,
+            type: mode
+          };
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success && result.media) {
+          console.log(`✅ [Mobile Generation] Generation completed! Found media:`, {
+            id: result.media.id,
+            runId: result.media.runId,
+            type: result.media.type,
+            url: result.media.url
+          });
+          
+          return {
+            success: true,
+            jobId: runId,
+            runId: runId,
+            status: 'completed',
+            imageUrl: result.media.type === 'video' ? undefined : result.media.url,
+            error: undefined,
+            type: mode
+          };
+        }
+
+        // Unexpected response format
+        console.warn(`⚠️ [Mobile Generation] Unexpected response format:`, result);
+        return {
+          success: false,
+          status: 'failed',
+          error: 'Unexpected response format from server',
+          type: mode
+        };
+
+      } catch (endpointError) {
+        console.warn(`⚠️ [Mobile Generation] getMediaByRunId endpoint failed, falling back to getUserMedia:`, endpointError);
+        
+        // Fallback to the old getUserMedia method
+        return await this.checkStatusFallback(runId, mode);
+      }
+
+    } catch (error) {
+      console.error('❌ [Mobile Generation] Status check failed:', error);
+
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        type: mode
+      };
+    }
+  }
+
+  /**
+   * Fallback status check using getUserMedia (old method)
+   */
+  private async checkStatusFallback(runId: string, mode: GenerationMode): Promise<GenerationResult> {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
+      // Get user ID from token
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.userId;
+      
+      if (!userId) {
+        console.error('❌ [Mobile Generation] No user ID available for polling')
+        throw new Error('User not authenticated')
+      }
+      
+      // Use getUserMedia as fallback
+      const response = await fetch(config.apiUrl(`getUserMedia?userId=${userId}&limit=50`), {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Look for media with exact runId match - check all possible field names
+      const matchingMedia = result.items?.find((item: any) => {
+        return (
+          item.runId === runId || 
+          item.run_id === runId || 
+          item.stability_job_id === runId ||
+          item.falJobId === runId ||
+          item.stabilityJobId === runId
+        );
+      });
+
+      if (matchingMedia) {
+        console.log(`✅ [Mobile Generation] Found media with exact runId match (fallback):`, {
+          id: matchingMedia.id,
+          runId: matchingMedia.runId,
+          url: matchingMedia.finalUrl || matchingMedia.imageUrl
+        });
+        
+        return {
+          success: true,
+          jobId: runId,
+          runId: runId,
+          status: 'completed',
+          imageUrl: matchingMedia.finalUrl || matchingMedia.imageUrl || matchingMedia.image_url,
+          error: undefined,
+          type: mode
+        };
+      }
+
+      // No matching media found, still processing
+      console.log(`⏳ [Mobile Generation] No matching media found, still processing... (runId: ${runId})`);
+      return {
+        success: true,
+        jobId: runId,
+        runId: runId,
+        status: 'processing',
+        error: undefined,
+        type: mode
+      };
+
+    } catch (error) {
+      console.error('❌ [Mobile Generation] Fallback status check failed:', error);
+
+      return {
+        success: false,
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        type: mode
+      };
+    }
+  }
+
+  /**
+   * Build payload for unified generation endpoint
+   * Based on website's SimpleGenerationService.buildPayload()
+   */
+  private buildPayload(request: GenerationRequest, cloudinaryUrl: string): any {
+    // Convert mode names to match unified function expectations
+    const modeMap: Record<GenerationMode, string> = {
+      'presets': 'presets',
+      'custom-prompt': 'custom',
+      'emotion-mask': 'emotion_mask',
+      'ghibli-reaction': 'ghibli_reaction',
+      'neo-glitch': 'neo_glitch',
+      'edit-photo': 'edit'
+    };
+
+    // Get user ID from token
+    const getUserFromToken = async (): Promise<string> => {
+      try {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) throw new Error('No auth token found');
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.userId;
+      } catch (error) {
+        console.error('Failed to get user from token:', error);
+        throw new Error('User not authenticated');
+      }
+    };
+
+    const runId = `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Get the base prompt
+    const originalPrompt = this.getPromptForMode(request);
+    
+    // Apply prompt enhancement (same as website)
+    console.log('🔍 [Mobile Generation] Applying prompt enhancement to:', originalPrompt.substring(0, 100) + '...');
+    
+    // Detect gender, animals, and groups from the prompt
+    const detectedGender = detectGenderFromPrompt(originalPrompt);
+    const detectedAnimals = detectAnimalsFromPrompt(originalPrompt);
+    const detectedGroups = detectGroupsFromPrompt(originalPrompt);
+    
+    console.log('🔍 [Mobile Generation] Detected:', {
+      gender: detectedGender,
+      animals: detectedAnimals,
+      groups: detectedGroups
+    });
+
+    // Apply enhanced prompt engineering
+    const { enhancedPrompt, negativePrompt } = enhancePromptForSpecificity(originalPrompt, {
+      preserveGender: true,
+      preserveAnimals: true,
+      preserveGroups: true,
+      originalGender: detectedGender,
+      originalAnimals: detectedAnimals,
+      originalGroups: detectedGroups,
+      context: request.mode
+    });
+
+    // Apply advanced prompt enhancements
+    const ultraEnhancedPrompt = applyAdvancedPromptEnhancements(enhancedPrompt);
+    
+    console.log('✨ [Mobile Generation] Original:', originalPrompt.substring(0, 100) + '...');
+    console.log('✨ [Mobile Generation] Enhanced:', ultraEnhancedPrompt.substring(0, 100) + '...');
+    if (negativePrompt) {
+      console.log('✨ [Mobile Generation] Negative:', negativePrompt.substring(0, 100) + '...');
+    }
+
+    const basePayload = {
+      mode: modeMap[request.mode],
+      prompt: ultraEnhancedPrompt,
+      negative_prompt: negativePrompt,
+      sourceAssetId: cloudinaryUrl,
+      userId: getUserFromToken(),
+      runId: runId,
+      meta: {},
+      // IPA parameters (matching website defaults)
+      ipaThreshold: 0.7, // 70% similarity required (same as website)
+      ipaRetries: 3, // 3 retry attempts (same as website)
+      ipaBlocking: true // Block if IPA fails (same as website)
+    };
+
+    // Add mode-specific parameters
+    switch (request.mode) {
+      case 'presets':
+        return {
+          ...basePayload,
+          presetKey: request.presetId
+        };
+
+      case 'custom-prompt':
+        return basePayload;
+
+      case 'emotion-mask':
+        return {
+          ...basePayload,
+          emotionMaskPresetId: request.presetId
+        };
+
+      case 'ghibli-reaction':
+        return {
+          ...basePayload,
+          ghibliReactionPresetId: request.presetId
+        };
+
+      case 'neo-glitch':
+        return {
+          ...basePayload,
+          neoGlitchPresetId: request.presetId
+        };
+
+      case 'edit-photo':
+        return {
+          ...basePayload,
+          editPrompt: request.customPrompt
+        };
+
+      default:
+        return basePayload;
+    }
+  }
+
+  /**
+   * Get prompt for the generation mode
+   */
+  private getPromptForMode(request: GenerationRequest): string {
+    // For custom-prompt and edit-photo modes, always use the custom prompt
+    if (request.mode === 'custom-prompt' || request.mode === 'edit-photo') {
+      if (request.customPrompt) {
+        return request.customPrompt;
+      }
+      console.warn('⚠️ [Mobile Generation] No custom prompt provided for', request.mode);
+      return 'Transform the image with artistic enhancement';
+    }
+
+    // For presets mode, the backend will handle the preset lookup
+    if (request.mode === 'presets') {
+      if (request.presetId) {
+        // The backend will resolve the preset ID to the actual prompt
+        // We just pass a placeholder here
+        return 'Using preset from database';
+      }
+      console.warn('⚠️ [Mobile Generation] No preset ID provided for presets mode');
+      return 'Transform the image with artistic enhancement';
+    }
+
+    // For emotion-mask, ghibli-reaction, and neo-glitch modes, use EXACT prompts from website
+    const presetMaps: Record<string, Record<string, string>> = {
+      'neo-glitch': {
+        'neo_tokyo_base': 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.',
+        'neo_tokyo_visor': 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.',
+        'neo_tokyo_tattoos': 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.',
+        'neo_tokyo_scanlines': 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
+      },
+      'ghibli-reaction': {
+        'ghibli_tears': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.',
+        'ghibli_shock': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.',
+        'ghibli_sparkle': 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.',
+        'ghibli_sadness': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.',
+        'ghibli_love': 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
+      },
+      'emotion-mask': {
+        'emotion_mask_nostalgia_distance': 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+        'emotion_mask_joy_sadness': 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+        'emotion_mask_conf_loneliness': 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+        'emotion_mask_peace_fear': 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
+        'emotion_mask_strength_vuln': 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
+      }
+    };
+
+    const modePresets = presetMaps[request.mode];
+    if (modePresets && request.presetId && modePresets[request.presetId]) {
+      return modePresets[request.presetId];
+    }
+
+    console.warn('⚠️ [Mobile Generation] Unknown preset:', { mode: request.mode, presetId: request.presetId });
+    return 'Transform the image with artistic enhancement';
+  }
+
+  /**
+   * Upload image to Cloudinary
+   */
+  private async uploadImageToCloudinary(imageUri: string): Promise<string> {
+    try {
+      console.log('🖼️ [Mobile Generation] Compressing and uploading image:', imageUri);
       
       // Compress image before upload
       const compressedImage = await ImageManipulator.manipulateAsync(
@@ -148,7 +663,7 @@ export class GenerationService {
         }
       );
       
-      console.log('✅ [Mobile] Image compressed successfully');
+      console.log('✅ [Mobile Generation] Image compressed successfully');
       
       // Get Cloudinary signature
       const signatureData = await cloudinaryService.getSignature({
@@ -161,10 +676,10 @@ export class GenerationService {
         signatureData
       );
       
-      console.log('☁️ [Mobile] Image uploaded to Cloudinary:', uploadResult.secure_url);
+      console.log('☁️ [Mobile Generation] Image uploaded to Cloudinary:', uploadResult.secure_url);
       return uploadResult.secure_url;
     } catch (error) {
-      console.error('❌ [Mobile] Upload failed, trying original:', error);
+      console.error('❌ [Mobile Generation] Upload failed, trying original:', error);
       
       // Fallback: try uploading original image
       try {
@@ -177,17 +692,32 @@ export class GenerationService {
           signatureData
         );
         
-        console.log('☁️ [Mobile] Original image uploaded to Cloudinary:', uploadResult.secure_url);
+        console.log('☁️ [Mobile Generation] Original image uploaded to Cloudinary:', uploadResult.secure_url);
         return uploadResult.secure_url;
       } catch (fallbackError) {
-        console.error('❌ [Mobile] Fallback upload also failed:', fallbackError);
+        console.error('❌ [Mobile Generation] Fallback upload also failed:', fallbackError);
         throw new Error('Failed to upload image to Cloudinary');
       }
     }
   }
 
-  // Offline queue management
-  static async queueOfflineGeneration(request: GenerationRequest) {
+  /**
+   * Network detection
+   */
+  private async isOnline(): Promise<boolean> {
+    try {
+      const state = await NetInfo.fetch();
+      return state.isConnected ?? false;
+    } catch (error) {
+      console.error('Network check failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Offline queue management
+   */
+  private async queueOfflineGeneration(request: GenerationRequest) {
     try {
       const offlineQueue = await AsyncStorage.getItem('offline_generation_queue');
       const queue = offlineQueue ? JSON.parse(offlineQueue) : [];
@@ -199,825 +729,11 @@ export class GenerationService {
       });
       
       await AsyncStorage.setItem('offline_generation_queue', JSON.stringify(queue));
-      console.log('📱 [Mobile] Queued offline generation:', request.mode);
+      console.log('📱 [Mobile Generation] Queued offline generation:', request.mode);
     } catch (error) {
-      console.error('❌ [Mobile] Failed to queue offline generation:', error);
-    }
-  }
-
-  static async processOfflineQueue() {
-    try {
-      const offlineQueue = await AsyncStorage.getItem('offline_generation_queue');
-      if (!offlineQueue) return;
-      
-      const queue = JSON.parse(offlineQueue);
-      const processed = [];
-      
-      for (const item of queue) {
-        try {
-          if (item.status === 'queued') {
-            const result = await this.startOnlineGeneration(item);
-            processed.push({ ...item, status: 'completed', result });
-          } else {
-            processed.push(item);
-          }
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unknown error';
-          processed.push({ ...item, status: 'failed', error: message });
-        }
-      }
-      
-      await AsyncStorage.setItem('offline_generation_queue', JSON.stringify(processed));
-      console.log('📱 [Mobile] Processed offline queue');
-    } catch (error) {
-      console.error('❌ [Mobile] Failed to process offline queue:', error);
-    }
-  }
-
-  static async getPresets(): Promise<Preset[]> {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No auth token found');
-
-      const response = await fetch(config.apiUrl('get-presets'), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const contentType = response.headers.get('content-type');
-      const text = await response.text();
-      if (!contentType || !contentType.includes('application/json') || !text.trim().startsWith('{')) {
-        throw new Error('Invalid presets response');
-      }
-      const data = JSON.parse(text);
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch presets');
-      }
-      return data.presets || [];
-    } catch (error) {
-      console.error('Get presets error:', error instanceof Error ? error.message : error);
-      // Return local presets as fallback
-      return this.getLocalPresets();
-    }
-  }
-
-  static async startGeneration(request: GenerationRequest): Promise<GenerationResponse> {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No auth token found');
-
-      // Check network connection
-      const isOnline = await this.isOnline();
-      if (!isOnline) {
-        console.log('📱 [Mobile] Offline mode - queuing generation');
-        await this.queueOfflineGeneration(request);
-        return {
-          success: true,
-          jobId: `offline_${Date.now()}`,
-          estimatedTime: 0,
-          offline: true
-        };
-      }
-
-      // Upload image to Cloudinary first (like website)
-      const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
-      console.log('🔗 [Mobile] Cloudinary URL received:', cloudinaryUrl);
-      console.log('🔗 [Mobile] Cloudinary URL type:', typeof cloudinaryUrl);
-      console.log('🔗 [Mobile] Cloudinary URL length:', cloudinaryUrl?.length);
-      
-      // Send Cloudinary URL directly as sourceAssetId (like website does)
-      const sourceAssetId = cloudinaryUrl;
-      console.log('🔗 [Mobile] SourceAssetId set to:', sourceAssetId);
-
-      // Convert mobile mode names to website's expected format
-      const modeMap: Record<string, string> = {
-        'presets': 'presets',
-        'custom-prompt': 'custom',
-        'edit-photo': 'edit',
-        'emotion-mask': 'emotion_mask',
-        'ghibli-reaction': 'ghibli',
-        'neo-glitch': 'neo_glitch',
-      };
-
-      // Apply complete prompt enhancement pipeline (matching website)
-      let processedPrompt = request.customPrompt || '';
-      let negativePrompt = '';
-
-      // Handle preset-based modes - map presetId to actual prompt
-      if (!processedPrompt && request.presetId && request.mode !== 'presets') {
-        console.log('🔍 [Mobile] Looking up preset prompt:', { mode: request.mode, presetId: request.presetId });
-        processedPrompt = getPresetPrompt(request.mode, request.presetId);
-        console.log('🎨 [Mobile] Using preset prompt:', { mode: request.mode, presetId: request.presetId, prompt: processedPrompt });
-      }
-
-      console.log('🔍 [Mobile] Prompt processing:', {
-        mode: request.mode,
-        presetId: request.presetId,
-        customPrompt: request.customPrompt,
-        processedPrompt: processedPrompt,
-        promptLength: processedPrompt.length
-      });
-
-      // Ensure we have a prompt for non-preset modes
-      if (!processedPrompt && request.mode !== 'presets') {
-        console.warn('⚠️ [Mobile] No prompt provided for non-preset mode');
-        processedPrompt = 'Transform the image with artistic enhancement';
-      }
-
-      if (processedPrompt) {
-        // Step 1: Detect gender, animals, groups from original prompt
-        const detectedGender = detectGenderFromPrompt(processedPrompt);
-        const detectedAnimals = detectAnimalsFromPrompt(processedPrompt);
-        const detectedGroups = detectGroupsFromPrompt(processedPrompt);
-
-        console.log('🔍 [Mobile Prompt Enhancement] Detected:', {
-          gender: detectedGender,
-          animals: detectedAnimals,
-          groups: detectedGroups
-        });
-
-        // Step 2: Apply enhanced prompt engineering (matching website)
-        const { enhancedPrompt, negativePrompt: enhancedNegative } = enhancePromptForSpecificity(processedPrompt, {
-          preserveGender: true,
-          preserveAnimals: true,
-          preserveGroups: true,
-          originalGender: detectedGender,
-          originalAnimals: detectedAnimals,
-          originalGroups: detectedGroups,
-          context: request.mode
-        });
-
-        // Step 3: Apply advanced prompt enhancements
-        processedPrompt = applyAdvancedPromptEnhancements(enhancedPrompt);
-        negativePrompt = enhancedNegative;
-
-        console.log('✨ [Mobile Prompt Enhancement] Original:', processedPrompt);
-        console.log('✨ [Mobile Prompt Enhancement] Enhanced:', processedPrompt);
-        if (negativePrompt) {
-          console.log('✨ [Mobile Prompt Enhancement] Negative:', negativePrompt);
-        }
-      }
-
-      // Build payload matching website's simple generation service format
-      const runId = `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Get user ID from token (like website does)
-      const user = await this.getUserFromToken(token);
-      if (!user?.id) {
-        throw new Error('User not found in token');
-      }
-
-      const payload: any = {
-        mode: modeMap[request.mode] || request.mode,
-        prompt: processedPrompt,
-        sourceAssetId: sourceAssetId,
-        sourceWidth: undefined, // Will be detected by backend
-        sourceHeight: undefined, // Will be detected by backend
-        userId: user.id,
-        runId,
-        meta: {},
-        // IPA parameters
-        ipaThreshold: 0.8,
-        ipaRetries: 2,
-        ipaBlocking: false,
-      };
-
-      // Add mode-specific parameters (matching website's simple generation service)
-      switch (request.mode) {
-        case 'presets':
-          if (request.presetId) {
-            payload.presetKey = request.presetId;
-          }
-          break;
-        case 'emotion-mask':
-          if (request.presetId) {
-            payload.emotionMaskPresetId = request.presetId;
-          }
-          break;
-        case 'ghibli-reaction':
-          if (request.presetId) {
-            payload.ghibliReactionPresetId = request.presetId;
-          }
-          break;
-        case 'neo-glitch':
-          if (request.presetId) {
-            payload.neoGlitchPresetId = request.presetId;
-          }
-          break;
-        case 'custom-prompt':
-          // No additional parameters needed
-          break;
-        case 'edit-photo':
-          payload.editPrompt = processedPrompt;
-          break;
-      }
-
-      console.log('🚀 [Mobile Generation] Sending payload:', {
-        mode: payload.mode,
-        promptLength: payload.prompt?.length || 0,
-        hasSource: !!payload.sourceAssetId,
-        sourceAssetId: payload.sourceAssetId,
-        cloudinaryUrl: payload.cloudinaryUrl ? payload.cloudinaryUrl.substring(0, 50) + '...' : 'MISSING',
-        runId: payload.runId,
-        url: config.apiUrl('unified-generate'),
-        payloadSize: JSON.stringify(payload).length,
-        // Show mode-specific parameters
-        presetKey: payload.presetKey,
-        ghibliReactionPresetId: payload.ghibliReactionPresetId,
-        emotionMaskPresetId: payload.emotionMaskPresetId,
-        neoGlitchPresetId: payload.neoGlitchPresetId,
-        customPrompt: payload.customPrompt ? 'present' : 'missing',
-        editPrompt: payload.editPrompt ? 'present' : 'missing'
-      });
-      
-      // Debug: Show full payload structure
-      console.log('📋 [Mobile] Full payload structure:', Object.keys(payload));
-      console.log('📋 [Mobile] Payload cloudinaryUrl:', payload.cloudinaryUrl);
-      console.log('📋 [Mobile] Payload sourceAssetId:', payload.sourceAssetId);
-
-      // Hermes-safe fetch + parse with timeout and defensive checks
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-      let response: Response | undefined;
-      let responseText = '';
-      try {
-        response = await fetch(config.apiUrl('unified-generate'), {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        const contentType = response.headers.get('content-type');
-        responseText = await response.text();
-
-        console.log('📡 [Mobile Generation] Response status:', response.status);
-        console.log('📡 [Mobile Generation] Content-Type:', contentType);
-        console.log('📄 [Mobile Generation] Raw response:', {
-          status: response.status,
-          responseLength: responseText.length,
-          responseStart: responseText.substring(0, 200),
-        });
-
-      if (!contentType || !contentType.includes('application/json')) {
-        // Handle 202 Accepted responses (async processing started)
-        if (response.status === 202) {
-          console.log('✅ [Mobile Generation] Request accepted (202), processing started');
-          console.log('📋 [Mobile Generation] 202 Response body:', responseText.substring(0, 200));
-          
-          // For 202 responses, use the runId as both jobId and runId
-          const jobId = payload.runId;
-          const runId = payload.runId;
-          
-          console.log('📋 [Mobile Generation] Using runId for polling:', { jobId, runId });
-          
-          return {
-            success: true,
-            jobId: jobId,
-            runId: runId,
-            estimatedTime: 45, // Default estimate
-          };
-        }
-        
-        // Only log as error for non-202 responses
-        console.error('❌ [Mobile Generation] Non-JSON response:', {
-          contentType,
-          status: response.status,
-          responsePreview: responseText.substring(0, 500)
-        });
-        
-        // Check for common error patterns
-        if (responseText.includes('Internal Error') && responseText.includes('ID:')) {
-          // Extract error ID for debugging
-          const idMatch = responseText.match(/ID:\s*([A-Z0-9]+)/);
-          const errorId = idMatch ? idMatch[1] : 'unknown';
-          return {
-            success: false,
-            error: `Server error (ID: ${errorId}). Please try again or contact support.`
-          };
-        }
-        
-        return {
-          success: false,
-          error: `Invalid response format: ${responseText.substring(0, 200)}`
-        };
-      }
-
-        const trimmed = responseText.trim();
-        
-        // Handle 202 responses with empty body (common case)
-        if (response.status === 202 && trimmed === '') {
-          console.log('✅ [Mobile Generation] Empty 202 response - async processing started');
-          return {
-            success: true,
-            jobId: payload.runId,
-            runId: payload.runId,
-            estimatedTime: 45,
-          };
-        }
-        
-        // Check if response is valid JSON
-        if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-          return {
-            success: false,
-            error: `Unexpected response from server (status ${response.status}): ${trimmed.substring(0, 200)}`
-          };
-        }
-
-        // Safe JSON parsing with error handling
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('❌ [Mobile Generation] JSON parse error:', parseError);
-          return {
-            success: false,
-            error: `Invalid JSON response: ${responseText.substring(0, 200)}`
-          };
-        }
-
-        if (!response.ok) {
-          return {
-            success: false,
-            error: data.error || 'Generation failed'
-          };
-        }
-
-        return {
-          success: true,
-          jobId: data.jobId,
-          runId: data.runId || runId,
-          estimatedTime: data.estimatedTime,
-        };
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        console.error('❌ [Mobile Generation] Fetch or JSON error:', {
-          message: fetchError?.message,
-          responseText,
-        });
-        if (fetchError?.name === 'AbortError') {
-          return { success: false, error: 'Request timeout' };
-        }
-        return {
-          success: false,
-          error: `Unexpected error: ${fetchError?.message || 'Unknown error'}`
-        };
-      }
-    } catch (error) {
-      console.error('Start generation error:', error instanceof Error ? error.message : error);
-      
-      // If network error, queue for offline processing
-      const message = error instanceof Error ? error.message : String(error);
-      if (message.includes('network') || message.includes('fetch')) {
-        await this.queueOfflineGeneration(request);
-        return {
-          success: true,
-          jobId: `offline_${Date.now()}`,
-          estimatedTime: 0,
-          offline: true
-        };
-      }
-      
-      return {
-        success: false,
-        error: this.getUserFriendlyErrorMessage(message)
-      };
-    }
-  }
-
-  // Separate method for online generation (used by offline queue processor)
-  private static async startOnlineGeneration(request: GenerationRequest): Promise<GenerationResponse> {
-    const token = await AsyncStorage.getItem('auth_token');
-    if (!token) throw new Error('No auth token found');
-
-    // Upload image to Cloudinary first (like website)
-    const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
-    
-    // Send the actual Cloudinary URL for IPA check
-    const sourceAssetId = cloudinaryUrl;
-
-    // Convert mobile mode names to website's expected format
-    const modeMap: Record<string, string> = {
-      'presets': 'presets',
-      'custom-prompt': 'custom',
-      'edit-photo': 'edit',
-      'emotion-mask': 'emotion_mask',
-      'ghibli-reaction': 'ghibli_reaction',
-      'neo-glitch': 'neo_glitch',
-    };
-
-    // Apply complete prompt enhancement pipeline (matching website)
-    let processedPrompt = request.customPrompt || '';
-    let negativePrompt = '';
-
-    if (processedPrompt) {
-      // Step 1: Detect gender, animals, groups from original prompt
-      const detectedGender = detectGenderFromPrompt(processedPrompt);
-      const detectedAnimals = detectAnimalsFromPrompt(processedPrompt);
-      const detectedGroups = detectGroupsFromPrompt(processedPrompt);
-
-      console.log('🔍 [Mobile Prompt Enhancement] Detected:', {
-        gender: detectedGender,
-        animals: detectedAnimals,
-        groups: detectedGroups
-      });
-
-      // Step 2: Apply enhanced prompt engineering (matching website)
-      const { enhancedPrompt, negativePrompt: enhancedNegative } = enhancePromptForSpecificity(processedPrompt, {
-        preserveGender: true,
-        preserveAnimals: true,
-        preserveGroups: true,
-        originalGender: detectedGender,
-        originalAnimals: detectedAnimals,
-        originalGroups: detectedGroups,
-        context: request.mode
-      });
-
-      // Step 3: Apply advanced prompt enhancements
-      processedPrompt = applyAdvancedPromptEnhancements(enhancedPrompt);
-      negativePrompt = enhancedNegative;
-
-      console.log('✨ [Mobile Prompt Enhancement] Original:', processedPrompt);
-      console.log('✨ [Mobile Prompt Enhancement] Enhanced:', processedPrompt);
-      if (negativePrompt) {
-        console.log('✨ [Mobile Prompt Enhancement] Negative:', negativePrompt);
-      }
-    }
-
-    // Build payload matching website's unified-generate-background format
-    const payload: any = {
-      mode: modeMap[request.mode] || request.mode,
-      prompt: processedPrompt,
-        sourceAssetId: sourceAssetId, // Using 'present' like website
-        cloudinaryUrl: cloudinaryUrl, // Include Cloudinary URL for backend
-      // userId removed - backend will extract from JWT token
-      runId: `mobile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      additionalImages: 0,
-      editImages: 0,
-      storyTimePresetId: undefined,
-
-      // Mode-specific parameters (matching website's database table structure)
-      // Only Presets Mode uses database presets - others use hardcoded system prompts
-      ...(request.presetId && request.mode === 'presets' && { presetKey: request.presetId }),
-      // For hardcoded modes, we don't send presetId - the prompt is already processed
-
-      // Prompt enhancement results
-      ...(negativePrompt && { negative_prompt: negativePrompt }),
-
-      // Mode-specific settings (matching website)
-      aspect_ratio: this.getAspectRatioForMode(request.mode),
-      image_prompt_strength: this.getImageStrengthForMode(request.mode),
-      guidance_scale: this.getGuidanceScaleForMode(request.mode),
-
-      // Quality settings
-      prompt_upsampling: true,
-      safety_tolerance: 3,
-      output_format: 'jpeg',
-
-      // IPA (Identity Preservation Analysis) settings
-      ipaThreshold: 0.8,
-      ipaRetries: 2,
-      ipaBlocking: false,
-    };
-
-    console.log('🚀 [Mobile Generation] Sending payload:', {
-      mode: payload.mode,
-      promptLength: payload.prompt?.length || 0,
-      hasSource: !!payload.sourceAssetId,
-      runId: payload.runId,
-      url: config.apiUrl('unified-generate-background'),
-      payloadSize: JSON.stringify(payload).length
-    });
-
-    // Log the actual payload being sent (truncated for readability)
-    console.log('📦 [Mobile Generation] Full payload preview:', {
-      ...payload,
-      sourceAssetId: payload.sourceAssetId ? `base64:${payload.sourceAssetId.substring(0, 50)}...` : 'none',
-      prompt: payload.prompt?.substring(0, 100) + (payload.prompt?.length > 100 ? '...' : '')
-    });
-
-    // Use the unified background endpoint (matching website)
-    console.log('🌐 [Mobile Generation] Making request to:', config.apiUrl('unified-generate-background'));
-    console.log('🔐 [Mobile Generation] Token length:', token.length);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-    let response: Response | undefined;
-    let responseText = '';
-    try {
-      response = await fetch(config.apiUrl('unified-generate-background'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const contentType = response.headers.get('content-type');
-      responseText = await response.text();
-
-      console.log('📡 [Mobile Generation] Response status:', response.status);
-      console.log('📡 [Mobile Generation] Content-Type:', contentType);
-      console.log('📄 [Mobile Generation] Raw response:', {
-        status: response.status,
-        responseLength: responseText.length,
-        responseStart: responseText.substring(0, 200),
-      });
-
-      // Hermes-safe defensive check before parsing as JSON
-      const trimmed = responseText.trim();
-      if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-        return {
-          success: false,
-          error: `Unexpected response from server (status ${response.status})`
-        };
-      }
-
-      const data = JSON.parse(responseText);
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: data.error || `Generation failed (${response.status})`
-        };
-      }
-
-      return {
-        success: true,
-        jobId: data.jobId,
-        estimatedTime: data.estimatedTime,
-      };
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId);
-      console.error('❌ [Mobile Generation] Fetch or JSON error:', {
-        message: fetchError?.message,
-        responseText,
-      });
-      if (fetchError?.name === 'AbortError') {
-        return { success: false, error: 'Request timeout' };
-      }
-      return {
-        success: false,
-        error: `Unexpected error: ${fetchError?.message || 'Unknown error'}`
-      };
-    }
-  }
-
-  // User-friendly error messages
-  private static getUserFriendlyErrorMessage(error: string): string {
-    const friendlyMessages = {
-      'INSUFFICIENT_CREDITS': 'You need more credits to generate images. Credits reset daily.',
-      'NETWORK_ERROR': 'Please check your internet connection and try again.',
-      'IMAGE_TOO_LARGE': 'The image is too large. Please try a smaller image.',
-      'INVALID_IMAGE': 'The image format is not supported. Please try a different image.',
-      'GENERATION_TIMEOUT': 'Generation took too long. Please try again.',
-      'SERVER_ERROR': 'Our servers are busy. Please try again in a few minutes.',
-      'fetch': 'Please check your internet connection and try again.',
-      'network': 'Please check your internet connection and try again.'
-    };
-    
-    // Check for partial matches
-    for (const [key, message] of Object.entries(friendlyMessages)) {
-      if (error.toLowerCase().includes(key.toLowerCase())) {
-        return message;
-      }
-    }
-    
-    return 'Something went wrong. Please try again.';
-  }
-
-  // Adaptive polling configuration
-  private static pollInterval = 2000; // Start with 2 seconds
-  private static maxPollInterval = 30000; // Max 30 seconds
-  private static pollMultiplier = 1.5; // Increase by 50% each time
-
-  static async getGenerationStatus(jobId: string): Promise<GenerationStatus> {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No auth token found');
-
-      const response = await fetch(config.apiUrl(`getMediaByRunId?runId=${encodeURIComponent(jobId)}`), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const ct = response.headers.get('content-type');
-      const raw = await response.text();
-      
-      // Handle non-JSON responses gracefully - treat as "not ready yet"
-      if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
-        console.log('📊 [GenerationService] Non-JSON response received, treating as not ready');
-        return {
-          jobId,
-          status: 'processing',
-          progress: 0,
-        };
-      }
-      
-      const data = JSON.parse(raw);
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to get status');
-      }
-      return {
-        jobId,
-        status: data.status,
-        resultUrl: data.resultUrl,
-        progress: data.progress,
-        error: data.error,
-      };
-    } catch (error) {
-      console.error('Get generation status error:', error instanceof Error ? error.message : error);
-      return {
-        jobId,
-        status: 'failed',
-        error: this.getUserFriendlyErrorMessage(error instanceof Error ? error.message : String(error)),
-      };
-    }
-  }
-
-  // Adaptive polling with exponential backoff
-  static async pollGenerationStatus(jobId: string): Promise<GenerationStatus> {
-    let attempts = 0;
-    const maxAttempts = 20; // 5 minutes max
-    let currentPollInterval = this.pollInterval;
-    
-    console.log('🔄 [Mobile] Starting adaptive polling for job:', jobId);
-    
-    while (attempts < maxAttempts) {
-      try {
-        const status = await this.getGenerationStatus(jobId);
-        
-        if (status.status === 'completed' || status.status === 'failed') {
-          console.log('✅ [Mobile] Polling completed:', status.status);
-          return status;
-        }
-        
-        console.log(`🔄 [Mobile] Polling attempt ${attempts + 1}/${maxAttempts}, status: ${status.status}, next poll in ${currentPollInterval}ms`);
-        
-        // Wait with current interval
-        await new Promise(resolve => setTimeout(resolve, currentPollInterval));
-        
-        // Increase interval for next poll (adaptive backoff)
-        currentPollInterval = Math.min(currentPollInterval * this.pollMultiplier, this.maxPollInterval);
-        attempts++;
-      } catch (error) {
-        console.error('❌ [Mobile] Polling error:', error);
-        break;
-      }
-    }
-    
-    console.log('⏰ [Mobile] Polling timeout after', attempts, 'attempts');
-    return { 
-      jobId, 
-      status: 'failed', 
-      error: 'Generation took too long. Please try again.' 
-    };
-  }
-
-  // Removed: getUserMedia - use mediaService.getUserMedia instead
-  // Backend will extract userId from JWT token, no need to pass it
-
-  static async refreshUserCredits(): Promise<number> {
-    try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No auth token found');
-
-      const response = await fetch(config.apiUrl('get-user-profile'), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const ct = response.headers.get('content-type');
-      const raw = await response.text();
-      if (!ct || !ct.includes('application/json') || !raw.trim().startsWith('{')) {
-        throw new Error('Invalid profile response');
-      }
-      const data = JSON.parse(raw);
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to refresh credits');
-      }
-      return data?.credits?.balance ?? 0;
-    } catch (error) {
-      console.error('Refresh credits error:', error instanceof Error ? error.message : error);
-      return 0;
-    }
-  }
-
-
-  private static getLocalPresets(): Preset[] {
-    // Fallback presets for offline/demo mode
-    return [
-      {
-        id: 'cinematic_glow',
-        key: 'cinematic_glow',
-        label: 'Cinematic Glow',
-        description: 'Cinematic photo with soft lighting',
-        category: 'cinematic',
-        prompt: 'Cinematic photo with soft lighting, shallow depth of field, filmic glow',
-        negativePrompt: 'blurry, low quality, distorted',
-        strength: 0.8,
-      },
-      {
-        id: 'bright_airy',
-        key: 'bright_airy',
-        label: 'Bright & Airy',
-        description: 'Bright and airy portrait',
-        category: 'bright',
-        prompt: 'Bright and airy portrait, pastel tones, soft sunlight',
-        negativePrompt: 'blurry, low quality, distorted',
-        strength: 0.8,
-      },
-      {
-        id: 'vivid_pop',
-        key: 'vivid_pop',
-        label: 'Vivid Pop',
-        description: 'Vivid photo with bold colors',
-        category: 'vivid',
-        prompt: 'Vivid photo with bold colors, strong contrast, high saturation',
-        negativePrompt: 'blurry, low quality, distorted',
-        strength: 0.8,
-      },
-    ];
-  }
-
-  // Mode-specific settings (matching website's unified-generate-background)
-  private static getAspectRatioForMode(mode: string): string {
-    switch (mode) {
-      case 'ghibli-reaction':
-      case 'emotion-mask':
-      case 'custom-prompt':
-      case 'presets':
-        return '4:5'; // Instagram/Facebook/X-friendly portrait
-      case 'neo-glitch':
-        return '16:9'; // Cinematic wide (Stability.ai)
-      case 'edit-photo':
-        return '4:5'; // Safe default for edits
-      default:
-        return '1:1'; // Safe fallback
-    }
-  }
-
-  private static getImageStrengthForMode(mode: string): number {
-    switch (mode) {
-      case 'ghibli-reaction':
-        return 0.55;
-      case 'neo-glitch':
-        return 0.35;
-      case 'emotion-mask':
-        return 0.45;
-      case 'custom-prompt':
-      case 'presets':
-        return 0.45;
-      case 'edit-photo':
-        return 0.5;
-      default:
-        return 0.45;
-    }
-  }
-
-  private static getGuidanceScaleForMode(mode: string): number {
-    switch (mode) {
-      case 'ghibli-reaction':
-      case 'emotion-mask':
-        return 7.0; // Lower guidance for subtler effect
-      case 'neo-glitch':
-        return 8.5;
-      case 'custom-prompt':
-      case 'presets':
-        return 7.5;
-      case 'edit-photo':
-        return 8.0;
-      default:
-        return 7.5;
-    }
-  }
-
-  private static async getUserFromToken(token: string): Promise<{ id: string } | null> {
-    try {
-      // Decode JWT token to get user info
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return { id: payload.userId };
-    } catch (error) {
-      console.error('Failed to decode token:', error);
-      return null;
+      console.error('❌ [Mobile Generation] Failed to queue offline generation:', error);
     }
   }
 }
+
+export default GenerationService.getInstance();

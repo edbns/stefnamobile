@@ -12,8 +12,6 @@ export default function GenerateScreen() {
   const { user } = useAuthStore();
   const {
     isGenerating,
-    presets,
-    loadPresets,
     startGeneration,
   } = useGenerationStore();
 
@@ -22,10 +20,7 @@ export default function GenerateScreen() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('presets');
   const [customPrompt, setCustomPrompt] = useState('');
 
-  // Load presets on mount
-  useEffect(() => {
-    loadPresets();
-  }, [loadPresets]);
+  // Presets are now loaded by GenerationModes component
 
   // Compute original aspect ratio of the selected image
   useEffect(() => {

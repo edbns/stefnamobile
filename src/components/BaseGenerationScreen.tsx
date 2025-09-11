@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } fr
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
+import GenerationProgress from './GenerationProgress';
 import { Feather } from '@expo/vector-icons';
 
 interface BaseGenerationScreenProps {
@@ -14,7 +15,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuthStore();
-  const { isGenerating, startGeneration } = useGenerationStore();
+  const { isGenerating, startGeneration, currentJob, clearCurrentJob } = useGenerationStore();
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
@@ -66,22 +67,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return;
     }
 
-    // Navigate immediately to progress screen with pending state
-    const tempJobId = `pending_${Date.now()}`;
-    const tempRunId = `pending_${Date.now()}`;
-    
-    console.log('🚀 [BaseGenerationScreen] Navigating immediately to progress screen');
-    
-    router.push({
-      pathname: '/generation-progress',
-      params: {
-        jobId: tempJobId,
-        runId: tempRunId,
-        pending: 'true' // Flag to indicate this is a pending generation
-      }
-    });
-
-    // Start the generation process in the background
+    // Start the generation process using the simplified service
     try {
       const result = await startGeneration({
         imageUri: selectedImage,
@@ -90,27 +76,10 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         customPrompt: customPrompt?.trim() || undefined,
       });
 
-      console.log('🚀 [BaseGenerationScreen] Generation started in background:', result);
-
-      // Update the progress screen with real job details
-      router.replace({
-        pathname: '/generation-progress',
-        params: {
-          jobId: result.jobId,
-          runId: result.runId
-        }
-      });
+      console.log('🚀 [BaseGenerationScreen] Generation completed:', result);
     } catch (error) {
       console.error('❌ [BaseGenerationScreen] Generation failed:', error);
-      // Navigate back to show error
-      router.replace({
-        pathname: '/generation-progress',
-        params: {
-          jobId: tempJobId,
-          runId: tempRunId,
-          error: error instanceof Error ? error.message : 'Generation failed'
-        }
-      });
+      Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
@@ -166,6 +135,29 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         {/* Bottom spacing */}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Generation Progress Modal */}
+      <GenerationProgress
+        isVisible={isGenerating || (currentJob?.status === 'completed') || (currentJob?.status === 'failed')}
+        result={currentJob?.result}
+        onComplete={() => {
+          clearCurrentJob();
+        }}
+        onError={() => {
+          clearCurrentJob();
+        }}
+        onViewResult={(result) => {
+          // Navigate to media viewer
+          router.push({
+            pathname: '/media-viewer',
+            params: { 
+              imageUrl: result.imageUrl,
+              title: 'Generated Image'
+            }
+          });
+          clearCurrentJob();
+        }}
+      />
     </View>
   );
 }

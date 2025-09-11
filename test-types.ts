@@ -7,8 +7,7 @@ const test = async () => {
   
   const result = await startGeneration({
     imageUri: 'test',
-    mode: 'presets',
-    userId: 'test'
+    mode: 'presets'
   });
   
   // This should work if types are correct
