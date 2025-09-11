@@ -241,8 +241,10 @@ export default function GenerationFolderScreen() {
         data={folderData}
         keyExtractor={(item) => item.id}
         renderItem={renderMediaItem}
+        numColumns={2}
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.row}
       />
 
       {/* Action Bar - appears when in selection mode */}
@@ -341,13 +343,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mediaItem: {
-    width: '100%',
+    width: '49%',
     marginBottom: 8,
     position: 'relative',
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: 1, // Square aspect ratio as default
+    aspectRatio: 1, // Square aspect ratio
     resizeMode: 'contain', // Show full image without cropping
   },
   deleteButton: {
