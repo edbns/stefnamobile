@@ -381,7 +381,6 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
-    borderRadius: 8,
   },
   folderImage: {
     position: 'relative',
@@ -406,8 +405,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
   },
   folderTitleOverlay: {
     color: '#ffffff',
