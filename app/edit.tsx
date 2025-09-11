@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   modeCard: {
-    width: '42%',
+    width: '38%',
     aspectRatio: 1,
     marginBottom: 16,
     borderRadius: 16,
