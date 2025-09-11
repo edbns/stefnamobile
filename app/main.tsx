@@ -262,8 +262,7 @@ export default function MainScreen() {
           renderItem={({ item: section }) => renderFolderItem({ section })}
           contentContainerStyle={styles.galleryContainer}
           showsVerticalScrollIndicator={false}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
+          numColumns={1}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -344,11 +343,6 @@ const styles = StyleSheet.create({
   galleryContainer: {
     paddingTop: 20,
     paddingBottom: 100, // Space for floating footer
-    paddingHorizontal: 8, // Add horizontal padding for better spacing
-  },
-  row: {
-    justifyContent: 'space-between',
-    paddingHorizontal: 4, // Reduce margin between columns
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
@@ -384,7 +378,7 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
-    marginBottom: 8, // Add small margin between rows
+    marginBottom: 8, // Small margin between rows only
   },
   folderImage: {
     position: 'relative',
