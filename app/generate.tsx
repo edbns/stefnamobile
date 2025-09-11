@@ -67,30 +67,19 @@ export default function GenerateScreen() {
     }
 
     try {
-      // Show popup that generation started
-      Alert.alert(
-        'Generation Started!', 
-        'Your image is being generated. You can continue using the app while it processes in the background.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Start generation first
-              startGeneration({
-                imageUri: selectedImage,
-                mode: actualMode,
-                presetId: presetId || undefined,
-                customPrompt: customPrompt.trim() || undefined,
-              });
-              
-              // Navigate to main screen after a short delay to ensure generation starts
-              setTimeout(() => {
-                router.push('/main');
-              }, 100);
-            }
-          }
-        ]
-      );
+      // Start generation immediately
+      console.log('🚀 [Generate] Starting generation...');
+      await startGeneration({
+        imageUri: selectedImage,
+        mode: actualMode,
+        presetId: presetId || undefined,
+        customPrompt: customPrompt.trim() || undefined,
+      });
+      
+      console.log('✅ [Generate] Generation started, navigating to main...');
+      
+      // Navigate to main screen immediately
+      router.push('/main');
     } catch (error) {
       console.error('❌ [Generate] Generation failed:', error);
       Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');

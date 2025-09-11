@@ -33,6 +33,13 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   presets: [],
 
   startGeneration: async (request: GenerationRequest) => {
+    console.log('🚀 [GenerationStore] startGeneration called with:', {
+      mode: request.mode,
+      hasImage: !!request.imageUri,
+      hasPreset: !!request.presetId,
+      hasCustomPrompt: !!request.customPrompt
+    });
+    
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Add to active generations
@@ -47,8 +54,12 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
       activeGenerations: [...state.activeGenerations, newGeneration]
     }));
 
+    console.log('📝 [GenerationStore] Added job to active generations:', jobId);
+
     // Start background processing
     processGenerationInBackground(jobId, request);
+    
+    console.log('🔄 [GenerationStore] Background processing started for job:', jobId);
   },
 
   clearCompletedJobs: () => {
@@ -68,8 +79,17 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
 
 // Background processing function
 async function processGenerationInBackground(jobId: string, request: GenerationRequest) {
+  console.log('🔄 [Background] Starting background processing for job:', jobId);
+  console.log('🔄 [Background] Request details:', {
+    mode: request.mode,
+    hasImage: !!request.imageUri,
+    hasPreset: !!request.presetId,
+    hasCustomPrompt: !!request.customPrompt
+  });
+  
   try {
     // Update status to processing
+    console.log('📝 [Background] Updating job status to processing...');
     useGenerationStore.setState(state => ({
       activeGenerations: state.activeGenerations.map(job =>
         job.id === jobId ? { ...job, status: 'processing' as const } : job
@@ -77,14 +97,17 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
     }));
 
     // Get user from auth store
+    console.log('👤 [Background] Getting user from auth store...');
     const { user } = useAuthStore.getState();
     if (!user) {
+      console.error('❌ [Background] No user found in auth store');
       throw new Error('Not authenticated');
     }
+    console.log('✅ [Background] User found:', user.id);
 
     // Reserve credits using creditsStore
     const creditCost = 2; // Standard cost for image generation
-    console.log('💰 [GenerationStore] Attempting to reserve credits...');
+    console.log('💰 [Background] Attempting to reserve credits...');
     
     const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
 
@@ -111,7 +134,21 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
     console.log(`💰 Reserved ${creditCost} credits for generation`);
 
     // Call the generation service
+    console.log('🚀 [Background] Calling GenerationService.generate...');
+    console.log('🚀 [Background] Request being sent:', {
+      mode: request.mode,
+      imageUri: request.imageUri ? 'present' : 'missing',
+      presetId: request.presetId,
+      customPrompt: request.customPrompt ? 'present' : 'missing'
+    });
+    
     const result = await GenerationService.generate(request);
+    
+    console.log('📊 [Background] GenerationService result:', {
+      success: result.success,
+      hasError: !!result.error,
+      error: result.error
+    });
 
     if (result.success) {
       // Update job with success

@@ -94,7 +94,7 @@ class GenerationService {
         const token = await AsyncStorage.getItem('auth_token');
         if (!token) throw new Error('No auth token found');
 
-        const quotaResp = await fetch(config.apiUrl('getQuota'), {
+        const quotaResp = await fetch(config.apiUrl('get-quota'), {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -121,6 +121,7 @@ class GenerationService {
       const payload = await this.buildPayload(request, cloudinaryUrl);
 
       console.log('📡 [Mobile Generation] Calling unified-generate endpoint');
+      console.log('📡 [Mobile Generation] Payload being sent:', JSON.stringify(payload, null, 2));
 
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
@@ -132,6 +133,12 @@ class GenerationService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
+      });
+
+      console.log('📡 [Mobile Generation] Response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
       });
 
       // Read response body first to check for early failures
