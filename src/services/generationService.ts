@@ -367,8 +367,8 @@ export class GenerationService {
       console.log('🔗 [Mobile] Cloudinary URL type:', typeof cloudinaryUrl);
       console.log('🔗 [Mobile] Cloudinary URL length:', cloudinaryUrl?.length);
       
-      // Use 'present' like website does - backend will handle the Cloudinary URL
-      const sourceAssetId = 'present';
+      // Send the actual Cloudinary URL for IPA check
+      const sourceAssetId = cloudinaryUrl;
 
       // Convert mobile mode names to website's expected format
       const modeMap: Record<string, string> = {
@@ -656,8 +656,8 @@ export class GenerationService {
     // Upload image to Cloudinary first (like website)
     const cloudinaryUrl = await this.compressAndUploadImage(request.imageUri);
     
-    // Use 'present' like website does - backend will handle the Cloudinary URL
-    const sourceAssetId = 'present';
+    // Send the actual Cloudinary URL for IPA check
+    const sourceAssetId = cloudinaryUrl;
 
     // Convert mobile mode names to website's expected format
     const modeMap: Record<string, string> = {
