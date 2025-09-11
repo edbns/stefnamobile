@@ -70,7 +70,7 @@ export default function EditScreen() {
               <View style={styles.cardOverlay}>
                 <View style={styles.gridPattern} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -85,7 +85,7 @@ export default function EditScreen() {
                 <View style={styles.techGrid} />
                 <View style={styles.cameraFrame} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -99,7 +99,7 @@ export default function EditScreen() {
               <View style={styles.cardOverlay}>
                 <View style={styles.emotionGlow} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -114,7 +114,7 @@ export default function EditScreen() {
                 <View style={styles.glitchPattern} />
                 <View style={styles.digitalLines} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -129,7 +129,7 @@ export default function EditScreen() {
                 <View style={styles.magicCircles} />
                 <View style={styles.sparkleDots} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -144,7 +144,7 @@ export default function EditScreen() {
                 <View style={styles.vintageLines} />
                 <View style={styles.filmStrip} />
                 <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={32} color="#ffffff" />
+                  <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
                 </View>
@@ -234,14 +234,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: 'center',
   },
   headerSubtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#cccccc',
     textAlign: 'center',
   },
@@ -254,10 +254,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   modeCard: {
-    width: '48%',
-    aspectRatio: 1,
-    marginBottom: 16,
-    borderRadius: 16,
+    width: '45%',
+    aspectRatio: 0.9,
+    marginBottom: 12,
+    borderRadius: 12,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   },
   cardOverlay: {
     flex: 1,
-    padding: 16,
+    padding: 12,
     position: 'relative',
   },
   cardContent: {
@@ -284,21 +284,21 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 8,
+    marginBottom: 2,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
   cardSubtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#ffffff',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
