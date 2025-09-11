@@ -36,16 +36,18 @@ export class ImagePickerService {
 
       console.log('📸 [ImagePicker] Launching camera');
       
-      // Launch camera with consistent options
+      // Launch camera with optimized options to prevent black screen
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false, // Always false to avoid crashes
-        quality: options.quality || 0.8,
+        quality: options.quality || 0.7, // Slightly lower quality for better performance
         allowsMultipleSelection: false,
         cameraType: options.cameraType || ImagePicker.CameraType.back,
-        exif: false, // Disable EXIF to prevent orientation issues
+        exif: true, // Enable EXIF to get proper orientation data
         base64: false, // Always false to reduce memory usage
         presentationStyle: ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN,
+        // Add additional options to prevent black screen
+        videoMaxDuration: 0,
         ...options
       });
 
@@ -136,7 +138,7 @@ export class ImagePickerService {
     }
   }
 
-  // Unified image normalization with consistent EXIF handling
+  // Improved image normalization with proper EXIF handling
   static async normalizeImage(uri: string, exif?: any): Promise<string> {
     try {
       console.log('📸 [ImagePicker] Normalizing image orientation');
@@ -147,16 +149,88 @@ export class ImagePickerService {
         throw new Error('Invalid image URI');
       }
       
-      // Skip normalization if no EXIF data - this often causes more problems than it solves
+      // If no EXIF data, return original URI
       if (!exif || !exif.Orientation) {
-        console.log('📸 [ImagePicker] No EXIF orientation data, skipping normalization');
+        console.log('📸 [ImagePicker] No EXIF orientation data, using original image');
         return uri;
       }
       
-      // TEMPORARY FIX: Skip normalization entirely to prevent flipping issues
-      // Many developers have messed up EXIF handling, so we'll disable it for now
-      console.log('📸 [ImagePicker] EXIF normalization disabled to prevent flipping issues');
-      return uri;
+      // Handle common orientation values that cause flipping
+      const orientation = exif.Orientation;
+      console.log('📸 [ImagePicker] Image orientation:', orientation);
+      
+      // Only normalize if orientation indicates rotation/flipping is needed
+      if (orientation === 1) {
+        console.log('📸 [ImagePicker] Image already in correct orientation');
+        return uri;
+      }
+      
+      // Apply proper rotation based on EXIF orientation
+      let rotation = 0;
+      let flipHorizontal = false;
+      let flipVertical = false;
+      
+      switch (orientation) {
+        case 2:
+          flipHorizontal = true;
+          break;
+        case 3:
+          rotation = 180;
+          break;
+        case 4:
+          flipVertical = true;
+          break;
+        case 5:
+          rotation = 90;
+          flipHorizontal = true;
+          break;
+        case 6:
+          rotation = 90;
+          break;
+        case 7:
+          rotation = 270;
+          flipHorizontal = true;
+          break;
+        case 8:
+          rotation = 270;
+          break;
+        default:
+          console.log('📸 [ImagePicker] Unknown orientation, using original image');
+          return uri;
+      }
+      
+      console.log('📸 [ImagePicker] Applying transformations:', { rotation, flipHorizontal, flipVertical });
+      
+      // Apply transformations using ImageManipulator
+      const manipulatorActions = [];
+      
+      if (rotation !== 0) {
+        manipulatorActions.push({ rotate: rotation });
+      }
+      
+      if (flipHorizontal || flipVertical) {
+        manipulatorActions.push({ 
+          flip: flipHorizontal && flipVertical ? ImageManipulator.FlipType.Both 
+              : flipHorizontal ? ImageManipulator.FlipType.Horizontal 
+              : ImageManipulator.FlipType.Vertical 
+        });
+      }
+      
+      if (manipulatorActions.length === 0) {
+        return uri;
+      }
+      
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        manipulatorActions,
+        { 
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG
+        }
+      );
+      
+      console.log('📸 [ImagePicker] Image normalized successfully');
+      return result.uri;
       
     } catch (error) {
       console.error('❌ [ImagePicker] Image normalization failed:', error);

@@ -368,27 +368,25 @@ export default function ProfileScreen() {
                 {/* Email Form */}
                 <View style={styles.emailForm}>
                   <Text style={styles.formLabel}>Friend's Email</Text>
-                  <View style={styles.emailInputContainer}>
-                    <TextInput
-                      style={styles.emailInput}
-                      value={inviteEmail}
-                      onChangeText={setInviteEmail}
-                      placeholder="Enter friend's email address"
-                      placeholderTextColor="#666666"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      editable={!isSendingInvite}
-                    />
-                    <TouchableOpacity
-                      style={[styles.sendButton, (!inviteEmail.trim() || isSendingInvite) && styles.sendButtonDisabled]}
-                      onPress={handleSendInvite}
-                      disabled={!inviteEmail.trim() || isSendingInvite}
-                    >
-                      <Text style={styles.sendButtonText}>
-                        {isSendingInvite ? 'Sending...' : 'Send Invite'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    style={styles.emailInputFull}
+                    value={inviteEmail}
+                    onChangeText={setInviteEmail}
+                    placeholder="Enter friend's email address"
+                    placeholderTextColor="#666666"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!isSendingInvite}
+                  />
+                  <TouchableOpacity
+                    style={[styles.sendButtonFull, (!inviteEmail.trim() || isSendingInvite) && styles.sendButtonDisabled]}
+                    onPress={handleSendInvite}
+                    disabled={!inviteEmail.trim() || isSendingInvite}
+                  >
+                    <Text style={styles.sendButtonText}>
+                      {isSendingInvite ? 'Sending...' : 'Send Invite'}
+                    </Text>
+                  </TouchableOpacity>
 
                   {inviteError && (
                     <View style={styles.errorContainer}>
@@ -439,27 +437,25 @@ export default function ProfileScreen() {
                   <Text style={styles.currentEmailDisplay}>{user?.email}</Text>
                   
                   <Text style={styles.formLabel}>New Email</Text>
-                  <View style={styles.emailInputContainer}>
-                    <TextInput
-                      style={styles.emailInput}
-                      value={newEmail}
-                      onChangeText={setNewEmail}
-                      placeholder="Enter new email address"
-                      placeholderTextColor="#666666"
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      editable={!isChangingEmail}
-                    />
-                    <TouchableOpacity
-                      style={[styles.sendButton, (!newEmail.trim() || isChangingEmail) && styles.sendButtonDisabled]}
-                      onPress={handleChangeEmail}
-                      disabled={!newEmail.trim() || isChangingEmail}
-                    >
-                      <Text style={styles.sendButtonText}>
-                        {isChangingEmail ? 'Updating...' : 'Update Email'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  <TextInput
+                    style={styles.emailInputFull}
+                    value={newEmail}
+                    onChangeText={setNewEmail}
+                    placeholder="Enter new email address"
+                    placeholderTextColor="#666666"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!isChangingEmail}
+                  />
+                  <TouchableOpacity
+                    style={[styles.sendButtonFull, (!newEmail.trim() || isChangingEmail) && styles.sendButtonDisabled]}
+                    onPress={handleChangeEmail}
+                    disabled={!newEmail.trim() || isChangingEmail}
+                  >
+                    <Text style={styles.sendButtonText}>
+                      {isChangingEmail ? 'Updating...' : 'Update Email'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -701,11 +697,31 @@ const styles = StyleSheet.create({
     marginRight: 8,
     letterSpacing: 0,
   },
+  emailInputFull: {
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#444444',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    color: '#ffffff',
+    fontSize: 16,
+    marginBottom: 12,
+    letterSpacing: 0,
+  },
   sendButton: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
+  },
+  sendButtonFull: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendButtonDisabled: {
     backgroundColor: '#666666',

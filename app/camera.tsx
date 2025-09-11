@@ -1,39 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import { ImagePickerService } from '../src/services/imagePickerService';
 
 export default function CameraScreen() {
   const router = useRouter();
-  const [isCapturing, setIsCapturing] = useState(false);
 
   // Auto-launch camera immediately when component mounts
-  useEffect(() => {
-    takePicture();
+  React.useEffect(() => {
+    handleCameraCapture();
   }, []);
 
-  const takePicture = async () => {
-    if (isCapturing) {
-      console.log('Already capturing, ignoring tap');
-      return;
-    }
-
+  const handleCameraCapture = async () => {
     try {
       console.log('📸 Opening camera - direct to generate flow');
-      setIsCapturing(true);
-
+      
       // Use unified image picker service
       const result = await ImagePickerService.captureFromCamera();
 
       if (result.success && result.uri) {
         try {
-          // Skip normalization to prevent flipping issues
-          console.log('✅ Photo captured, going to generate:', result.uri);
-          // Navigate directly to generate - no normalization
+          // Apply proper normalization to fix orientation issues
+          const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
+          console.log('✅ Photo captured and normalized, going to generate:', normalizedUri);
+          
+          // Navigate directly to generate
           router.replace({
             pathname: '/generate',
-            params: { selectedImage: result.uri }
+            params: { selectedImage: normalizedUri }
           });
           return;
         } catch (error) {
@@ -48,7 +42,7 @@ export default function CameraScreen() {
         ImagePickerService.showErrorAlert(
           'Camera Permission Required', 
           'Please allow camera access to take photos.',
-          () => takePicture(),
+          () => handleCameraCapture(),
           () => router.back()
         );
         return;
@@ -64,7 +58,7 @@ export default function CameraScreen() {
       ImagePickerService.showErrorAlert(
         'Camera Error', 
         'Unable to access camera. Please try the upload option instead.',
-        () => takePicture(),
+        () => handleCameraCapture(),
         () => router.back()
       );
 
@@ -73,11 +67,9 @@ export default function CameraScreen() {
       ImagePickerService.showErrorAlert(
         'Camera Error', 
         'Unable to access camera. Please try the upload option instead.',
-        () => takePicture(),
+        () => handleCameraCapture(),
         () => router.back()
       );
-    } finally {
-      setIsCapturing(false);
     }
   };
 
@@ -94,28 +86,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 18,
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  backButton: {
-    backgroundColor: '#333333',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
-    borderRadius: 12,
-  },
-  backButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

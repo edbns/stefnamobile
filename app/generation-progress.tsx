@@ -76,8 +76,19 @@ export default function GenerationProgressScreen() {
   };
 
   const handleViewResult = () => {
-    // Navigate to results screen
-    router.push('/main');
+    // Navigate directly to media viewer for the generated image
+    if (generationStatus.imageUrl) {
+      router.push({
+        pathname: '/media-viewer',
+        params: { 
+          imageUrl: generationStatus.imageUrl,
+          title: 'Generated Image'
+        }
+      });
+    } else {
+      // Fallback to main screen if no image URL
+      router.push('/main');
+    }
   };
 
   return (
@@ -158,20 +169,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    position: 'absolute',
+    top: 0,
+    right: 0,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingRight: 20,
+    zIndex: 1000,
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   mainContent: {
     flex: 1,
@@ -221,11 +234,16 @@ const styles = StyleSheet.create({
   },
   resultImageContainer: {
     marginVertical: 30,
+    width: width * 0.8,
+    height: width * 0.8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resultImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 12,
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    resizeMode: 'contain',
   },
   viewResultButton: {
     backgroundColor: '#ff6b35',
