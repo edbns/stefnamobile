@@ -216,7 +216,7 @@ export default function MainScreen() {
             <Image 
               source={{ uri: coverImage.cloudUrl }} 
               style={styles.folderImageContent}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           ) : (
             <View style={styles.folderImagePlaceholder}>
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,

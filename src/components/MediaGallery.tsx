@@ -123,7 +123,7 @@ export default function MediaGallery({
       <Image
         source={{ uri: item.localUri }}
         style={styles.mediaImage}
-        resizeMode="cover"
+        resizeMode="contain"
       />
       <View style={styles.mediaOverlay}>
         <View style={styles.mediaInfo}>
