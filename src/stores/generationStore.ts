@@ -170,7 +170,8 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
             ...savedMedia,
             cloudUrl: result.imageUrl,
             cloudId: extractCloudinaryPublicId(result.imageUrl), // Proper Cloudinary ID extraction
-            synced: true
+            synced: true,
+            type: request.mode // Add the generation mode as the type field
           };
           
           // Update local storage
