@@ -1,45 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import SimpleNotification from './SimpleNotification';
-
-interface Notification {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
+import { useNotificationsStore } from '../stores/notificationsStore';
 
 export default function NotificationManager() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const { notifications: storeNotifications, removeNotification } = useNotificationsStore();
 
+  // Listen to store notifications
   useEffect(() => {
-    // Listen for generation notifications
-    const handleGenerationNotification = (event: any) => {
-      const { message, type } = event.detail;
-      addNotification(message, type);
-    };
-
-    // Add event listener
-    if (typeof window !== 'undefined') {
-      window.addEventListener('generationNotification', handleGenerationNotification);
-    }
-
-    return () => {
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('generationNotification', handleGenerationNotification);
-      }
-    };
-  }, []);
-
-  const addNotification = (message: string, type: 'success' | 'error' | 'info') => {
-    const id = `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const notification: Notification = { id, message, type };
-    
-    setNotifications(prev => [...prev, notification]);
-  };
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
+    setNotifications(storeNotifications);
+  }, [storeNotifications]);
 
   return (
     <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 1000 }}>
