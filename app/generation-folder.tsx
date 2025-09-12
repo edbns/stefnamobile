@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import ModernSpinner from '../src/components/ModernSpinner';
 import { useMediaStore } from '../src/stores/mediaStore';
 
 
@@ -358,7 +359,7 @@ export default function GenerationFolderScreen() {
             disabled={deletingItemId === item.id}
           >
             {deletingItemId === item.id ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ModernSpinner size={16} color="#ffffff" />
             ) : (
               <Feather name="trash-2" size={16} color="#ffffff" />
             )}
@@ -430,7 +431,7 @@ export default function GenerationFolderScreen() {
             disabled={selectedItems.size === 0 || isSharing}
           >
             {isSharing ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ModernSpinner size={16} color="#ffffff" />
             ) : (
               <Feather name="share-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
             )}
@@ -445,7 +446,7 @@ export default function GenerationFolderScreen() {
             disabled={selectedItems.size === 0 || isDownloading}
           >
             {isDownloading ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ModernSpinner size={16} color="#ffffff" />
             ) : (
               <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
             )}
@@ -460,7 +461,7 @@ export default function GenerationFolderScreen() {
             disabled={selectedItems.size === 0 || isDeleting}
           >
             {isDeleting ? (
-              <ActivityIndicator size="small" color="#ff4444" />
+              <ModernSpinner size={16} color="#ff4444" />
             ) : (
               <Feather name="trash-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ff4444"} />
             )}

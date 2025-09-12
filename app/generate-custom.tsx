@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, Animated, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
 import MagicWandService from '../src/services/magicWandService';
+import ModernSpinner from '../src/components/ModernSpinner';
 
 interface CustomPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -106,6 +107,7 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
+            {/* Enhance Button - Circle */}
             <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
               <TouchableOpacity
                 onPress={handleMagicWand}
@@ -116,14 +118,14 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
                 ]}
               >
                 {isEnhancing ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ModernSpinner size={24} color="#ffffff" />
                 ) : (
                   <Text style={styles.magicWandIcon}>✨</Text>
                 )}
-                <Text style={styles.magicWandText}>{isEnhancing ? 'Enhancing...' : 'Enhance'}</Text>
               </TouchableOpacity>
             </Animated.View>
 
+            {/* Generate Button - Full Width */}
             <Animated.View style={[styles.generateButton, { transform: [{ scale: generateAnim }] }]}>
               <TouchableOpacity
                 style={[
@@ -208,45 +210,37 @@ const styles = StyleSheet.create({
         },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 16,
     paddingHorizontal: 4,
+    gap: 12,
   },
   magicWandButton: {
-    flex: 1,
-    marginRight: 8,
+    // Circle button - fixed size
   },
   magicWandTouchable: {
-    flexDirection: 'row',
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
   },
   magicWandTouchableDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     opacity: 0.6,
   },
   magicWandIcon: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#ffffff',
-    marginRight: 8,
     textShadowColor: 'rgba(255, 255, 255, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  magicWandText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '500',
-  },
   generateButton: {
     flex: 1,
-    marginLeft: 8,
   },
   generateTouchable: {
     flexDirection: 'row',

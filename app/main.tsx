@@ -20,6 +20,7 @@ import { useGenerationStore } from '../src/stores/generationStore';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImagePickerService } from '../src/services/imagePickerService';
+import ModernSpinner from '../src/components/ModernSpinner';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -352,7 +353,7 @@ export default function MainScreen() {
             disabled={isGenerating}
           >
             {isGenerating ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ModernSpinner size={20} color="#ffffff" />
             ) : (
               <Feather name="edit-3" size={20} color="#ffffff" />
             )}

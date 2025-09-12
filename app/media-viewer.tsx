@@ -7,6 +7,7 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useMediaStore } from '../src/stores/mediaStore';
+import ModernSpinner from '../src/components/ModernSpinner';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
@@ -226,7 +227,7 @@ export default function MediaViewerScreen() {
         
         <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isSaving || isSharing || isDeleting}>
           {isDeleting ? (
-            <ActivityIndicator size="small" color="#ff4444" />
+            <ModernSpinner size={16} color="#ff4444" />
           ) : (
             <Feather name="trash-2" size={24} color="#ff4444" />
           )}
