@@ -58,42 +58,32 @@ export default function GenerationProgressNotification({
     switch (status) {
       case 'starting':
         return {
-          icon: '🚀',
-          title: 'Starting Generation',
-          message: message || 'Preparing your image for processing...',
-          color: '#2196F3',
+          title: 'Added to Queue',
+          message: message || 'We will be processing it shortly',
           showProgress: false,
         };
       case 'processing':
         return {
-          icon: '⚡',
           title: 'Processing',
-          message: message || 'AI is working on your image...',
-          color: '#FF9800',
-          showProgress: true,
+          message: message || 'AI is working on your image',
+          showProgress: false,
         };
       case 'completed':
         return {
-          icon: '✅',
-          title: 'Generation Complete!',
-          message: message || 'Your image is ready to view',
-          color: '#4CAF50',
+          title: 'Media Ready',
+          message: message || 'Your media is ready',
           showProgress: false,
         };
       case 'failed':
         return {
-          icon: '❌',
           title: 'Generation Failed',
           message: error || message || 'Something went wrong',
-          color: '#F44336',
           showProgress: false,
         };
       default:
         return {
-          icon: 'ℹ️',
           title: 'Generation Status',
-          message: message || 'Processing...',
-          color: '#2196F3',
+          message: message || 'Processing',
           showProgress: false,
         };
     }
@@ -119,8 +109,7 @@ export default function GenerationProgressNotification({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.icon}>{statusInfo.icon}</Text>
-          <Text style={[styles.title, { color: statusInfo.color }]}>
+          <Text style={styles.title}>
             {statusInfo.title}
           </Text>
         </View>
@@ -135,42 +124,20 @@ export default function GenerationProgressNotification({
       {/* Message */}
       <Text style={styles.message}>{statusInfo.message}</Text>
 
-      {/* Progress Bar */}
-      {statusInfo.showProgress && (
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <Animated.View 
-              style={[
-                styles.progressFill,
-                { 
-                  width: progressAnimation.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: ['0%', '100%'],
-                  }),
-                  backgroundColor: statusInfo.color,
-                }
-              ]} 
-            />
-          </View>
-          <Text style={styles.progressText}>{Math.round(progress)}%</Text>
-        </View>
-      )}
-
       {/* Action Buttons */}
       <View style={styles.actions}>
         {status === 'completed' && onViewGallery && (
           <TouchableOpacity 
-            style={[styles.actionButton, styles.primaryButton]} 
+            style={styles.actionButton} 
             onPress={onViewGallery}
           >
-            <Feather name="image" size={16} color="#ffffff" />
             <Text style={styles.actionButtonText}>View Gallery</Text>
           </TouchableOpacity>
         )}
         
         {status === 'failed' && onDismiss && (
           <TouchableOpacity 
-            style={[styles.actionButton, styles.secondaryButton]} 
+            style={styles.actionButton} 
             onPress={onDismiss}
           >
             <Text style={styles.actionButtonText}>Try Again</Text>
@@ -213,10 +180,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  icon: {
-    fontSize: 16,
-    marginRight: 8,
-  },
   title: {
     fontSize: 16,
     fontWeight: '600',
@@ -237,25 +200,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     lineHeight: 20,
   },
-  progressContainer: {
-    marginBottom: 12,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    color: '#ffffff',
-    textAlign: 'right',
-  },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -268,11 +212,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     gap: 4,
-  },
-  primaryButton: {
-    backgroundColor: '#4CAF50',
-  },
-  secondaryButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   actionButtonText: {
