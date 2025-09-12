@@ -7,6 +7,8 @@ import GenerationService, { GenerationRequest, GenerationResult } from '../servi
 import { useCreditsStore } from './creditsStore';
 import { useAuthStore } from './authStore';
 import { useNotificationsStore } from './notificationsStore';
+import { StorageService } from '../services/storageService';
+import { useMediaStore } from './mediaStore';
 
 interface GenerationState {
   // Background processing state
@@ -141,6 +143,40 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
 
       // Credits are handled automatically by the backend
       console.log('Generation completed successfully - credits handled by backend');
+
+      // Save generated media to local storage
+      if (result.imageUrl) {
+        try {
+          console.log('💾 [Background] Saving generated media to local storage:', result.imageUrl);
+          
+          // Download and save the generated image
+          const filename = `generated_${request.mode}_${Date.now()}.jpg`;
+          const savedMedia = await StorageService.saveGeneratedImage(
+            result.imageUrl,
+            filename,
+            jobId
+          );
+          
+          // Update the saved media with cloud URL and cloud ID
+          const updatedMedia = {
+            ...savedMedia,
+            cloudUrl: result.imageUrl,
+            cloudId: result.imageUrl.split('/').pop()?.split('.')[0], // Extract ID from URL
+            synced: true
+          };
+          
+          // Update local storage
+          await StorageService.updateMediaInStorage(updatedMedia);
+          
+          // Refresh media store to show the new media
+          const { loadUserMedia } = useMediaStore.getState();
+          await loadUserMedia();
+          
+          console.log('✅ [Background] Media saved successfully to local storage');
+        } catch (saveError) {
+          console.error('❌ [Background] Failed to save media to local storage:', saveError);
+        }
+      }
 
       // Show completion notification
       showCompletionNotification(jobId, request.mode, true);

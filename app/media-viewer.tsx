@@ -23,6 +23,7 @@ export default function MediaViewerScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
   const [gestureFeedback, setGestureFeedback] = useState<string | null>(null);
   
@@ -77,10 +78,13 @@ export default function MediaViewerScreen() {
 
   const handleDelete = async () => {
     try {
+      setIsDeleting(true);
       await deleteMedia(currentImage.id, currentImage.cloudId);
       navigateBack.toMain();
     } catch (e) {
       Alert.alert('Delete Error', 'Unable to delete this image.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -229,8 +233,12 @@ export default function MediaViewerScreen() {
           )}
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isSaving || isSharing}>
-          <Feather name="trash-2" size={24} color="#ff4444" />
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isSaving || isSharing || isDeleting}>
+          {isDeleting ? (
+            <ActivityIndicator size="small" color="#ff4444" />
+          ) : (
+            <Feather name="trash-2" size={24} color="#ff4444" />
+          )}
         </TouchableOpacity>
       </View>
     </View>

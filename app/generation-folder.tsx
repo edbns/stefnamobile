@@ -28,6 +28,7 @@ export default function GenerationFolderScreen() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
   const handleMediaPress = (item: any) => {
     if (isSelectionMode) {
@@ -321,8 +322,16 @@ export default function GenerationFolderScreen() {
             text: 'Delete',
             style: 'destructive',
             onPress: async () => {
-              await deleteMedia(item.id, item.cloudId);
-              navigateBack.toMain(); // Go back to refresh main page
+              try {
+                setDeletingItemId(item.id);
+                await deleteMedia(item.id, item.cloudId);
+                navigateBack.toMain(); // Go back to refresh main page
+              } catch (error) {
+                console.error('Delete error:', error);
+                Alert.alert('Delete Error', 'Failed to delete photo. Please try again.');
+              } finally {
+                setDeletingItemId(null);
+              }
             }
           }
         ]
@@ -343,8 +352,16 @@ export default function GenerationFolderScreen() {
         />
         {/* Individual delete button - only show when not in selection mode */}
         {!isSelectionMode && (
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Feather name="trash-2" size={16} color="#ffffff" />
+          <TouchableOpacity 
+            style={styles.deleteButton} 
+            onPress={handleDelete}
+            disabled={deletingItemId === item.id}
+          >
+            {deletingItemId === item.id ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Feather name="trash-2" size={16} color="#ffffff" />
+            )}
           </TouchableOpacity>
         )}
         {/* Selection indicator - only show when in selection mode */}

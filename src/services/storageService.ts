@@ -223,7 +223,7 @@ export class StorageService {
     await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedMedia));
   }
 
-  private static async updateMediaInStorage(updatedMedia: StoredMedia): Promise<void> {
+  static async updateMediaInStorage(updatedMedia: StoredMedia): Promise<void> {
     const existingMedia = await this.getStoredMedia();
     const updatedList = existingMedia.map(media =>
       media.id === updatedMedia.id ? updatedMedia : media
