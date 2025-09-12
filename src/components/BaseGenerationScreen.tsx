@@ -150,11 +150,21 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
     } catch (error) {
       console.error('[BaseGenerationScreen] Generation failed:', error);
+      
+      // Show error notification immediately
+      let errorMessage = 'Generation failed';
+      if (error instanceof Error) {
+        if (error.message.includes('INSUFFICIENT_CREDITS')) {
+          errorMessage = 'Insufficient credits. Please add more credits to continue.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setProgressNotification({
         visible: true,
         status: 'failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        message: errorMessage,
       });
     }
   };
