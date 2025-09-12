@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import GenerationService, { GenerationRequest, GenerationResult } from '../services/generationService';
 import { useCreditsStore } from './creditsStore';
 import { useAuthStore } from './authStore';
+import { useNotificationsStore } from './notificationsStore';
 
 interface GenerationState {
   // Background processing state
@@ -217,11 +218,25 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
 // Simple notification function
 function showCompletionNotification(jobId: string, mode: string, success: boolean, error?: string) {
   const message = success 
-    ? `${mode} generation completed!` 
-    : `Generation failed: ${error || 'Unknown error'}`;
+    ? 'Your media is ready' 
+    : error || 'Generation failed';
   
   console.log(`Notification: ${message}`);
   
-  // For React Native, we'll use the notification service instead of CustomEvent
-  // The notification will be handled by the BaseGenerationScreen component
+  // Use the notifications store to show the notification
+  const { addNotification } = useNotificationsStore.getState();
+  
+  if (success) {
+    addNotification({
+      type: 'success',
+      title: 'Media Ready',
+      message: 'Your media is ready'
+    });
+  } else {
+    addNotification({
+      type: 'error', 
+      title: 'Generation Failed',
+      message: error || 'Unknown error occurred'
+    });
+  }
 }

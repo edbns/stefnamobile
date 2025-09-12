@@ -66,9 +66,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       mode,
       presetId,
       customPrompt: customPrompt?.substring(0, 100) + (customPrompt && customPrompt.length > 100 ? '...' : ''),
-      customPromptLength: customPrompt?.length || 0,
-      modeType: typeof mode,
-      modeValue: mode
+      customPromptLength: customPrompt?.length || 0
     });
 
     if (!selectedImage) {
@@ -89,12 +87,11 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return;
     }
 
-    // Show generation starting notification
+    // Show simple queue notification
     setProgressNotification({
       visible: true,
       status: 'starting',
-      progress: 0,
-      message: 'Preparing your image for processing...',
+      message: 'Added to queue - we will be processing it shortly',
     });
 
     // Start the generation process (non-blocking)
@@ -114,44 +111,14 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
       console.log('[BaseGenerationScreen] Generation started in background');
       
-      // Simulate progress updates
-      let progress = 10;
-      const progressInterval = setInterval(() => {
-        progress += Math.random() * 15; // Random progress increments
-        if (progress >= 90) {
-          progress = 90; // Don't go to 100% until actually complete
-          clearInterval(progressInterval);
-        }
-        
-        setProgressNotification({
-          visible: true,
-          status: 'processing',
-          progress: Math.min(progress, 90),
-          message: progress < 30 ? 'Uploading image...' : 
-                   progress < 60 ? 'AI is processing your image...' : 
-                   'Finalizing your creation...',
-        });
-      }, 1000);
-
-      // Show completion after a delay (simulating real completion)
+      // Redirect to main page immediately
       setTimeout(() => {
-        clearInterval(progressInterval);
-        setProgressNotification({
-          visible: true,
-          status: 'completed',
-          progress: 100,
-          message: 'Your image is ready!',
-        });
-        
-        // Auto-dismiss after 3 seconds and go to main gallery
-        setTimeout(() => {
-          setProgressNotification(prev => ({ ...prev, visible: false }));
-          router.push('/main'); // Go to main gallery to see the result
-        }, 3000);
-      }, 8000); // Simulate 8 seconds total generation time
+        setProgressNotification(prev => ({ ...prev, visible: false }));
+        router.push('/main');
+      }, 2000);
 
     } catch (error) {
-      console.error('❌ [BaseGenerationScreen] Generation failed:', error);
+      console.error('[BaseGenerationScreen] Generation failed:', error);
       setProgressNotification({
         visible: true,
         status: 'failed',

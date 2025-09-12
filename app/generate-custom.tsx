@@ -73,7 +73,7 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
     <KeyboardAvoidingView 
       style={styles.keyboardAvoidingView}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       <ScrollView 
         style={styles.scrollView}
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 50,
+    paddingBottom: 100,
   },
   promptInputWrapper: {
     position: 'relative',
