@@ -23,6 +23,7 @@ interface MediaState {
   loadUserMedia: () => Promise<void>;
   deleteMedia: (mediaId: string, cloudId?: string) => Promise<boolean>;
   uploadToCloudinary: (imageUri: string, folder?: string) => Promise<CloudinaryUploadResult | null>;
+  clearMedia: () => void;
   clearError: () => void;
   reset: () => void;
   syncWithLocalStorage: () => Promise<void>;
@@ -34,13 +35,22 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   currentUpload: null,
   error: null,
 
+  clearMedia: () => {
+    set({ media: [], isLoading: false, error: null });
+  },
+
   loadUserMedia: async () => {
+    // Get user ID for user-specific storage
+    const userString = await AsyncStorage.getItem('user_profile');
+    const user = userString ? JSON.parse(userString) : null;
+    const userId = user?.id;
+
     try {
       set({ isLoading: true, error: null });
 
       // Show locally stored media immediately for fast UX
       try {
-        const localMedia = await StorageService.getStoredMedia();
+        const localMedia = await StorageService.getStoredMedia(userId);
         if (localMedia && localMedia.length > 0) {
           set({ media: localMedia, isLoading: false });
         }
@@ -90,7 +100,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         });
 
         // Load local media (may already be displayed)
-        const localMedia = await StorageService.getStoredMedia();
+        const localMedia = await StorageService.getStoredMedia(userId);
 
         // Merge and deduplicate (prefer cloud entry, match by generationJobId or id)
         const mergedMedia = [...(localMedia || []), ...cloudMedia].reduce((acc: MediaItem[], item) => {
@@ -117,7 +127,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         });
 
         set({ media: mergedMedia, isLoading: false });
-        await StorageService.storeMedia(mergedMedia);
+        await StorageService.storeMedia(mergedMedia, userId);
       } else {
         console.error('🌐 [MediaStore] Server error:', response.error);
         set({ error: response.error, isLoading: false });
@@ -127,7 +137,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
       // Fallback to local storage only
       try {
-        const localMedia = await StorageService.getStoredMedia();
+        const localMedia = await StorageService.getStoredMedia(userId);
         set({ media: localMedia, isLoading: false });
       } catch (localError) {
         console.error('Local storage fallback error:', localError);
@@ -169,7 +179,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       }
 
       // Always delete from local storage
-      await StorageService.deleteMedia(mediaId);
+      await StorageService.deleteMedia(mediaId, user.id);
 
       // Update state
       const { media } = get();
@@ -244,7 +254,11 @@ export const useMediaStore = create<MediaState>((set, get) => ({
   syncWithLocalStorage: async () => {
     try {
       const { media } = get();
-      await StorageService.storeMedia(media);
+      const userString = await AsyncStorage.getItem('user_profile');
+      const user = userString ? JSON.parse(userString) : null;
+      const userId = user?.id;
+      
+      await StorageService.storeMedia(media, userId);
     } catch (error) {
       console.error('Sync with local storage error:', error);
     }

@@ -18,8 +18,13 @@ export interface StoredMedia {
 }
 
 export class StorageService {
-  private static readonly STORAGE_KEY = 'stefna_media';
+  private static readonly STORAGE_KEY_PREFIX = 'stefna_media_';
   private static readonly MEDIA_DIR = FileSystem.documentDirectory + 'stefna_media/';
+
+  // Get user-specific storage key
+  private static getStorageKey(userId?: string): string {
+    return userId ? `${this.STORAGE_KEY_PREFIX}${userId}` : 'stefna_media';
+  }
 
   // Initialize storage directory
   static async initialize(): Promise<void> {
@@ -37,7 +42,8 @@ export class StorageService {
   static async saveGeneratedImage(
     imageUri: string,
     filename: string,
-    generationJobId?: string
+    generationJobId?: string,
+    userId?: string
   ): Promise<StoredMedia> {
     try {
       await this.initialize();
@@ -68,7 +74,7 @@ export class StorageService {
       };
 
       // Save to local storage
-      await this.saveMediaToStorage(media);
+      await this.saveMediaToStorage(media, userId);
 
       // Auto-save to Photos app if enabled
       if (config.AUTO_SAVE_TO_PHOTOS) {
@@ -114,9 +120,10 @@ export class StorageService {
   }
 
   // Store media array (used by mediaStore)
-  static async storeMedia(media: StoredMedia[]): Promise<void> {
+  static async storeMedia(media: StoredMedia[], userId?: string): Promise<void> {
     try {
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(media));
+      const storageKey = this.getStorageKey(userId);
+      await AsyncStorage.setItem(storageKey, JSON.stringify(media));
     } catch (error) {
       console.error('Store media error:', error);
       throw error;
@@ -124,9 +131,10 @@ export class StorageService {
   }
 
   // Get all stored media
-  static async getStoredMedia(): Promise<StoredMedia[]> {
+  static async getStoredMedia(userId?: string): Promise<StoredMedia[]> {
     try {
-      const mediaString = await AsyncStorage.getItem(this.STORAGE_KEY);
+      const storageKey = this.getStorageKey(userId);
+      const mediaString = await AsyncStorage.getItem(storageKey);
       if (!mediaString) return [];
 
       const media: StoredMedia[] = JSON.parse(mediaString);
@@ -142,9 +150,9 @@ export class StorageService {
   }
 
   // Delete media
-  static async deleteMedia(mediaId: string): Promise<void> {
+  static async deleteMedia(mediaId: string, userId?: string): Promise<void> {
     try {
-      const media = await this.getStoredMedia();
+      const media = await this.getStoredMedia(userId);
       const updatedMedia = media.filter(item => item.id !== mediaId);
 
       // Delete physical file only if it's a local file
@@ -158,7 +166,8 @@ export class StorageService {
         }
       }
 
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedMedia));
+      const storageKey = this.getStorageKey(userId);
+      await AsyncStorage.setItem(storageKey, JSON.stringify(updatedMedia));
     } catch (error) {
       console.error('Delete media error:', error);
       throw error;
@@ -223,17 +232,19 @@ export class StorageService {
   }
 
   // Private helper methods
-  private static async saveMediaToStorage(media: StoredMedia): Promise<void> {
-    const existingMedia = await this.getStoredMedia();
+  private static async saveMediaToStorage(media: StoredMedia, userId?: string): Promise<void> {
+    const existingMedia = await this.getStoredMedia(userId);
     const updatedMedia = [...existingMedia, media];
-    await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedMedia));
+    const storageKey = this.getStorageKey(userId);
+    await AsyncStorage.setItem(storageKey, JSON.stringify(updatedMedia));
   }
 
-  static async updateMediaInStorage(updatedMedia: StoredMedia): Promise<void> {
-    const existingMedia = await this.getStoredMedia();
+  static async updateMediaInStorage(updatedMedia: StoredMedia, userId?: string): Promise<void> {
+    const existingMedia = await this.getStoredMedia(userId);
     const updatedList = existingMedia.map(media =>
       media.id === updatedMedia.id ? updatedMedia : media
     );
-    await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedList));
+    const storageKey = this.getStorageKey(userId);
+    await AsyncStorage.setItem(storageKey, JSON.stringify(updatedList));
   }
 }

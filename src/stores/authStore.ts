@@ -8,6 +8,7 @@ import { userService } from '../services/userService';
 import { useErrorStore, errorHelpers } from './errorStore';
 import { useNotificationsStore, notificationHelpers } from './notificationsStore';
 import { useCreditsStore } from './creditsStore';
+import { useMediaStore } from './mediaStore';
 import { AuthState } from '../types/auth';
 import { User } from '../types/user';
 
@@ -87,8 +88,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       set({ isLoading: true });
 
-      // Clear all stored data
-      await AsyncStorage.multiRemove(['auth_token', 'user_profile', 'user_settings']);
+      // Clear all stored data including media cache
+      await AsyncStorage.multiRemove([
+        'auth_token', 
+        'user_profile', 
+        'user_settings',
+        'stefna_media' // Clear media cache to prevent cross-user data
+      ]);
+
+      // Clear media store state
+      const { clearMedia } = useMediaStore.getState();
+      clearMedia();
 
       set({
         user: null,

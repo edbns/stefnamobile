@@ -93,6 +93,11 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
   });
   
   try {
+    // Get user ID for user-specific storage
+    const userString = await AsyncStorage.getItem('user_profile');
+    const currentUser = userString ? JSON.parse(userString) : null;
+    const userId = currentUser?.id;
+    
     // Update status to processing
     console.log('[Background] Updating job status to processing...');
     useGenerationStore.setState(state => ({
@@ -156,7 +161,8 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
           const savedMedia = await StorageService.saveGeneratedImage(
             result.imageUrl,
             filename,
-            jobId
+            jobId,
+            userId
           );
           
           // Update the saved media with cloud URL and cloud ID
@@ -168,7 +174,7 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
           };
           
           // Update local storage
-          await StorageService.updateMediaInStorage(updatedMedia);
+          await StorageService.updateMediaInStorage(updatedMedia, userId);
           
           // Update media store directly instead of reloading everything
           const { media } = useMediaStore.getState();

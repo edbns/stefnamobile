@@ -99,6 +99,14 @@ export const mediaService = {
         media: data.items || [],
       };
     } catch (error) {
+      // Don't log authentication errors - they're expected during logout
+      if (error instanceof Error && error.message.includes('Not authenticated')) {
+        return {
+          media: [],
+          error: 'Not authenticated',
+        };
+      }
+      
       console.error('Load user media error:', error);
       return {
         media: [],
