@@ -94,15 +94,15 @@ export default function VerifyScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  contentWithKeyboard: { justifyContent: 'flex-start', paddingTop: 100 },
+  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, paddingTop: 60 },
+  contentWithKeyboard: { justifyContent: 'flex-start', paddingTop: 80 },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   logo: {
-    width: 200,
-    height: 80,
+    width: 160,
+    height: 60,
   },
   title: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
