@@ -10,6 +10,7 @@ import { useNotificationsStore } from './notificationsStore';
 import { StorageService } from '../services/storageService';
 import { useMediaStore } from './mediaStore';
 import { ErrorMessages } from '../constants/errorMessages';
+import { mapErrorToUserMessage } from '../utils/errorMapping';
 
 interface GenerationState {
   // Background processing state
@@ -222,32 +223,20 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
       )
     }));
 
-    // Show error notification with better message for insufficient credits
-    let errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    if (errorMessage.includes('INSUFFICIENT_CREDITS')) {
-      errorMessage = ErrorMessages.insufficientCredits();
-    } else if (errorMessage.includes('NETWORK')) {
-      errorMessage = ErrorMessages.networkError();
-    } else if (errorMessage.includes('SERVER')) {
-      errorMessage = ErrorMessages.serverError();
-    } else {
-      errorMessage = ErrorMessages.generationFailed(errorMessage);
-    }
+    // Show user-friendly error notification
+    const errorMapping = mapErrorToUserMessage(error instanceof Error ? error : String(error));
+    const { addNotification } = useNotificationsStore.getState();
     
-    // Don't show duplicate notification - BaseGenerationScreen handles it
-    console.log(`Generation failed: ${errorMessage}`);
+    addNotification({
+      type: 'error',
+      title: errorMapping.title,
+      message: errorMapping.message
+    });
   }
 }
 
 // Simple notification function
 function showCompletionNotification(jobId: string, mode: string, success: boolean, error?: string) {
-  const message = success 
-    ? 'Your media is ready' 
-    : error || 'Generation failed';
-  
-  console.log(`Notification: ${message}`);
-  
-  // Use the notifications store to show the notification
   const { addNotification } = useNotificationsStore.getState();
   
   if (success) {
@@ -256,11 +245,12 @@ function showCompletionNotification(jobId: string, mode: string, success: boolea
       title: 'Media Ready',
       message: 'Your media is ready'
     });
-  } else {
+  } else if (error) {
+    const errorMapping = mapErrorToUserMessage(String(error));
     addNotification({
-      type: 'error', 
-      title: 'Generation Failed',
-      message: error || 'Unknown error occurred'
+      type: 'error',
+      title: errorMapping.title,
+      message: errorMapping.message
     });
   }
 }

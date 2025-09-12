@@ -148,29 +148,8 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       }, 2000);
 
     } catch (error) {
-      console.error('[BaseGenerationScreen] Generation failed:', error);
-      
-      // Show error notification immediately
-      let errorMessage = ErrorMessages.unknownError();
-      if (error instanceof Error) {
-        if (error.message.includes('INSUFFICIENT_CREDITS')) {
-          errorMessage = ErrorMessages.insufficientCredits();
-        } else if (error.message.includes('NETWORK')) {
-          errorMessage = ErrorMessages.networkError();
-        } else if (error.message.includes('SERVER')) {
-          errorMessage = ErrorMessages.serverError();
-        } else {
-          errorMessage = ErrorMessages.generationFailed(error.message);
-        }
-      }
-      
-      // Only show the progress notification, not duplicate store notification
-      setProgressNotification({
-        visible: true,
-        status: 'failed',
-        message: errorMessage,
-      });
-      
+      // Don't show error notifications on generation screen - only show "Added to queue"
+      // Errors will be handled by the main notification system
       setIsGenerating(false); // Reset generating state on error
     }
   };
