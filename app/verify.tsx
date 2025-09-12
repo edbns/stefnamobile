@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: 'center', 
     paddingHorizontal: 24, 
-    paddingTop: 40,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   logoContainer: {
