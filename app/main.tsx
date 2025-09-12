@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingTop: 60, // Increased top padding
+    paddingTop: 20, // Reduced from 60 to move media up
     paddingBottom: 100, // Space for floating footer
     paddingHorizontal: 16, // Add horizontal padding for 2 columns
   },
