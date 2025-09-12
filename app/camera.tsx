@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CameraView, CameraType, FlashMode, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -12,8 +12,8 @@ export default function CameraScreen() {
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [cameraType, setCameraType] = useState<CameraType>(CameraType.back);
-  const [flashMode, setFlashMode] = useState<FlashMode>(FlashMode.off);
+  const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
+  const [flashMode, setFlashMode] = useState<'off' | 'on' | 'auto'>('off');
   const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
@@ -33,26 +33,24 @@ export default function CameraScreen() {
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.8,
           base64: false,
-          exif: false,
+          exif: true, // Enable EXIF to get orientation data
         });
 
         if (photo?.uri) {
-          // Normalize the image (fix orientation, compress)
-          const manipulatedImage = await ImageManipulator.manipulateAsync(
-            photo.uri,
-            [
-              { resize: { width: 1024 } }, // Resize to reasonable size
-            ],
-            {
-              compress: 0.8,
-              format: ImageManipulator.SaveFormat.JPEG,
-            }
+          // Use ImagePickerService to properly normalize the image
+          const { ImagePickerService } = await import('../src/services/imagePickerService');
+          const { CameraType } = await import('expo-image-picker');
+          
+          const normalizedUri = await ImagePickerService.normalizeImage(
+            photo.uri, 
+            photo.exif, 
+            cameraType === 'front' ? CameraType.front : CameraType.back
           );
 
-          // Navigate to upload mode with the captured image
+          // Navigate to upload mode with the normalized image
           router.push({
             pathname: '/upload-mode',
-            params: { selectedImage: manipulatedImage.uri },
+            params: { selectedImage: normalizedUri },
           });
         }
       } catch (error) {
@@ -65,25 +63,25 @@ export default function CameraScreen() {
   };
 
   const toggleCameraType = () => {
-    setCameraType(current => (current === CameraType.back ? CameraType.front : CameraType.back));
+    setCameraType(current => (current === 'back' ? 'front' : 'back'));
   };
 
   const toggleFlashMode = () => {
     setFlashMode(current => {
       switch (current) {
-        case FlashMode.off: return FlashMode.on;
-        case FlashMode.on: return FlashMode.auto;
-        case FlashMode.auto: return FlashMode.off;
-        default: return FlashMode.off;
+        case 'off': return 'on';
+        case 'on': return 'auto';
+        case 'auto': return 'off';
+        default: return 'off';
       }
     });
   };
 
   const getFlashIcon = () => {
     switch (flashMode) {
-      case FlashMode.on: return 'zap';
-      case FlashMode.auto: return 'zap-off';
-      case FlashMode.off: return 'slash';
+      case 'on': return 'zap';
+      case 'auto': return 'zap-off';
+      case 'off': return 'slash';
       default: return 'slash';
     }
   };
@@ -91,7 +89,7 @@ export default function CameraScreen() {
   const handlePickFromGallery = async () => {
     try {
       const { ImagePickerService } = await import('../src/services/imagePickerService');
-      const result = await ImagePickerService.pickImageFromLibrary();
+      const result = await ImagePickerService.pickFromGallery();
       if (result?.uri) {
         router.push({
           pathname: '/upload-mode',
@@ -127,12 +125,11 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={styles.camera}
-        facing={cameraType}
-        flashMode={flashMode}
-      >
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          facing={cameraType}
+        >
         {/* Header Overlay */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.headerButton} onPress={handleBack}>
