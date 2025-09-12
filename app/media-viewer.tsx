@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions, ScrollView } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions, ScrollView, PanResponder } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
@@ -22,6 +22,27 @@ export default function MediaViewerScreen() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
+  const panResponder = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 50;
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      // Handle horizontal swipe
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      if (folderData && folderData.length > 1) {
+        if (gestureState.dx > 50) {
+          // Swipe right - go to previous image
+          const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : folderData.length - 1;
+          setCurrentImageIndex(newIndex);
+        } else if (gestureState.dx < -50) {
+          // Swipe left - go to next image
+          const newIndex = currentImageIndex < folderData.length - 1 ? currentImageIndex + 1 : 0;
+          setCurrentImageIndex(newIndex);
+        }
+      }
+    },
+  })).current;
 
   // Debug logging
   console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
@@ -126,7 +147,7 @@ export default function MediaViewerScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.gestureContainer}>
+      <View style={styles.gestureContainer} {...panResponder.panHandlers}>
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -159,20 +180,18 @@ export default function MediaViewerScreen() {
         </View>
       )}
 
-      <View style={styles.actionBar}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleShare} disabled={isLoading}>
-          <Feather name="share-2" size={20} color="#ffffff" />
-          <Text style={styles.actionButtonText}>Share</Text>
+      {/* Floating Action Buttons */}
+      <View style={styles.floatingActions}>
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleShare} disabled={isLoading}>
+          <Feather name="share-2" size={24} color="#ffffff" />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton} onPress={handleSave} disabled={isLoading}>
-          <Feather name="download" size={20} color="#ffffff" />
-          <Text style={styles.actionButtonText}>Save</Text>
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleSave} disabled={isLoading}>
+          <Feather name="download" size={24} color="#ffffff" />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.actionButton} onPress={handleDelete} disabled={isLoading}>
-          <Feather name="trash-2" size={20} color="#ff4444" />
-          <Text style={[styles.actionButtonText, { color: '#ff4444' }]}>Delete</Text>
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isLoading}>
+          <Feather name="trash-2" size={24} color="#ff4444" />
         </TouchableOpacity>
       </View>
     </View>
@@ -219,31 +238,29 @@ const styles = StyleSheet.create({
   },
   image: {
     width: width,
-    height: height * 0.8,
+    height: height * 0.85, // Increased height to position better under count
   },
-  actionBar: {
+  // Floating Action Buttons
+  floatingActions: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    flexDirection: 'row',
+    bottom: 40,
+    right: 20,
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: 20,
-    paddingBottom: 30,
+    gap: 20,
   },
-  actionButton: {
+  floatingActionButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-  },
-  actionButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    marginTop: 5,
-    fontWeight: '500',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   // Navigation Indicators
   navigationIndicators: {
