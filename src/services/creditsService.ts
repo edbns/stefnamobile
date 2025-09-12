@@ -56,6 +56,10 @@ export const creditsService = {
     });
 
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(config.apiUrl('credits-reserve'), {
         method: 'POST',
         headers: {
@@ -63,9 +67,10 @@ export const creditsService = {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
-        // Add timeout and retry logic
-        signal: AbortSignal.timeout(10000), // 10 second timeout
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 

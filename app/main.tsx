@@ -379,8 +379,9 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingTop: 20,
+    paddingTop: 60, // Increased top padding
     paddingBottom: 100, // Space for floating footer
+    paddingHorizontal: 16, // Add horizontal padding for 2 columns
   },
   sectionHeaderContainer: {
     flexDirection: 'row',
@@ -416,7 +417,9 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
-    marginBottom: 8, // Small margin between rows only
+    marginBottom: 12, // Increased margin between rows
+    marginHorizontal: 4, // Add horizontal margin for 2 columns
+    flex: 1, // Ensure equal width for 2 columns
   },
   folderImage: {
     position: 'relative',

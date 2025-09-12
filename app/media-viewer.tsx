@@ -7,7 +7,6 @@ import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import { useMediaStore } from '../src/stores/mediaStore';
-import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
@@ -26,28 +25,6 @@ export default function MediaViewerScreen() {
 
   // Debug logging
   console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
-
-  const handleClose = () => {
-    navigateBack.toMain();
-  };
-
-  const handleSwipeGesture = (event: any) => {
-    if (!folderData || folderData.length <= 1) return;
-    
-    const { translationX, state } = event.nativeEvent;
-    
-    if (state === State.END) {
-      const threshold = 50; // Minimum swipe distance
-      
-      if (translationX > threshold && currentImageIndex > 0) {
-        // Swipe right - go to previous image
-        setCurrentImageIndex(currentImageIndex - 1);
-      } else if (translationX < -threshold && currentImageIndex < folderData.length - 1) {
-        // Swipe left - go to next image
-        setCurrentImageIndex(currentImageIndex + 1);
-      }
-    }
-  };
 
   const getCurrentImage = () => {
     if (!folderData || folderData.length === 0) {
@@ -145,24 +122,22 @@ export default function MediaViewerScreen() {
 
   return (
     <View style={styles.container}>
-      <PanGestureHandler onHandlerStateChange={handleSwipeGesture}>
-        <View style={styles.gestureContainer}>
-          <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            maximumZoomScale={3}
-            minimumZoomScale={1}
-            showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-          >
-            <Image
-              source={{ uri: currentImage.cloudUrl || currentImage.localUri }}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          </ScrollView>
-        </View>
-      </PanGestureHandler>
+      <View style={styles.gestureContainer}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          maximumZoomScale={3}
+          minimumZoomScale={1}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+        >
+          <Image
+            source={{ uri: currentImage.cloudUrl || currentImage.localUri }}
+            style={styles.image}
+            resizeMode="contain"
+          />
+        </ScrollView>
+      </View>
 
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
