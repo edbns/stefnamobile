@@ -32,17 +32,8 @@ export default function VerifyScreen() {
   }, [otp]);
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+    <View style={styles.container}>
+      <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image 
@@ -76,22 +67,19 @@ export default function VerifyScreen() {
         </TouchableOpacity>
 
         <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-    minHeight: '100%',
+  content: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    paddingHorizontal: 24, 
+    paddingTop: 40,
+    paddingBottom: 40,
   },
   logoContainer: {
     alignItems: 'center',
