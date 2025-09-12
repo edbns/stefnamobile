@@ -157,8 +157,8 @@ export default function GenerateStudioScreen() {
   const { mode } = useLocalSearchParams();
   return (
     <BaseGenerationScreen mode="edit-photo">
-      {({ onGenerate }) => (
-        <StudioPromptMode onGenerate={onGenerate} />
+      {({ onGenerate, setIsTyping }) => (
+        <StudioPromptMode onGenerate={onGenerate} setIsTyping={setIsTyping} />
       )}
     </BaseGenerationScreen>
   );
