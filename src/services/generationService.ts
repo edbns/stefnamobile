@@ -528,6 +528,13 @@ class GenerationService {
    * Based on website's SimpleGenerationService.buildPayload()
    */
   private async buildPayload(request: GenerationRequest, cloudinaryUrl: string): Promise<any> {
+    console.log('🔍 [Mobile Generation] buildPayload called with:', {
+      mode: request.mode,
+      presetId: request.presetId,
+      hasCustomPrompt: !!request.customPrompt,
+      cloudinaryUrl: cloudinaryUrl?.substring(0, 50) + '...'
+    });
+
     // Convert mode names to match unified function expectations
     const modeMap: Record<GenerationMode, string> = {
       'presets': 'presets',
@@ -652,6 +659,13 @@ class GenerationService {
    * Uses centralized presets for emotion-mask, ghibli-reaction, neo-glitch modes
    */
   private getPromptForMode(request: GenerationRequest): string {
+    console.log('🔍 [Mobile Generation] getPromptForMode called:', {
+      mode: request.mode,
+      presetId: request.presetId,
+      hasCustomPrompt: !!request.customPrompt,
+      customPrompt: request.customPrompt?.substring(0, 50) + '...'
+    });
+
     // Handle undefined mode
     if (!request.mode) {
       console.warn('⚠️ [Mobile Generation] Mode is undefined, defaulting to presets');
@@ -670,7 +684,13 @@ class GenerationService {
 
     // For emotion-mask mode, use centralized presets
     if (request.mode === 'emotion-mask' && request.presetId) {
+      console.log('🎭 [Mobile Generation] Looking up emotion mask preset:', request.presetId);
       const preset = getEmotionMaskPreset(request.presetId);
+      console.log('🎭 [Mobile Generation] Found preset:', {
+        found: !!preset,
+        prompt: preset?.prompt?.substring(0, 100) + '...',
+        label: preset?.label
+      });
       return preset?.prompt || 'Transform the image with artistic enhancement';
     }
 
