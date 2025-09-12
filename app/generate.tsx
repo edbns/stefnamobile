@@ -154,12 +154,11 @@ const styles = StyleSheet.create({
   imageContainer: {
     marginHorizontal: 20,
     marginBottom: 20,
-    overflow: 'hidden',
     backgroundColor: '#1a1a1a',
   },
   selectedImage: {
     width: '100%',
-    aspectRatio: 0.8, // 4:5 to match generation defaults
+    aspectRatio: 0.9, // Make image bigger - closer to square
     resizeMode: 'contain',
   },
   section: {
