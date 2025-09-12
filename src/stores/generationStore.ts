@@ -168,9 +168,10 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
           // Update local storage
           await StorageService.updateMediaInStorage(updatedMedia);
           
-          // Refresh media store to show the new media
-          const { loadUserMedia } = useMediaStore.getState();
-          await loadUserMedia();
+          // Update media store directly instead of reloading everything
+          const { media } = useMediaStore.getState();
+          const updatedMediaList = [...media, updatedMedia];
+          useMediaStore.setState({ media: updatedMediaList });
           
           console.log('✅ [Background] Media saved successfully to local storage');
         } catch (saveError) {
