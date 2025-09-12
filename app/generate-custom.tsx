@@ -9,9 +9,10 @@ import ModernSpinner from '../src/components/ModernSpinner';
 
 interface CustomPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
+  setIsTyping: (isTyping: boolean) => void;
 }
 
-function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
+function CustomPromptMode({ onGenerate, setIsTyping }: CustomPromptModeProps) {
   const [customPrompt, setCustomPrompt] = useState('');
   const [magicWandAnim] = useState(new Animated.Value(1));
   const [generateAnim] = useState(new Animated.Value(1));
@@ -102,6 +103,8 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
             textAlignVertical="top"
             returnKeyType="done"
             blurOnSubmit={false}
+            onFocus={() => setIsTyping(true)}
+            onBlur={() => setIsTyping(false)}
           />
         </Animated.View>
 

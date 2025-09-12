@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
@@ -7,10 +7,15 @@ import { Feather } from '@expo/vector-icons';
 import GenerationProgressNotification from './GenerationProgressNotification';
 import { GenerationMode } from '../services/generationService';
 import { ErrorMessages } from '../constants/errorMessages';
+import SmartScrollView from './SmartScrollView';
+import { getResponsiveDimensions } from '../utils/responsiveDimensions';
 
 interface BaseGenerationScreenProps {
   mode: string;
-  children: (props: { onGenerate: (presetId?: string, customPrompt?: string) => void }) => React.ReactNode;
+  children: (props: { 
+    onGenerate: (presetId?: string, customPrompt?: string) => void;
+    setIsTyping: (isTyping: boolean) => void;
+  }) => React.ReactNode;
 }
 
 export default function BaseGenerationScreen({ mode, children }: BaseGenerationScreenProps) {
@@ -21,6 +26,8 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [progressNotification, setProgressNotification] = useState<{
     visible: boolean;
     status: 'starting' | 'processing' | 'completed' | 'failed';
@@ -32,7 +39,9 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
     status: 'starting',
     progress: 0,
   });
-  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Get responsive dimensions
+  const dimensions = getResponsiveDimensions();
 
   // Compute original aspect ratio of the selected image
   useEffect(() => {
@@ -46,21 +55,6 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       );
     }
   }, [selectedImage]);
-
-  // Auto-scroll to content after image loads
-  useEffect(() => {
-    if (selectedImage && imageAspect !== null) {
-      // Delay scroll to ensure content is rendered
-      const timer = setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          y: 600, // Scroll down to show the presets/prompt box area
-          animated: true,
-        });
-      }, 800); // Wait 800ms for image to load and render
-
-      return () => clearTimeout(timer);
-    }
-  }, [selectedImage, imageAspect]);
 
   // Listen to generation completion
   useEffect(() => {
@@ -125,6 +119,10 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       status: 'starting',
       message: 'We will be processing it shortly',
     });
+
+    // Set generating state
+    setIsGenerating(true);
+    setIsTyping(false); // Stop typing state when generating
 
     // Start the generation process (non-blocking)
     try {
@@ -224,29 +222,38 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.scrollView} 
-        showsVerticalScrollIndicator={false}
+      <SmartScrollView 
+        isTyping={isTyping}
+        isGenerating={isGenerating}
+        style={styles.scrollView}
       >
         {/* Selected Image Preview */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: selectedImage }}
-            style={[styles.selectedImage, imageAspect ? { aspectRatio: imageAspect } : null]}
+            style={[
+              styles.selectedImage, 
+              { 
+                height: dimensions.photoHeight,
+                width: dimensions.photoWidth,
+                marginHorizontal: dimensions.padding
+              },
+              imageAspect ? { aspectRatio: imageAspect } : null
+            ]}
           />
         </View>
 
         {/* Mode-specific content */}
-        <View style={styles.section}>
+        <View style={[styles.section, { paddingHorizontal: dimensions.padding }]}>
           {children({ 
-            onGenerate: handleGenerate
+            onGenerate: handleGenerate,
+            setIsTyping: setIsTyping
           })}
         </View>
 
         {/* Bottom spacing */}
         <View style={{ height: 100 }} />
-      </ScrollView>
+      </SmartScrollView>
     </View>
   );
 }
@@ -278,14 +285,12 @@ const styles = StyleSheet.create({
     paddingTop: 100,
   },
   imageContainer: {
-    marginHorizontal: 20,
+    alignItems: 'center',
     marginBottom: 20,
-    overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
   },
   selectedImage: {
-    width: '100%',
-    aspectRatio: 0.8, // 4:5 to match generation defaults
+    borderRadius: 12,
+    backgroundColor: '#1a1a1a',
     resizeMode: 'contain',
   },
   section: {
