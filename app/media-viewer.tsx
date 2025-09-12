@@ -26,6 +26,10 @@ export default function MediaViewerScreen() {
   // Debug logging
   console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
 
+  const handleClose = () => {
+    navigateBack.toMain();
+  };
+
   const getCurrentImage = () => {
     if (!folderData || folderData.length === 0) {
       return { uri: mediaUri, id: mediaId, cloudId };
