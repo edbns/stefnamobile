@@ -57,6 +57,12 @@ export default function GenerationModes({
   }, []);
 
   const handleModePress = (mode: GenerationMode) => {
+    console.log('🔍 [GenerationModes] Mode pressed:', {
+      pressedMode: mode,
+      currentSelectedMode: selectedMode,
+      modeType: typeof mode
+    });
+    
     onModeChange(mode);
     
     // Show prompt input for custom and edit modes
@@ -84,12 +90,39 @@ export default function GenerationModes({
       Alert.alert('Prompt Required', 'Please enter a prompt for this generation mode.');
       return;
     }
-    console.log('🔍 [GenerationModes] Calling onGenerate with mode:', selectedMode);
+    
+    console.log('🔍 [GenerationModes] handleGenerate called:', {
+      selectedMode,
+      modeType: typeof selectedMode,
+      isUndefined: selectedMode === undefined,
+      hasCustomPrompt: !!customPrompt.trim()
+    });
+    
+    // Ensure we have a valid mode before proceeding
+    if (!selectedMode) {
+      console.error('❌ [GenerationModes] selectedMode is undefined in handleGenerate!');
+      Alert.alert('Error', 'Generation mode is not selected. Please try again.');
+      return;
+    }
+    
     onGenerate(undefined, selectedMode);
   };
 
   const handlePresetClick = (presetId: string) => {
-    console.log('Preset clicked:', presetId, 'with mode:', selectedMode);
+    console.log('🔍 [GenerationModes] Preset clicked:', {
+      presetId,
+      selectedMode,
+      modeType: typeof selectedMode,
+      isUndefined: selectedMode === undefined
+    });
+    
+    // Ensure we have a valid mode before proceeding
+    if (!selectedMode) {
+      console.error('❌ [GenerationModes] selectedMode is undefined! Cannot proceed with generation.');
+      Alert.alert('Error', 'Generation mode is not selected. Please try again.');
+      return;
+    }
+    
     // Auto-run generation immediately when preset is clicked
     onGenerate(presetId, selectedMode);
   };
