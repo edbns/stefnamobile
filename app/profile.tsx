@@ -105,24 +105,30 @@ export default function ProfileScreen() {
         throw new Error('Not authenticated');
       }
 
-      // Use the proper userService.updateProfile endpoint
-      const { userService } = await import('../src/services/userService');
-      const response = await userService.updateProfile(token, {
-        email: newEmail.trim()
+      const { config } = await import('../src/config/environment');
+      const response = await fetch(config.apiUrl('change-email'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newEmail: newEmail.trim() })
       });
+
+      const data = await response.json();
 
       if (response.ok) {
         Alert.alert('Success', 'Email updated successfully!');
         setNewEmail('');
         setShowChangeEmailDropdown(false);
-        // Update user in auth store with new email
+        // Update user in auth store
         // Note: In a real app, you'd refresh the user data from the server
       } else {
-        Alert.alert('Error', 'Failed to update email');
+        Alert.alert('Error', data.error || 'Failed to update email');
       }
     } catch (error) {
       console.error('Email change error:', error);
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update email. Please try again.');
+      Alert.alert('Error', 'Failed to update email. Please try again.');
     } finally {
       setIsChangingEmail(false);
     }
