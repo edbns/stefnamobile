@@ -27,6 +27,7 @@
     "expo-notifications": "^0.31.4",
     "expo-router": "^5.1.4",
     "expo-sharing": "^13.1.5",
+    "expo-splash-screen": "^31.0.9",
     "expo-status-bar": "~2.2.3",
     "expo-updates": "~0.28.17",
     "lucide-react-native": "^0.542.0",

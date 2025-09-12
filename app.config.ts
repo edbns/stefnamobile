@@ -11,7 +11,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'dark',
   scheme: 'stefnamobile',
   newArchEnabled: true,
-  // Custom splash screen handled by splash.tsx component
+  // Disable default splash screen - use custom splash.tsx component instead
+  splash: {
+    image: './assets/splash-icon.png',
+    resizeMode: 'contain',
+    backgroundColor: '#000000'
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.stefnamobile.app',
@@ -46,7 +51,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
-    'expo-font'
+    'expo-font',
+    [
+      'expo-splash-screen',
+      {
+        'image': './assets/splash-icon.png',
+        'resizeMode': 'contain',
+        'backgroundColor': '#000000'
+      }
+    ]
   ],
   extra: {
     router: {},
