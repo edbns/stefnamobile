@@ -101,6 +101,13 @@ export default function MainScreen() {
     };
 
     const groups: Record<string, any[]> = {};
+    
+    // Add "All Media" folder with all media
+    if (media && media.length > 0) {
+      groups['All Media'] = [...media]; // Copy all media for All Media folder
+    }
+    
+    // Group media by mode/type for individual folders
     for (const m of media || []) {
       const key = labelFor(m);
       if (!groups[key]) groups[key] = [];
@@ -116,7 +123,7 @@ export default function MainScreen() {
       });
     });
     
-    const orderedTitles = ['Neo Tokyo Glitch', 'Emotion Mask', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
+    const orderedTitles = ['All Media', 'Neo Tokyo Glitch', 'Emotion Mask', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
     const s = Object.keys(groups)
       .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))
       .map(title => ({ title, data: groups[title] }));
