@@ -63,12 +63,18 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   // Listen to generation completion
   useEffect(() => {
+    console.log('[BaseGenerationScreen] activeGenerations changed:', activeGenerations);
+    
     const completedGenerations = activeGenerations.filter(gen => 
       gen.status === 'completed' || gen.status === 'failed'
     );
     
+    console.log('[BaseGenerationScreen] completedGenerations:', completedGenerations);
+    
     if (completedGenerations.length > 0) {
       const latestGeneration = completedGenerations[completedGenerations.length - 1];
+      
+      console.log('[BaseGenerationScreen] latestGeneration:', latestGeneration);
       
       if (latestGeneration.status === 'completed') {
         setProgressNotification({
