@@ -9,7 +9,6 @@ import { GenerationMode } from '../services/generationService';
 import { ErrorMessages } from '../constants/errorMessages';
 import SmartScrollView from './SmartScrollView';
 import { getResponsiveDimensions } from '../utils/responsiveDimensions';
-import { useNotificationsStore } from '../stores/notificationsStore';
 
 interface BaseGenerationScreenProps {
   mode: string;
@@ -165,19 +164,14 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         }
       }
       
-      // Use notifications store to show error
-      const { addNotification } = useNotificationsStore.getState();
-      addNotification({
-        type: 'error',
-        title: 'Generation Failed',
-        message: errorMessage
-      });
-      
+      // Only show the progress notification, not duplicate store notification
       setProgressNotification({
         visible: true,
         status: 'failed',
         message: errorMessage,
       });
+      
+      setIsGenerating(false); // Reset generating state on error
     }
   };
 

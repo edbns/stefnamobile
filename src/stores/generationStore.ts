@@ -234,7 +234,8 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
       errorMessage = ErrorMessages.generationFailed(errorMessage);
     }
     
-    showCompletionNotification(jobId, request.mode, false, errorMessage);
+    // Don't show duplicate notification - BaseGenerationScreen handles it
+    console.log(`Generation failed: ${errorMessage}`);
   }
 }
 
