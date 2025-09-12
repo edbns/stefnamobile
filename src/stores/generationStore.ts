@@ -161,7 +161,7 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
           const updatedMedia = {
             ...savedMedia,
             cloudUrl: result.imageUrl,
-            cloudId: result.imageUrl.split('/').pop()?.split('.')[0], // Extract ID from URL
+            cloudId: extractCloudinaryPublicId(result.imageUrl), // Proper Cloudinary ID extraction
             synced: true
           };
           
@@ -248,5 +248,30 @@ function showCompletionNotification(jobId: string, mode: string, success: boolea
       title: 'Generation Failed',
       message: error || 'Unknown error occurred'
     });
+  }
+}
+
+// Helper function to extract Cloudinary public ID from URL
+function extractCloudinaryPublicId(imageUrl: string): string | undefined {
+  try {
+    // Cloudinary URL format: https://res.cloudinary.com/{cloud_name}/image/upload/{version}/{public_id}.{format}
+    // Example: https://res.cloudinary.com/dw2xaqjmg/image/upload/v1757651501/stefna/generated/cuix97vhhwnxwzognlro.jpg
+    const url = new URL(imageUrl);
+    const pathParts = url.pathname.split('/');
+    
+    // Find the 'upload' part and get everything after it
+    const uploadIndex = pathParts.indexOf('upload');
+    if (uploadIndex !== -1 && uploadIndex + 2 < pathParts.length) {
+      // Skip 'upload' and version, get the rest
+      const publicIdParts = pathParts.slice(uploadIndex + 2);
+      const publicId = publicIdParts.join('/');
+      // Remove file extension
+      return publicId.replace(/\.[^/.]+$/, '');
+    }
+    
+    return undefined;
+  } catch (error) {
+    console.error('Error extracting Cloudinary public ID:', error);
+    return undefined;
   }
 }

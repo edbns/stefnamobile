@@ -141,6 +141,8 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       // Mobile can delete media - this is a shared feature
       set({ error: null });
 
+      console.log('🗑️ [MediaStore] Starting delete operation:', { mediaId, cloudId });
+
       const token = await AsyncStorage.getItem('auth_token');
       const userString = await AsyncStorage.getItem('user_profile');
       const user = userString ? JSON.parse(userString) : null;
@@ -149,15 +151,20 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         throw new Error('User not found');
       }
 
+      console.log('👤 [MediaStore] User found:', { userId: user.id, hasToken: !!token });
+
       // Delete from cloud first (if cloudId provided and token exists)
       if (cloudId && token) {
+        console.log('🗑️ [MediaStore] Deleting from cloud:', { cloudId, userId: user.id });
         const cloudResponse: DeleteMediaResponse = await mediaService.deleteMedia(token, {
           mediaId: cloudId,
-          userId: 'temp' // Temporary fix - backend should extract from JWT
+          userId: user.id // Use actual user ID
         });
 
         if (!cloudResponse.success) {
           console.warn('Cloud deletion failed, proceeding with local deletion:', cloudResponse.error);
+        } else {
+          console.log('✅ [MediaStore] Cloud deletion successful');
         }
       }
 
