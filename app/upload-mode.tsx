@@ -25,7 +25,7 @@ export default function UploadModeScreen() {
     try {
       const result = await ImagePickerService.captureFromCamera();
       if (result.success && result.uri) {
-        const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
+        const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif, result.cameraType);
         navigateToGeneration(normalizedUri);
       } else {
         ImagePickerService.showErrorAlert(

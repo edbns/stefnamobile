@@ -134,7 +134,7 @@ export default function MainScreen() {
     try {
       const result = await ImagePickerService.captureFromCamera();
       if (result.success && result.uri) {
-        const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
+        const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif, result.cameraType);
         // Navigate to generate screen with captured image
         router.push({
           pathname: '/generate',

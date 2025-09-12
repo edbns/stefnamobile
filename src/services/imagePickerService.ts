@@ -16,6 +16,7 @@ export interface ImagePickerResult {
   success: boolean;
   uri?: string;
   exif?: any;
+  cameraType?: ImagePicker.CameraType;
   error?: string;
 }
 
@@ -70,7 +71,8 @@ export class ImagePickerService {
       return {
         success: true,
         uri: asset.uri,
-        exif: (asset as any).exif // Include EXIF data for orientation handling
+        exif: (asset as any).exif, // Include EXIF data for orientation handling
+        cameraType: options.cameraType || ImagePicker.CameraType.back // Pass camera type for proper handling
       };
 
     } catch (error) {
@@ -139,14 +141,22 @@ export class ImagePickerService {
   }
 
   // Improved image normalization with proper EXIF handling
-  static async normalizeImage(uri: string, exif?: any): Promise<string> {
+  static async normalizeImage(uri: string, exif?: any, cameraType?: ImagePicker.CameraType): Promise<string> {
     try {
       console.log('📸 [ImagePicker] Normalizing image orientation');
       console.log('📸 [ImagePicker] EXIF data:', exif);
+      console.log('📸 [ImagePicker] Camera type:', cameraType);
       
       // Validate URI first
       if (!uri || typeof uri !== 'string') {
         throw new Error('Invalid image URI');
+      }
+      
+      // For front camera, don't apply EXIF orientation correction
+      // This prevents the disorienting flip that users experience
+      if (cameraType === ImagePicker.CameraType.front) {
+        console.log('📸 [ImagePicker] Front camera detected - skipping EXIF orientation correction');
+        return uri;
       }
       
       // If no EXIF data, return original URI
