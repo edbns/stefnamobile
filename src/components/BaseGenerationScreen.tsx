@@ -161,6 +161,17 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         }
       }
       
+      // Dispatch custom event for NotificationManager to catch
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('generationNotification', {
+          detail: {
+            message: errorMessage,
+            type: 'error'
+          }
+        });
+        window.dispatchEvent(event);
+      }
+      
       setProgressNotification({
         visible: true,
         status: 'failed',

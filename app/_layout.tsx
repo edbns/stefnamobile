@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../src/stores/authStore';
 import SplashScreen from './splash';
+import NotificationManager from '../src/components/NotificationManager';
 
 export default function Layout() {
   const router = useRouter();
@@ -42,6 +43,7 @@ export default function Layout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" backgroundColor="#000000" />
+      <NotificationManager />
       <Stack
         screenOptions={{
           headerShown: false,

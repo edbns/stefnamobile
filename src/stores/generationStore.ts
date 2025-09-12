@@ -239,21 +239,15 @@ function showCompletionNotification(jobId: string, mode: string, success: boolea
   
   console.log(`Notification: ${message}`);
   
-  // Use the notifications store to show the notification
-  const { addNotification } = useNotificationsStore.getState();
-  
-  if (success) {
-    addNotification({
-      type: 'success',
-      title: 'Media Ready',
-      message: 'Your media is ready'
+  // Dispatch custom event for NotificationManager to catch
+  if (typeof window !== 'undefined') {
+    const event = new CustomEvent('generationNotification', {
+      detail: {
+        message,
+        type: success ? 'success' : 'error'
+      }
     });
-  } else {
-    addNotification({
-      type: 'error', 
-      title: 'Generation Failed',
-      message: error || 'Unknown error occurred'
-    });
+    window.dispatchEvent(event);
   }
 }
 
