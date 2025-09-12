@@ -706,7 +706,7 @@ class GenerationService {
       return preset?.prompt || 'Transform the image with artistic enhancement';
     }
 
-    console.warn('⚠️ [Mobile Generation] Unknown preset:', { mode: request.mode, presetId: request.presetId });
+    console.warn('[Mobile Generation] Unknown preset:', { mode: request.mode, presetId: request.presetId });
     return 'Transform the image with artistic enhancement';
   }
 

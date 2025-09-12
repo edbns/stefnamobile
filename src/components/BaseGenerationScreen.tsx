@@ -66,7 +66,9 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       mode,
       presetId,
       customPrompt: customPrompt?.substring(0, 100) + (customPrompt && customPrompt.length > 100 ? '...' : ''),
-      customPromptLength: customPrompt?.length || 0
+      customPromptLength: customPrompt?.length || 0,
+      modeType: typeof mode,
+      modeValue: mode
     });
 
     if (!selectedImage) {

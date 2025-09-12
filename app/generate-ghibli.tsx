@@ -55,15 +55,15 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      // Call onGenerate with presetId only - let unified system handle the generation
-      onGenerate(preset.id);
-      
-      // Reset processing state after a delay
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 1000);
-    });
+    ]).start();
+    
+    // Auto-run generation immediately when preset is clicked
+    onGenerate(preset.id);
+    
+    // Reset processing state after a delay
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 1000);
   };
 
   return (
