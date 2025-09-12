@@ -222,18 +222,6 @@ function showCompletionNotification(jobId: string, mode: string, success: boolea
   
   console.log(`📱 Notification: ${message}`);
   
-  // Dispatch custom event for notification
-  const event = new CustomEvent('generationNotification', {
-    detail: {
-      message,
-      type: success ? 'success' : 'error',
-      jobId,
-      mode
-    }
-  });
-  
-  // Dispatch to window (for React Native, this will be handled by the app)
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(event);
-  }
+  // For React Native, we'll use the notification service instead of CustomEvent
+  // The notification will be handled by the BaseGenerationScreen component
 }
