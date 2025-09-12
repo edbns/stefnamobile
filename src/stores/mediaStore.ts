@@ -8,6 +8,7 @@ import { CloudinaryUploadResult, CloudinarySignResponse } from '../types/cloudin
 import { mediaService } from '../services/mediaService';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { StorageService } from '../services/storageService';
+import { config } from '../config/environment';
 
 interface MediaState {
   media: MediaItem[];

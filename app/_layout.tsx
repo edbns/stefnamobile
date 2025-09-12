@@ -16,10 +16,10 @@ export default function Layout() {
     
     console.log('🚀 App initialized - Expo will handle updates automatically');
     
-    // Hide splash screen after a shorter delay to prevent double splash
+    // Hide splash screen after a very short delay to prevent double splash
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1000); // Reduced to 1 second for faster transition
+    }, 500); // Reduced to 0.5 seconds for minimal splash
     
     return () => clearTimeout(timer);
   }, [initialize]);

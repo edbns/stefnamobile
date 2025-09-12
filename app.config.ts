@@ -11,11 +11,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'dark',
   scheme: 'stefnamobile',
   newArchEnabled: true,
-  splash: {
-    image: './assets/logo.png',
-    resizeMode: 'contain',
-    backgroundColor: '#000000'
-  },
   // Custom splash screen handled by splash.tsx component
   ios: {
     supportsTablet: true,
