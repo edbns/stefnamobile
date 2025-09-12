@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
@@ -25,6 +25,9 @@ export default function GenerationFolderScreen() {
   
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleMediaPress = (item: any) => {
     if (isSelectionMode) {
@@ -86,6 +89,7 @@ export default function GenerationFolderScreen() {
 
   const downloadSelected = async () => {
     try {
+      setIsDownloading(true);
       console.log('📱 Starting bulk download for', selectedItems.size, 'items');
       
       // Request media library permissions
@@ -143,11 +147,14 @@ export default function GenerationFolderScreen() {
     } catch (error) {
       console.error('❌ Bulk download error:', error);
       Alert.alert('Download Error', `Unable to download images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsDownloading(false);
     }
   };
 
   const shareSelected = async () => {
     try {
+      setIsSharing(true);
       console.log('📱 Starting bulk share for', selectedItems.size, 'items');
       
       if (selectedItems.size === 0) {
@@ -243,6 +250,8 @@ export default function GenerationFolderScreen() {
     } catch (error) {
       console.error('❌ Bulk share error:', error);
       Alert.alert('Share Error', `Unable to share images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -256,14 +265,22 @@ export default function GenerationFolderScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            for (const itemId of selectedItems) {
-              const item = folderData.find((m: any) => m.id === itemId);
-              if (item) {
-                await deleteMedia(item.id, item.cloudId);
+            try {
+              setIsDeleting(true);
+              for (const itemId of selectedItems) {
+                const item = folderData.find((m: any) => m.id === itemId);
+                if (item) {
+                  await deleteMedia(item.id, item.cloudId);
+                }
               }
+              exitSelectionMode();
+              navigateBack.toMain(); // Go back to refresh main page
+            } catch (error) {
+              console.error('Delete error:', error);
+              Alert.alert('Delete Error', 'Failed to delete photos. Please try again.');
+            } finally {
+              setIsDeleting(false);
             }
-            exitSelectionMode();
-            navigateBack.toMain(); // Go back to refresh main page
           }
         }
       ]
@@ -394,33 +411,45 @@ export default function GenerationFolderScreen() {
           <TouchableOpacity 
             style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
             onPress={shareSelected}
-            disabled={selectedItems.size === 0}
+            disabled={selectedItems.size === 0 || isSharing}
           >
-            <Feather name="share-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
+            {isSharing ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Feather name="share-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
+            )}
             <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
-              Share
+              {isSharing ? 'Sharing...' : 'Share'}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
             onPress={downloadSelected}
-            disabled={selectedItems.size === 0}
+            disabled={selectedItems.size === 0 || isDownloading}
           >
-            <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
+            {isDownloading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
+            )}
             <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
-              Download
+              {isDownloading ? 'Saving...' : 'Download'}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
             onPress={deleteSelected}
-            disabled={selectedItems.size === 0}
+            disabled={selectedItems.size === 0 || isDeleting}
           >
-            <Feather name="trash-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ff4444"} />
+            {isDeleting ? (
+              <ActivityIndicator size="small" color="#ff4444" />
+            ) : (
+              <Feather name="trash-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ff4444"} />
+            )}
             <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
-              Delete
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Text>
           </TouchableOpacity>
         </View>

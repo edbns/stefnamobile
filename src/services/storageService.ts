@@ -141,10 +141,15 @@ export class StorageService {
       const media = await this.getStoredMedia();
       const updatedMedia = media.filter(item => item.id !== mediaId);
 
-      // Delete physical file
+      // Delete physical file only if it's a local file
       const mediaToDelete = media.find(item => item.id === mediaId);
-      if (mediaToDelete) {
-        await FileSystem.deleteAsync(mediaToDelete.localUri, { idempotent: true });
+      if (mediaToDelete && mediaToDelete.localUri) {
+        // Only delete if it's a local file path, not a Cloudinary URL
+        if (mediaToDelete.localUri.startsWith('file://') || mediaToDelete.localUri.startsWith('/')) {
+          await FileSystem.deleteAsync(mediaToDelete.localUri, { idempotent: true });
+        } else {
+          console.log('Skipping file deletion for Cloudinary URL:', mediaToDelete.localUri);
+        }
       }
 
       await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(updatedMedia));
