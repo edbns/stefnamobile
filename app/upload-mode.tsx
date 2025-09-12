@@ -169,14 +169,14 @@ const styles = StyleSheet.create({
     height: 40,
   },
   mainTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'normal',
+    color: '#888888',
     textAlign: 'center',
   },
   description: {
     fontSize: 14,
-    color: '#cccccc',
+    color: '#666666',
     marginTop: 6,
     textAlign: 'center',
   },
