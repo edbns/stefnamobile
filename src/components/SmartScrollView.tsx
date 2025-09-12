@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ScrollView, Dimensions, Keyboard } from 'react-native';
-import { shouldEnableScroll, getScrollOffset } from './responsiveDimensions';
+import { shouldEnableScroll, getScrollOffset } from '../utils/responsiveDimensions';
 
 interface SmartScrollViewProps {
   children: React.ReactNode;
