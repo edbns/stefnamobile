@@ -9,6 +9,7 @@ import { useAuthStore } from './authStore';
 import { useNotificationsStore } from './notificationsStore';
 import { StorageService } from '../services/storageService';
 import { useMediaStore } from './mediaStore';
+import { ErrorMessages } from '../constants/errorMessages';
 
 interface GenerationState {
   // Background processing state
@@ -224,7 +225,13 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
     // Show error notification with better message for insufficient credits
     let errorMessage = error instanceof Error ? error.message : 'Unknown error';
     if (errorMessage.includes('INSUFFICIENT_CREDITS')) {
-      errorMessage = 'Insufficient credits. Please add more credits to continue.';
+      errorMessage = ErrorMessages.insufficientCredits();
+    } else if (errorMessage.includes('NETWORK')) {
+      errorMessage = ErrorMessages.networkError();
+    } else if (errorMessage.includes('SERVER')) {
+      errorMessage = ErrorMessages.serverError();
+    } else {
+      errorMessage = ErrorMessages.generationFailed(errorMessage);
     }
     
     showCompletionNotification(jobId, request.mode, false, errorMessage);

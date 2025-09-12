@@ -6,6 +6,7 @@ import { useGenerationStore } from '../stores/generationStore';
 import { Feather } from '@expo/vector-icons';
 import GenerationProgressNotification from './GenerationProgressNotification';
 import { GenerationMode } from '../services/generationService';
+import { ErrorMessages } from '../constants/errorMessages';
 
 interface BaseGenerationScreenProps {
   mode: string;
@@ -152,12 +153,16 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       console.error('[BaseGenerationScreen] Generation failed:', error);
       
       // Show error notification immediately
-      let errorMessage = 'Generation failed';
+      let errorMessage = ErrorMessages.unknownError();
       if (error instanceof Error) {
         if (error.message.includes('INSUFFICIENT_CREDITS')) {
-          errorMessage = 'Insufficient credits. Please add more credits to continue.';
+          errorMessage = ErrorMessages.insufficientCredits();
+        } else if (error.message.includes('NETWORK')) {
+          errorMessage = ErrorMessages.networkError();
+        } else if (error.message.includes('SERVER')) {
+          errorMessage = ErrorMessages.serverError();
         } else {
-          errorMessage = error.message;
+          errorMessage = ErrorMessages.generationFailed(error.message);
         }
       }
       
