@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 100,
+    paddingBottom: 150, // Increased for keyboard
   },
   promptInputWrapper: {
     position: 'relative',

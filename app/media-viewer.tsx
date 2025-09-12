@@ -26,14 +26,14 @@ export default function MediaViewerScreen() {
   
   const panResponder = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 100;
+      return Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dy) < 150;
     },
     onPanResponderMove: (evt, gestureState) => {
       // Show visual feedback during gesture
       if (folderData && folderData.length > 1) {
-        if (gestureState.dx > 30) {
+        if (gestureState.dx > 50) {
           setGestureFeedback('← Previous');
-        } else if (gestureState.dx < -30) {
+        } else if (gestureState.dx < -50) {
           setGestureFeedback('Next →');
         } else {
           setGestureFeedback(null);
@@ -44,11 +44,11 @@ export default function MediaViewerScreen() {
       setGestureFeedback(null);
       
       if (folderData && folderData.length > 1) {
-        if (gestureState.dx > 50) {
+        if (gestureState.dx > 80) {
           // Swipe right - go to previous image
           const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : folderData.length - 1;
           setCurrentImageIndex(newIndex);
-        } else if (gestureState.dx < -50) {
+        } else if (gestureState.dx < -80) {
           // Swipe left - go to next image
           const newIndex = currentImageIndex < folderData.length - 1 ? currentImageIndex + 1 : 0;
           setCurrentImageIndex(newIndex);
@@ -189,6 +189,15 @@ export default function MediaViewerScreen() {
         <TouchableOpacity style={styles.iconBackButton} onPress={handleClose}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
+        
+        {/* Media Counter */}
+        {folderData && folderData.length > 1 && (
+          <View style={styles.mediaCounter}>
+            <Text style={styles.mediaCounterText}>
+              {currentImageIndex + 1} / {folderData.length}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Navigation Indicators */}
@@ -253,9 +262,12 @@ const styles = StyleSheet.create({
     position: 'absolute', 
     top: 0, 
     left: 0, 
-    right: 0, 
-    paddingTop: 40, 
-    paddingLeft: 8, 
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50, 
     zIndex: 1000 
   },
   iconBackButton: { 
@@ -266,19 +278,31 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'center' 
   },
+  mediaCounter: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  mediaCounterText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   scrollView: {
     flex: 1,
-    paddingTop: 80, // Space for floating back button
+    paddingTop: 60, // Space for floating back button
   },
   scrollContent: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     minHeight: height,
+    paddingTop: 20,
   },
   image: {
     width: width,
-    height: height * 0.85, // Increased height to position better under count
+    height: height * 0.75, // Position image under back button
   },
   // Floating Action Buttons
   floatingActions: {
