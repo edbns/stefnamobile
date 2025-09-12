@@ -72,11 +72,8 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       console.log('[BaseGenerationScreen] latestGeneration:', latestGeneration);
       
       if (latestGeneration.status === 'completed') {
-        setProgressNotification({
-          visible: true,
-          status: 'completed',
-          message: 'Your media is ready!',
-        });
+        // Don't show completion notifications on generation screen
+        // "Media Ready" notifications are handled by the main notification system
       } else if (latestGeneration.status === 'failed') {
         // Don't show error notifications on generation screen
         // Errors are handled by the main notification system
@@ -93,20 +90,14 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
     });
 
     if (!selectedImage) {
-      setProgressNotification({
-        visible: true,
-        status: 'failed',
-        message: 'No image selected',
-      });
+      // Don't show validation errors on generation screen
+      // These should be handled by UI validation instead
       return;
     }
 
     if (!user?.id) {
-      setProgressNotification({
-        visible: true,
-        status: 'failed',
-        message: 'User not authenticated',
-      });
+      // Don't show auth errors on generation screen
+      // These should be handled by the main notification system
       return;
     }
 
