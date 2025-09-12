@@ -98,6 +98,16 @@ export default function MainScreen() {
       if (!groups[key]) groups[key] = [];
       groups[key].push(m);
     }
+    
+    // Sort each group by creation date (newest first)
+    Object.keys(groups).forEach(key => {
+      groups[key].sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA; // Newest first
+      });
+    });
+    
     const orderedTitles = ['Neo Tokyo Glitch', 'Emotion Mask', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
     const s = Object.keys(groups)
       .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))

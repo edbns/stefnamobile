@@ -22,14 +22,27 @@ export default function MediaViewerScreen() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
+  const [gestureFeedback, setGestureFeedback] = useState<string | null>(null);
+  
   const panResponder = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      return Math.abs(gestureState.dx) > 20 && Math.abs(gestureState.dy) < 50;
+      return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dy) < 100;
     },
     onPanResponderMove: (evt, gestureState) => {
-      // Handle horizontal swipe
+      // Show visual feedback during gesture
+      if (folderData && folderData.length > 1) {
+        if (gestureState.dx > 30) {
+          setGestureFeedback('← Previous');
+        } else if (gestureState.dx < -30) {
+          setGestureFeedback('Next →');
+        } else {
+          setGestureFeedback(null);
+        }
+      }
     },
     onPanResponderRelease: (evt, gestureState) => {
+      setGestureFeedback(null);
+      
       if (folderData && folderData.length > 1) {
         if (gestureState.dx > 50) {
           // Swipe right - go to previous image
@@ -162,6 +175,13 @@ export default function MediaViewerScreen() {
             resizeMode="contain"
           />
         </ScrollView>
+        
+        {/* Gesture Feedback Overlay */}
+        {gestureFeedback && (
+          <View style={styles.gestureFeedbackOverlay}>
+            <Text style={styles.gestureFeedbackText}>{gestureFeedback}</Text>
+          </View>
+        )}
       </View>
 
       {/* Floating Back Button */}
@@ -211,6 +231,22 @@ const styles = StyleSheet.create({
   },
   gestureContainer: {
     flex: 1,
+  },
+  gestureFeedbackOverlay: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -50 }, { translateY: -50 }],
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    zIndex: 1000,
+  },
+  gestureFeedbackText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   // Floating Back Button
   headerRow: { 
