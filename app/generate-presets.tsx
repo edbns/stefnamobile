@@ -28,14 +28,14 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
 
         if (response.success && response.data) {
           setAvailablePresets(response.data.presets);
-          console.log('🎨 [PresetsMode] Loaded', response.data.presets.length, 'presets for week', response.data.currentWeek);
+          console.log('[PresetsMode] Loaded', response.data.presets.length, 'presets for week', response.data.currentWeek);
         } else {
           throw new Error(response.error || 'Failed to load presets');
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         setPresetsError(errorMessage);
-        console.error('❌ [PresetsMode] Failed to load presets:', errorMessage);
+        console.error('[PresetsMode] Failed to load presets:', errorMessage);
       } finally {
         setPresetsLoading(false);
       }
@@ -134,12 +134,6 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                             {/* Magical glow overlay */}
                             <View style={styles.magicalGlowOverlay} />
                             
-                            {/* Vintage lines pattern overlay */}
-                            <View style={styles.vintageLinesOverlay} />
-                            
-                            {/* Film strip overlay */}
-                            <View style={styles.filmStripOverlay} />
-                            
                             <Text style={[
                               styles.presetText,
                               selectedPreset === preset.key && styles.presetTextSelected
@@ -170,12 +164,6 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                           ]}>
                             {/* Magical glow overlay */}
                             <View style={styles.magicalGlowOverlay} />
-                            
-                            {/* Vintage lines pattern overlay */}
-                            <View style={styles.vintageLinesOverlay} />
-                            
-                            {/* Film strip overlay */}
-                            <View style={styles.filmStripOverlay} />
                             
                             <Text style={[
                               styles.presetText,
@@ -211,11 +199,11 @@ export default function GeneratePresetsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 12,
   },
   presetContainer: {
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
   presetGrid: {
     flexDirection: 'column',
@@ -238,10 +226,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   presetButton: {
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 10,
+    padding: 12,
     alignItems: 'center',
-    minHeight: 60,
+    minHeight: 50,
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -265,27 +253,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
-  },
-  vintageLinesOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
-    opacity: 0.1,
-    // Vintage lines pattern using borders
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  filmStripOverlay: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: 8,
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 1,
   },
   presetText: {
     fontSize: 12,
