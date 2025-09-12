@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
+import { useGenerationStore } from '../src/stores/generationStore';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImagePickerService } from '../src/services/imagePickerService';
@@ -25,6 +26,7 @@ export default function MainScreen() {
   const { user } = useAuthStore();
   const { media, isLoading, loadUserMedia, deleteMedia } = useMediaStore();
   const { refreshBalance } = useCreditsStore();
+  const { activeGenerations } = useGenerationStore();
   const [sections, setSections] = useState<any[]>([]);
 
   console.log('🔍 [MainScreen] Current state:', { 
@@ -37,6 +39,11 @@ export default function MainScreen() {
 
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+
+  // Check if there are any active generations
+  const isGenerating = activeGenerations.some(gen => 
+    gen.status === 'pending' || gen.status === 'processing'
+  );
 
   // Animation states for footer buttons
   const [profileAnim] = useState(new Animated.Value(1));
@@ -339,8 +346,16 @@ export default function MainScreen() {
         </Animated.View>
         
         <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: editAnim }] }]}>
-          <TouchableOpacity style={styles.footerButton} onPress={handleEditPress}>
-            <Feather name="edit-3" size={20} color="#ffffff" />
+          <TouchableOpacity 
+            style={styles.footerButton} 
+            onPress={handleEditPress}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Feather name="edit-3" size={20} color="#ffffff" />
+            )}
           </TouchableOpacity>
         </Animated.View>
         </View>

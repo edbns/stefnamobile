@@ -106,33 +106,9 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
     }
     console.log('[Background] User found:', user.id);
 
-    // Reserve credits using creditsStore
-    const creditCost = 2; // Standard cost for image generation
-    console.log('[Background] Attempting to reserve credits...');
-    
-    const creditsReserved = await useCreditsStore.getState().reserveCredits(creditCost, 'image.gen');
-
-    if (!creditsReserved) {
-      const { error } = useCreditsStore.getState();
-      console.error('❌ [GenerationStore] Credit reservation failed:', error);
-      
-      // Update job with credit failure
-      useGenerationStore.setState(state => ({
-        activeGenerations: state.activeGenerations.map(job =>
-          job.id === jobId ? { 
-            ...job, 
-            status: 'failed' as const,
-            error: error || 'Insufficient credits'
-          } : job
-        )
-      }));
-      
-      // Show error notification
-      showCompletionNotification(jobId, request.mode, false, error || 'Insufficient credits');
-      return; // Exit early
-    }
-
-    console.log(`Reserved ${creditCost} credits for generation`);
+    // Credits are handled automatically by the backend
+    // No need to reserve credits on mobile side to avoid double charging
+    console.log('[Background] Skipping credit reservation - backend handles credits automatically');
 
     // Call the generation service
     console.log('[Background] Calling GenerationService.generate...');
@@ -163,16 +139,14 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
         )
       }));
 
-      // Finalize credits on success
-      await useCreditsStore.getState().finalizeCredits('commit');
-      console.log('Credits consumed for successful generation');
+      // Credits are handled automatically by the backend
+      console.log('Generation completed successfully - credits handled by backend');
 
       // Show completion notification
       showCompletionNotification(jobId, request.mode, true);
     } else {
-      // Refund credits on generation failure
-      await useCreditsStore.getState().finalizeCredits('refund');
-      console.log('Refunded credits due to generation failure');
+      // Credits are handled automatically by the backend
+      console.log('Generation failed - credits handled by backend');
 
       // Update job with failure
       useGenerationStore.setState(state => ({
