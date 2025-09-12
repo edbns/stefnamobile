@@ -206,15 +206,6 @@ export default function MediaViewerScreen() {
         )}
       </View>
 
-      {/* Navigation Indicators */}
-      {folderData && folderData.length > 1 && (
-        <View style={styles.navigationIndicators}>
-          <Text style={styles.navigationText}>
-            {currentImageIndex + 1} / {folderData.length}
-          </Text>
-        </View>
-      )}
-
       {/* Floating Action Buttons */}
       <View style={styles.floatingActions}>
         <TouchableOpacity style={styles.floatingActionButton} onPress={handleShare} disabled={isSharing}>
@@ -339,21 +330,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-  },
-  // Navigation Indicators
-  navigationIndicators: {
-    position: 'absolute',
-    top: 100,
-    right: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    zIndex: 1000,
-  },
-  navigationText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
