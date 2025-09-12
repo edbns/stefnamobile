@@ -394,9 +394,11 @@ export default function GenerationFolderScreen() {
         columnWrapperStyle={styles.row}
         ListHeaderComponent={() => (
           <View style={styles.titleContainer}>
-            <Text style={styles.subtitle}>
-              {isSelectionMode ? `${selectedItems.size} selected` : `${folderData.length} photos`}
-            </Text>
+            {isSelectionMode && (
+              <Text style={styles.subtitle}>
+                {selectedItems.size} selected
+              </Text>
+            )}
           </View>
         )}
       />
