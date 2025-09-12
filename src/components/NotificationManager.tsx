@@ -17,6 +17,7 @@ export default function NotificationManager() {
       {notifications.map((notification, index) => (
         <SimpleNotification
           key={notification.id}
+          title={notification.title}
           message={notification.message}
           type={notification.type}
           duration={4000}

@@ -78,11 +78,8 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
           message: 'Your media is ready!',
         });
       } else if (latestGeneration.status === 'failed') {
-        setProgressNotification({
-          visible: true,
-          status: 'failed',
-          message: latestGeneration.error || 'Generation failed',
-        });
+        // Don't show error notifications on generation screen
+        // Errors are handled by the main notification system
       }
     }
   }, [activeGenerations]);

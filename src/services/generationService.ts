@@ -256,7 +256,7 @@ class GenerationService {
       return normalized;
 
     } catch (error) {
-      console.error('❌ [Mobile Generation] Generation failed:', error);
+      console.error('❌ [Mobile Generation] Generation error:', error);
 
       // Track generation failure
       const duration = Date.now() - startTime;

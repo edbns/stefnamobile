@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 
 interface SimpleNotificationProps {
+  title?: string;
   message: string;
   type: 'success' | 'error' | 'info';
   duration?: number;
@@ -9,6 +10,7 @@ interface SimpleNotificationProps {
 }
 
 export default function SimpleNotification({ 
+  title,
   message, 
   type, 
   duration = 3000, 
@@ -91,7 +93,10 @@ export default function SimpleNotification({
       ]}
     >
       <Text style={styles.icon}>{getIcon()}</Text>
-      <Text style={styles.message}>{message}</Text>
+      <View style={styles.textContainer}>
+        {title && <Text style={styles.title}>{title}</Text>}
+        <Text style={styles.message}>{message}</Text>
+      </View>
     </Animated.View>
   );
 }
@@ -121,10 +126,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginRight: 8,
   },
-  message: {
+  textContainer: {
     flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  message: {
     fontSize: 14,
     color: '#ffffff',
-    fontWeight: '500',
+    fontWeight: '400',
+    lineHeight: 18,
   },
 });
