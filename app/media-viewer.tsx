@@ -21,6 +21,8 @@ export default function MediaViewerScreen() {
   const currentIndex = params.currentIndex ? parseInt(params.currentIndex as string) : 0;
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
   const [gestureFeedback, setGestureFeedback] = useState<string | null>(null);
   
@@ -84,7 +86,7 @@ export default function MediaViewerScreen() {
 
   const handleShare = async () => {
     try {
-      setIsLoading(true);
+      setIsSharing(true);
       
       const imageUri = currentImage.cloudUrl || currentImage.localUri;
       
@@ -119,13 +121,13 @@ export default function MediaViewerScreen() {
       console.error('Share error:', error);
       Alert.alert('Share Error', 'Unable to share this image. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSharing(false);
     }
   };
 
   const handleSave = async () => {
     try {
-      setIsLoading(true);
+      setIsSaving(true);
       
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
@@ -154,7 +156,7 @@ export default function MediaViewerScreen() {
       console.error('Save error:', error);
       Alert.alert('Save Error', 'Unable to save this image. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -211,19 +213,23 @@ export default function MediaViewerScreen() {
 
       {/* Floating Action Buttons */}
       <View style={styles.floatingActions}>
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleShare} disabled={isLoading}>
-          <Feather name="share-2" size={24} color="#ffffff" />
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleShare} disabled={isSharing}>
+          {isSharing ? (
+            <Feather name="loader" size={24} color="#ffffff" />
+          ) : (
+            <Feather name="share-2" size={24} color="#ffffff" />
+          )}
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleSave} disabled={isLoading}>
-          {isLoading ? (
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleSave} disabled={isSaving}>
+          {isSaving ? (
             <Feather name="loader" size={24} color="#ffffff" />
           ) : (
             <Feather name="download" size={24} color="#ffffff" />
           )}
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isLoading}>
+        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isSaving || isSharing}>
           <Feather name="trash-2" size={24} color="#ff4444" />
         </TouchableOpacity>
       </View>
