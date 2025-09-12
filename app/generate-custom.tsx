@@ -136,7 +136,7 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
 export default function GenerateCustomScreen() {
   const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode={mode as string || "custom-prompt"}>
+    <BaseGenerationScreen mode="custom-prompt">
       {({ onGenerate }) => (
         <CustomPromptMode onGenerate={onGenerate} />
       )}

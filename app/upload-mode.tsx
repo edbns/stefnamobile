@@ -86,7 +86,12 @@ export default function UploadModeScreen() {
       pathname: route,
       params: { 
         selectedImage: imageUri,
-        mode: mode
+        mode: mode === 'ghibli' ? 'ghibli-reaction' : 
+              mode === 'emotion_mask' ? 'emotion-mask' :
+              mode === 'neo_glitch' ? 'neo-glitch' :
+              mode === 'custom' ? 'custom-prompt' :
+              mode === 'studio' ? 'edit-photo' :
+              mode
       }
     });
   };

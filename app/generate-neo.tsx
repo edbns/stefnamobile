@@ -144,7 +144,7 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
 export default function GenerateNeoScreen() {
   const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode={mode as string || "neo-glitch"}>
+    <BaseGenerationScreen mode="neo-glitch">
       {({ onGenerate }) => (
         <NeoTokyoMode onGenerate={onGenerate} />
       )}

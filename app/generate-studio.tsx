@@ -139,7 +139,7 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
 export default function GenerateStudioScreen() {
   const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode={mode as string || "edit-photo"}>
+    <BaseGenerationScreen mode="edit-photo">
       {({ onGenerate }) => (
         <StudioPromptMode onGenerate={onGenerate} />
       )}

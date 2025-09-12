@@ -144,7 +144,7 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
 export default function GenerateGhibliScreen() {
   const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode={mode as string || "ghibli-reaction"}>
+    <BaseGenerationScreen mode="ghibli-reaction">
       {({ onGenerate }) => (
         <GhibliReactionMode onGenerate={onGenerate} />
       )}
