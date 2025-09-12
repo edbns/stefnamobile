@@ -21,7 +21,7 @@ export default function GenerateScreen() {
   const [customPrompt, setCustomPrompt] = useState('');
 
   // Force rebuild marker - v2
-  console.log('🔄 [Generate] Screen loaded - v2 with mode fixes');
+  console.log('[Generate] Screen loaded - v2 with mode fixes');
 
   // Presets are now loaded by GenerationModes component
 
@@ -52,7 +52,7 @@ export default function GenerateScreen() {
     // Use the mode passed from GenerationModes, or fall back to current generationMode
     const actualMode = mode || generationMode;
 
-    console.log('🔍 [Generate] Debug generation request:', {
+    console.log('[Generate] Debug generation request:', {
       passedMode: mode,
       currentGenerationMode: generationMode,
       actualMode: actualMode,
@@ -68,7 +68,7 @@ export default function GenerateScreen() {
 
     try {
       // Start generation immediately
-      console.log('🚀 [Generate] Starting generation...');
+      console.log('[Generate] Starting generation...');
       await startGeneration({
         imageUri: selectedImage,
         mode: actualMode,
@@ -76,7 +76,7 @@ export default function GenerateScreen() {
         customPrompt: customPrompt.trim() || undefined,
       });
       
-      console.log('✅ [Generate] Generation started, navigating to main...');
+      console.log('[Generate] Generation started, navigating to main...');
       
       // Navigate to main screen immediately
       router.push('/main');

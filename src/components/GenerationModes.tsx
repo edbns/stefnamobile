@@ -40,7 +40,7 @@ export default function GenerationModes({
 
         if (response.success && response.data) {
           setAvailablePresets(response.data.presets);
-          console.log('🎨 [GenerationModes] Loaded', response.data.presets.length, 'presets for week', response.data.currentWeek);
+          console.log('[GenerationModes] Loaded', response.data.presets.length, 'presets for week', response.data.currentWeek);
         } else {
           throw new Error(response.error || 'Failed to load presets');
         }
@@ -57,7 +57,7 @@ export default function GenerationModes({
   }, []);
 
   const handleModePress = (mode: GenerationMode) => {
-    console.log('🔍 [GenerationModes] Mode pressed:', {
+    console.log('[GenerationModes] Mode pressed:', {
       pressedMode: mode,
       currentSelectedMode: selectedMode,
       modeType: typeof mode
@@ -91,7 +91,7 @@ export default function GenerationModes({
       return;
     }
     
-    console.log('🔍 [GenerationModes] handleGenerate called:', {
+    console.log('[GenerationModes] handleGenerate called:', {
       selectedMode,
       modeType: typeof selectedMode,
       isUndefined: selectedMode === undefined,
@@ -109,7 +109,7 @@ export default function GenerationModes({
   };
 
   const handlePresetClick = (presetId: string) => {
-    console.log('🔍 [GenerationModes] Preset clicked:', {
+    console.log('[GenerationModes] Preset clicked:', {
       presetId,
       selectedMode,
       modeType: typeof selectedMode,

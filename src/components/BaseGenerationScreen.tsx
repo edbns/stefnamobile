@@ -62,7 +62,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   }, [selectedImage, imageAspect]);
 
   const handleGenerate = async (presetId?: string, customPrompt?: string) => {
-    console.log('🔍 [BaseGenerationScreen] handleGenerate called:', {
+    console.log('[BaseGenerationScreen] handleGenerate called:', {
       mode,
       presetId,
       customPrompt: customPrompt?.substring(0, 100) + (customPrompt && customPrompt.length > 100 ? '...' : ''),
@@ -110,7 +110,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         customPrompt: customPrompt?.trim() || undefined,
       });
 
-      console.log('🚀 [BaseGenerationScreen] Generation started in background');
+      console.log('[BaseGenerationScreen] Generation started in background');
       
       // Simulate progress updates
       let progress = 10;
