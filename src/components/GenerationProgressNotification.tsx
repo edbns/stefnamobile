@@ -116,7 +116,7 @@ export default function GenerationProgressNotification({
         
         {onDismiss && (
           <TouchableOpacity onPress={onDismiss} style={styles.dismissButton}>
-            <Feather name="x" size={16} color="#ffffff" />
+            <Feather name="x" size={14} color="#ffffff" />
           </TouchableOpacity>
         )}
       </View>
@@ -155,16 +155,16 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
     zIndex: 1000,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   titleRow: {
     flexDirection: 'row',
@@ -181,41 +181,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
     flex: 1,
   },
   dismissButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   message: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#cccccc',
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 8,
+    lineHeight: 16,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 8,
+    gap: 6,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 6,
     gap: 4,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   actionButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     color: '#ffffff',
   },
