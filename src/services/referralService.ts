@@ -75,7 +75,7 @@ export const referralService = {
     token: string,
     request: SendReferralInviteRequest
   ): Promise<SendReferralInviteResponse> {
-    const response = await fetch(config.apiUrl('send-referral-invite-v2'), {
+    const response = await fetch(config.apiUrl('sendEmail'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
