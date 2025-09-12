@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityInd
 import { ArrowUp } from 'lucide-react-native';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams } from 'expo-router';
-import { config } from '../src/config/environment';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
+import MagicWandService from '../src/services/magicWandService';
 
 interface StudioPromptModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -57,17 +57,13 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
         }),
       ]).start();
       
-      // Call backend magic-wand function
-      const response = await fetch(config.apiUrl('magic-wand'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: customPrompt, enhanceNegativePrompt: false })
-      });
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to enhance prompt');
+      // Use centralized MagicWandService
+      const result = await MagicWandService.enhancePrompt(customPrompt, false);
+      if (result.success && result.enhancedPrompt) {
+        setCustomPrompt(result.enhancedPrompt);
+      } else {
+        throw new Error('Failed to enhance prompt');
       }
-      setCustomPrompt(data.enhancedPrompt || customPrompt);
     } catch (err: any) {
       Alert.alert('Magic Wand', err?.message || 'Failed to enhance prompt.');
     }
@@ -85,33 +81,29 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.container}>
-          <Text style={styles.title}>Studio</Text>
-          <Text style={styles.subtitle}>Tools for precision.</Text>
+        <Animated.View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f', transform: [{ scale: promptAnim }] }]}>
+          {/* Tech grid pattern overlay */}
+          <View style={styles.techGridOverlay} />
           
-          <Animated.View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f', transform: [{ scale: promptAnim }] }]}>
-            {/* Tech grid pattern overlay */}
-            <View style={styles.techGridOverlay} />
-            
-            {/* Camera frame overlay */}
-            <View style={styles.cameraFrameOverlay} />
-            
-            <TextInput
-              style={styles.promptInput}
-              value={customPrompt}
-              onChangeText={setCustomPrompt}
-              placeholder="Change something, add something — your call ... tap ✨ for a little magic."
-              placeholderTextColor="#666"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              returnKeyType="done"
-              blurOnSubmit={false}
-            />
-          </Animated.View>
+          {/* Camera frame overlay */}
+          <View style={styles.cameraFrameOverlay} />
+          
+          <TextInput
+            style={styles.promptInput}
+            value={customPrompt}
+            onChangeText={setCustomPrompt}
+            placeholder="Change something, add something — your call ... tap ✨ for a little magic."
+            placeholderTextColor="#666"
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit={false}
+          />
+        </Animated.View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
             <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
               <TouchableOpacity
                 onPress={handleMagicWand}
@@ -139,7 +131,6 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
               </TouchableOpacity>
             </Animated.View>
           </View>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -165,33 +156,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 50,
-  },
-  container: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   promptInputWrapper: {
     position: 'relative',
     borderRadius: 16,
     minHeight: 120,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -209,9 +181,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 16,
     opacity: 0.1,
-    // Tech grid pattern using borders
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cameraFrameOverlay: {
     position: 'absolute',
@@ -224,14 +193,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     opacity: 0.3,
   },
-  promptInput: {
-    backgroundColor: 'transparent',
-    padding: 20,
-    fontSize: 14,
-    color: '#ffffff',
-    minHeight: 120,
-    zIndex: 2,
-  },
+        promptInput: {
+          backgroundColor: 'transparent',
+          padding: 20,
+          fontSize: 14,
+          color: '#ffffff',
+          minHeight: 120,
+          zIndex: 2,
+          borderWidth: 0,
+        },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -84,9 +84,6 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Presets</Text>
-      <Text style={styles.subtitle}>One-tap styles.</Text>
-      
       <View style={styles.presetContainer}>
         {presetsLoading ? (
           <View style={styles.loadingContainer}>
@@ -215,22 +212,6 @@ export default function GeneratePresetsScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   presetContainer: {
     marginTop: 8,

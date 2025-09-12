@@ -314,7 +314,7 @@ export default function ProfileScreen() {
       {/* Settings List */}
       <ScrollView style={styles.settingsList} showsVerticalScrollIndicator={false}>
         {/* Greeting Only */}
-        <Text style={styles.greetingText}>Hello!</Text>
+        <Text style={styles.greetingText}>Reality is optional.</Text>
         {settingsItems.map((item, index) => (
           <View key={index}>
             <TouchableOpacity
@@ -536,11 +536,11 @@ const styles = StyleSheet.create({
 
   // User Info
   greetingText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#ffffff',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: 10,
+    marginBottom: 20,
     paddingHorizontal: 20,
     textAlign: 'center',
   },
@@ -549,16 +549,16 @@ const styles = StyleSheet.create({
   settingsList: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 80, // Add top padding to avoid back button
+    paddingTop: 60, // Reduced top padding
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 8,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -569,22 +569,22 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   settingIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   settingContent: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '500',
     color: '#ffffff',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   settingSubtitle: {
     fontSize: 14,
@@ -606,42 +606,42 @@ const styles = StyleSheet.create({
   // Invite Friends Dropdown
   inviteDropdown: {
     backgroundColor: '#1a1a1a',
-    marginTop: 8,
-    marginBottom: 8,
-    borderRadius: 12,
-    padding: 16,
+    marginTop: 6,
+    marginBottom: 6,
+    borderRadius: 10,
+    padding: 12,
   },
   benefitsContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   benefitCard: {
     flex: 1,
     backgroundColor: '#2a2a2a',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     alignItems: 'center',
   },
   benefitTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   benefitText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#cccccc',
     textAlign: 'center',
   },
   emailForm: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   formLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   currentEmailDisplay: {
     fontSize: 16,
@@ -787,7 +787,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 4,
@@ -802,11 +802,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginTop: 20,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 8,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -817,13 +817,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   logoutIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   logoutContent: {
     flex: 1,
@@ -838,10 +838,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
-    borderRadius: 16,
-    marginBottom: 40,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 20,
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -852,13 +852,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   deleteIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
   },
   deleteContent: {
     flex: 1,

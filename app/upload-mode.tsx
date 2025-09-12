@@ -92,36 +92,39 @@ export default function UploadModeScreen() {
   };
 
   const handleBack = () => {
-    navigateBack.toMain();
+    // Always go back to main screen to avoid navigation loops
+    router.push('/main');
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{currentMode.title}</Text>
-          <Text style={styles.headerSubtitle}>{currentMode.subtitle}</Text>
-        </View>
+      {/* Title at Top */}
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>{currentMode.title}</Text>
+        <Text style={styles.subtitle}>{currentMode.subtitle}</Text>
       </View>
 
       {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.mainTitle}>Start with a Photo</Text>
-        <Text style={styles.subtitle}>Upload or capture a moment to transform.</Text>
+        <Text style={styles.description}>Upload or capture a moment to transform.</Text>
       </View>
 
       {/* Bottom Buttons */}
       <View style={styles.bottomButtons}>
         <TouchableOpacity style={styles.uploadButton} onPress={handleUploadPress}>
-          <Feather name="plus" size={32} color="#000000" />
+          <Feather name="plus" size={20} color="#ffffff" />
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.cameraButton} onPress={handleCameraPress}>
-          <Feather name="camera" size={32} color="#000000" />
+          <Feather name="camera" size={20} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Floating Back Button */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={handleBack}>
+          <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
     </View>
@@ -133,59 +136,62 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#888888',
-    marginTop: 4,
-  },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 100,
   },
-  mainTitle: {
-    fontSize: 24,
+  titleContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 80, // Space for floating back button
+    paddingBottom: 20,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#cccccc',
+    color: '#888888',
+    marginTop: 4,
     textAlign: 'center',
-    lineHeight: 22,
+  },
+  spacer: {
+    height: 40,
+  },
+  mainTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 14,
+    color: '#cccccc',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  // Floating Back Button
+  headerRow: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    paddingTop: 40, 
+    paddingLeft: 8, 
+    zIndex: 1000 
+  },
+  iconBackButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#000000', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
   bottomButtons: {
     position: 'absolute',
@@ -194,15 +200,17 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingHorizontal: 60,
+    paddingHorizontal: 80,
   },
   uploadButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#ffffff',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -213,12 +221,14 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   cameraButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#ffffff',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#000000',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,

@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
-
-interface NeoPreset {
-  id: string;
-  label: string;
-  description: string;
-  prompt: string;
-}
+import { NEO_TOKYO_GLITCH_PRESETS, NeoTokyoGlitchPreset } from '../src/presets/neoTokyoGlitch';
 
 interface NeoTokyoModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -19,35 +13,15 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Real Neo Tokyo presets from website (exact same data)
-  const neoPresets: NeoPreset[] = [
-    {
-      id: 'neo_tokyo_base',
-      label: 'Base',
-      description: 'Cyberpunk portrait with Neo Tokyo aesthetics',
-      prompt: 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.'
-    },
-    {
-      id: 'neo_tokyo_visor',
-      label: 'Glitch Visor',
-      description: 'Glowing glitch visor covering the eyes',
-      prompt: 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.'
-    },
-    {
-      id: 'neo_tokyo_tattoos',
-      label: 'Tech Tattoos',
-      description: 'Vivid neon tattoos and holographic overlays',
-      prompt: 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.'
-    },
-    {
-      id: 'neo_tokyo_scanlines',
-      label: 'Scanline FX',
-      description: 'CRT scanline effects and VHS noise',
-      prompt: 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
-    }
-  ];
+  // Use centralized presets from website
+  const neoPresets = NEO_TOKYO_GLITCH_PRESETS.map((preset: NeoTokyoGlitchPreset) => ({
+    id: preset.id,
+    label: preset.label,
+    description: preset.features?.join(', ') || 'Cyberpunk transformation',
+    prompt: preset.prompt
+  }));
 
-  const handlePresetClick = (preset: NeoPreset) => {
+  const handlePresetClick = (preset: { id: string; label: string; description: string; prompt: string }) => {
     // Prevent double-click
     if (isProcessing) {
       console.log('Neo Tokyo preset click ignored - already processing');
@@ -94,9 +68,6 @@ function NeoTokyoMode({ onGenerate }: NeoTokyoModeProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Neo Tokyo</Text>
-      <Text style={styles.subtitle}>Future meets the face.</Text>
-      
       <View style={styles.presetContainer}>
         <View style={styles.presetGrid}>
           {/* First row - 3 presets */}
@@ -184,22 +155,6 @@ export default function GenerateNeoScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 6,
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#cccccc',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   presetContainer: {
     marginTop: 4,

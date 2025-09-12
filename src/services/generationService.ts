@@ -1,5 +1,6 @@
-// Mobile Generation Service - Simplified version based on website's SimpleGenerationService
+// Mobile Generation Service - Unified backend architecture
 // Uses the same unified-generate endpoint and polling logic as the website
+// Includes mobile-specific features: offline queuing, image compression, Cloudinary upload
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,6 +14,12 @@ import {
   detectGroupsFromPrompt, 
   applyAdvancedPromptEnhancements 
 } from '../utils/promptEnhancement';
+import { getEmotionMaskPreset } from '../presets/emotionmask';
+import { getGhibliReactionPreset } from '../presets/ghibliReact';
+import { getNeoTokyoGlitchPreset } from '../presets/neoTokyoGlitch';
+import NotificationService from './notificationService';
+import CacheService from './cacheService';
+import PerformanceService from './performanceService';
 
 export type GenerationMode = 'presets' | 'custom-prompt' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo';
 
@@ -36,8 +43,15 @@ export interface GenerationResult {
 class GenerationService {
   private static instance: GenerationService;
   private lastGenerationRequest?: GenerationRequest;
+  private notificationService: NotificationService;
+  private cacheService: CacheService;
+  private performanceService: PerformanceService;
 
-  private constructor() {}
+  private constructor() {
+    this.notificationService = NotificationService.getInstance();
+    this.cacheService = CacheService.getInstance();
+    this.performanceService = PerformanceService.getInstance();
+  }
 
   static getInstance(): GenerationService {
     if (!GenerationService.instance) {
@@ -49,8 +63,10 @@ class GenerationService {
   /**
    * Generate content using direct function calls with automatic polling
    * Based on website's SimpleGenerationService.generate()
+   * Enhanced with performance monitoring and caching
    */
   async generate(request: GenerationRequest): Promise<GenerationResult> {
+    const startTime = Date.now();
     console.log('🚀 [Mobile Generation] Starting generation:', {
       mode: request.mode,
       hasImage: !!request.imageUri,
@@ -60,9 +76,17 @@ class GenerationService {
       presetId: request.presetId
     });
 
+    // Track generation start
+    this.performanceService.trackEvent('generation_started', {
+      mode: request.mode,
+      hasPreset: !!request.presetId,
+      hasCustomPrompt: !!request.customPrompt,
+    });
+
     // Validate mode is not undefined
     if (!request.mode) {
       console.error('❌ [Mobile Generation] Mode is undefined! Request:', request);
+      this.performanceService.trackError('Generation mode is undefined', { request }, 'high');
       throw new Error('Generation mode is required');
     }
 
@@ -218,10 +242,28 @@ class GenerationService {
         hasImage: !!normalized.imageUrl
       });
 
+      // Track generation completion
+      const duration = Date.now() - startTime;
+      this.performanceService.trackGeneration(request.mode, duration, normalized.success, normalized.error);
+
+      // Send notification
+      if (normalized.success && normalized.imageUrl) {
+        await this.notificationService.notifyGenerationComplete(normalized.runId || 'unknown', normalized.imageUrl);
+      } else if (!normalized.success) {
+        await this.notificationService.notifyGenerationFailed(normalized.runId || 'unknown', normalized.error);
+      }
+
       return normalized;
 
     } catch (error) {
       console.error('❌ [Mobile Generation] Generation failed:', error);
+
+      // Track generation failure
+      const duration = Date.now() - startTime;
+      this.performanceService.trackGeneration(request.mode, duration, false, error instanceof Error ? error.message : 'Unknown error');
+
+      // Send failure notification
+      await this.notificationService.notifyGenerationFailed('unknown', error instanceof Error ? error.message : 'Unknown error');
 
       // Re-throw INSUFFICIENT_CREDITS errors so frontend can handle them properly
       if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
@@ -607,6 +649,7 @@ class GenerationService {
 
   /**
    * Get prompt for the generation mode
+   * Uses centralized presets for emotion-mask, ghibli-reaction, neo-glitch modes
    */
   private getPromptForMode(request: GenerationRequest): string {
     // Handle undefined mode
@@ -615,53 +658,32 @@ class GenerationService {
       return 'Transform the image with artistic enhancement';
     }
 
-    // For custom-prompt and edit-photo modes, always use the custom prompt
+    // For custom-prompt and edit-photo modes, use the custom prompt
     if (request.mode === 'custom-prompt' || request.mode === 'edit-photo') {
-      if (request.customPrompt) {
-        return request.customPrompt;
-      }
-      console.warn('⚠️ [Mobile Generation] No custom prompt provided for', request.mode);
-      return 'Transform the image with artistic enhancement';
+      return request.customPrompt || 'Transform the image with artistic enhancement';
     }
 
-    // For presets mode, the backend will handle the preset lookup
+    // For presets mode, backend will handle preset lookup
     if (request.mode === 'presets') {
-      if (request.presetId) {
-        // The backend will resolve the preset ID to the actual prompt
-        // We just pass a placeholder here
-        return 'Using preset from database';
-      }
-      console.warn('⚠️ [Mobile Generation] No preset ID provided for presets mode');
-      return 'Transform the image with artistic enhancement';
+      return 'Using preset from database';
     }
 
-    // For emotion-mask, ghibli-reaction, and neo-glitch modes, use EXACT prompts from website
-    const presetMaps: Record<string, Record<string, string>> = {
-      'neo-glitch': {
-        'neo_tokyo_base': 'Cyberpunk portrait with Neo Tokyo aesthetics. Face retains core features with glitch distortion and color shifts. Cel-shaded anime style with holographic elements, glitch effects, and neon shimmer. Background: vertical city lights, violet haze, soft scanlines. Colors: electric pink, cyan, sapphire blue, ultraviolet, black. Inspired by Akira and Ghost in the Shell.',
-        'neo_tokyo_visor': 'Cyberpunk portrait with a glowing glitch visor covering the eyes. Face retains core features with glitch distortion and color shifts. Add flickering holographic overlays, visor reflections, and neon lighting. Background: animated signs, deep contrast, vertical noise. Colors: vivid magenta visor, cyan-blue reflections, violet haze, black backdrop.',
-        'neo_tokyo_tattoos': 'Transform the human face into a cyberpunk glitch aesthetic with vivid neon tattoos and holographic overlays. Retain the subject\'s facial features, gender, and ethnicity. Apply stylized glowing tattoos on the cheeks, jawline, or neck. Add glitch patterns, chromatic distortion, and soft RGB splits. Use cinematic backlighting with a futuristic, dreamlike tone. The skin should retain texture, but colors can be surreal. Preserve facial integrity — no face swap or anime overlay.',
-        'neo_tokyo_scanlines': 'Cyberpunk portrait with CRT scanline effects. Face retains core features with glitch distortion and color shifts. Overlay intense CRT scanlines and VHS noise. Simulate broken holographic monitor interface. Use high-contrast neon hues with cel-shaded highlights and neon reflections. Background: corrupted cityscape through broken CRT monitor. Colors: vivid pink, cyan, ultraviolet, blue, black.'
-      },
-      'ghibli-reaction': {
-        'ghibli_tears': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.',
-        'ghibli_shock': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.',
-        'ghibli_sparkle': 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.',
-        'ghibli_sadness': 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.',
-        'ghibli_love': 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
-      },
-      'emotion-mask': {
-        'emotion_mask_nostalgia_distance': 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-        'emotion_mask_joy_sadness': 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-        'emotion_mask_conf_loneliness': 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-        'emotion_mask_peace_fear': 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.',
-        'emotion_mask_strength_vuln': 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-      }
-    };
+    // For emotion-mask mode, use centralized presets
+    if (request.mode === 'emotion-mask' && request.presetId) {
+      const preset = getEmotionMaskPreset(request.presetId);
+      return preset?.prompt || 'Transform the image with artistic enhancement';
+    }
 
-    const modePresets = presetMaps[request.mode];
-    if (modePresets && request.presetId && modePresets[request.presetId]) {
-      return modePresets[request.presetId];
+    // For ghibli-reaction mode, use centralized presets
+    if (request.mode === 'ghibli-reaction' && request.presetId) {
+      const preset = getGhibliReactionPreset(request.presetId);
+      return preset?.prompt || 'Transform the image with artistic enhancement';
+    }
+
+    // For neo-glitch mode, use centralized presets
+    if (request.mode === 'neo-glitch' && request.presetId) {
+      const preset = getNeoTokyoGlitchPreset(request.presetId);
+      return preset?.prompt || 'Transform the image with artistic enhancement';
     }
 
     console.warn('⚠️ [Mobile Generation] Unknown preset:', { mode: request.mode, presetId: request.presetId });

@@ -132,22 +132,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (token[1]) {
-        // Check if this is a test token (bypass validation)
-        if (token[1].startsWith('test-token-')) {
-          console.log('🧪 [Mobile Auth] Test token detected - bypassing validation');
-          if (userString[1]) {
-            const user = JSON.parse(userString[1]);
-            set({
-              user,
-              token: token[1],
-              isAuthenticated: true,
-              isLoading: false
-            });
-            console.log('✅ [Mobile Auth] Test session restored');
-            return;
-          }
-        }
-        
         // We have a token - validate it first
         try {
           console.log('🔐 [Mobile Auth] Validating existing token...');

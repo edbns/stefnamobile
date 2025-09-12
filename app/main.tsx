@@ -27,6 +27,14 @@ export default function MainScreen() {
   const { refreshBalance } = useCreditsStore();
   const [sections, setSections] = useState<any[]>([]);
 
+  console.log('🔍 [MainScreen] Current state:', { 
+    mediaCount: media?.length || 0, 
+    isLoading, 
+    sectionsCount: sections.length,
+    media: media,
+    sections: sections
+  });
+
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
 
@@ -37,17 +45,21 @@ export default function MainScreen() {
 
   // Load user's media on mount
   useEffect(() => {
+    console.log('🚀 [MainScreen] useEffect triggered - loading media');
+    // Always load media for demo purposes
+    loadUserMedia();
     if (user?.id) {
-      loadUserMedia();
       refreshBalance();
     }
   }, [user?.id, loadUserMedia, refreshBalance]);
 
   // Group media by mode/type
   useEffect(() => {
-    console.log('📁 [MainScreen] Grouping media:', {
+    console.log('📁 [MainScreen] Grouping media - START:', {
       totalMedia: media?.length || 0,
-      mediaTypes: media?.map(m => ({ type: m.type, presetKey: m.presetKey, prompt: m.prompt?.substring(0, 50) })) || []
+      isLoading: isLoading,
+      mediaTypes: media?.map(m => ({ type: m.type, presetKey: m.presetKey, prompt: m.prompt?.substring(0, 50) })) || [],
+      media: media
     });
 
     const normalizeType = (item: any): string => {
@@ -93,14 +105,40 @@ export default function MainScreen() {
     
     console.log('📁 [MainScreen] Final folders:', {
       folderCount: s.length,
-      folders: s.map(f => ({ title: f.title, count: f.data.length }))
+      folders: s.map(f => ({ title: f.title, count: f.data.length })),
+      sections: s
     });
     
     setSections(s);
   }, [media]);
 
-  const handleCameraPress = () => {
-    router.push('/camera');
+  const handleCameraPress = async () => {
+    try {
+      const result = await ImagePickerService.captureFromCamera();
+      if (result.success && result.uri) {
+        const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif);
+        // Navigate to generate screen with captured image
+        router.push({
+          pathname: '/generate',
+          params: { selectedImage: normalizedUri }
+        });
+      } else {
+        ImagePickerService.showErrorAlert(
+          'Camera Error',
+          result.error || 'Failed to capture image',
+          () => handleCameraPress(),
+          () => {}
+        );
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      ImagePickerService.showErrorAlert(
+        'Camera Error',
+        'Failed to capture image. Please try again.',
+        () => handleCameraPress(),
+        () => {}
+      );
+    }
   };
 
   const handleUploadPress = async () => {
@@ -112,9 +150,9 @@ export default function MainScreen() {
 
       if (result.success && result.uri) {
         console.log('Selected image:', result.uri);
-        // Navigate to generation screen with selected image
+        // Navigate to generate screen with selected image
         router.push({
-          pathname: '/upload-mode',
+          pathname: '/generate',
           params: { selectedImage: result.uri }
         });
       } else {
@@ -244,8 +282,8 @@ export default function MainScreen() {
     );
   };
 
-  const renderFolderItem = ({ section }: { section: any }) => {
-    return <FolderItem section={section} />;
+  const renderFolderItem = ({ item }: { item: any }) => {
+    return <FolderItem section={item} />;
   };
 
   return (
@@ -255,14 +293,14 @@ export default function MainScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ffffff" />
         </View>
-      ) : media && media.length > 0 ? (
+      ) : sections && sections.length > 0 ? (
         <FlatList
           data={sections}
           keyExtractor={(section) => section.title}
-          renderItem={({ item: section }) => renderFolderItem({ section })}
+          renderItem={renderFolderItem}
           contentContainerStyle={styles.galleryContainer}
           showsVerticalScrollIndicator={false}
-          numColumns={1}
+          numColumns={2}
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -326,7 +364,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   emptyText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 8,

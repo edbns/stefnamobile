@@ -61,8 +61,10 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
   initializeFromCache: async () => {
     try {
       console.log('🔄 Initializing credits from cache...');
+      const token = await AsyncStorage.getItem('auth_token');
       const cachedUser = await AsyncStorage.getItem('user_profile');
       console.log('📱 Cached user data:', cachedUser);
+      console.log('📱 Token:', token ? token.substring(0, 20) + '...' : 'none');
       
       if (cachedUser) {
         const user = JSON.parse(cachedUser);
@@ -207,24 +209,6 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         return;
       }
 
-      // Bypass API calls for test accounts
-      if (token.startsWith('test-token-')) {
-        console.log('🧪 [Test Account] Bypassing API calls for test account');
-        const cachedUser = await AsyncStorage.getItem('user_profile');
-        if (cachedUser) {
-          try {
-            const user = JSON.parse(cachedUser);
-            if (user.credits !== undefined && user.credits !== null) {
-              set({ balance: user.credits, error: null });
-              console.log('📱 [Test Account] Credits loaded from cache:', user.credits);
-            }
-          } catch (e) {
-            console.error('Failed to parse cached user:', e);
-          }
-        }
-        return;
-      }
-
       // Show cached credits immediately if we don't have a balance yet
       const currentBalance = get().balance;
       if (currentBalance === 0) {
@@ -243,16 +227,22 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
         }
       }
 
-      // Try get-quota endpoint first (like website), fallback to get-user-profile
-      console.log('🔄 Trying get-quota endpoint first...');
+      // Try getQuota endpoint first (like website), fallback to get-user-profile
+      console.log('🔄 Trying getQuota endpoint first...');
+      console.log('🔍 API URL:', config.apiUrl('getQuota'));
+      console.log('🔍 Token (first 20 chars):', token.substring(0, 20) + '...');
+      
       try {
-        const quotaResponse = await fetch(config.apiUrl('get-quota'), {
+        const quotaResponse = await fetch(config.apiUrl('getQuota'), {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
+        
+        console.log('📡 getQuota response status:', quotaResponse.status);
+        console.log('📡 getQuota response headers:', Object.fromEntries(quotaResponse.headers.entries()));
         
         if (quotaResponse.ok) {
           const quotaData = await quotaResponse.json();
@@ -266,7 +256,31 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
               error: null
             });
             
-            console.log(`✅ Credits loaded from get-quota: ${newBalance}`);
+            console.log(`✅ Credits loaded from getQuota (balance): ${newBalance}`);
+            
+            // Update cached user credits
+            const cachedUser = await AsyncStorage.getItem('user_profile');
+            if (cachedUser) {
+              try {
+                const user = JSON.parse(cachedUser);
+                user.credits = newBalance;
+                await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+                console.log('📱 Updated cached user credits:', newBalance);
+              } catch (e) {
+                console.error('Failed to update cached credits:', e);
+              }
+            }
+            return; // Success, exit early
+          } else if (quotaData.currentBalance !== undefined) {
+            // Handle the actual API response format from getQuota
+            const newBalance = quotaData.currentBalance;
+            set({
+              balance: newBalance,
+              dailyCap: quotaData.daily_limit || 30,
+              error: null
+            });
+            
+            console.log(`✅ Credits loaded from getQuota (currentBalance): ${newBalance}`);
             
             // Update cached user credits
             const cachedUser = await AsyncStorage.getItem('user_profile');
@@ -283,10 +297,13 @@ export const useCreditsStore = create<CreditsState>((set, get) => ({
             return; // Success, exit early
           }
         } else {
-          console.log('⚠️ get-quota failed, trying get-user-profile...');
+          console.log('⚠️ getQuota failed with status:', quotaResponse.status);
+          const errorText = await quotaResponse.text();
+          console.log('⚠️ getQuota error response:', errorText);
+          console.log('⚠️ Trying get-user-profile fallback...');
         }
       } catch (quotaError) {
-        console.log('⚠️ get-quota error, trying get-user-profile:', quotaError);
+        console.log('⚠️ getQuota error, trying get-user-profile:', quotaError);
       }
       
       // Fallback to get-user-profile

@@ -12,10 +12,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: 'stefnamobile',
   newArchEnabled: true,
   splash: {
-    image: './assets/splash-icon.png',
+    image: './assets/logo.png',
     resizeMode: 'contain',
     backgroundColor: '#000000'
   },
+  // Custom splash screen handled by splash.tsx component
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.stefnamobile.app',
@@ -45,11 +46,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ]
   },
   web: {
-    favicon: './assets/favicon.png'
+    favicon: './assets/favicon.png',
+    bundler: 'metro'
   },
   plugins: [
     'expo-router',
-    'expo-font',
+    'expo-font'
   ],
   extra: {
     router: {},

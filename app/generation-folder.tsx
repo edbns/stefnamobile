@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { useMediaStore } from '../src/stores/mediaStore';
 
 
@@ -37,13 +38,16 @@ export default function GenerationFolderScreen() {
       setSelectedItems(newSelected);
     } else {
       // Navigate to fullscreen media view
+      const currentIndex = folderData.findIndex((mediaItem: any) => mediaItem.id === item.id);
       router.push({
         pathname: '/media-viewer',
         params: { 
           mediaUri: item.cloudUrl || item.localUri,
           mediaId: item.id,
           cloudId: item.cloudId,
-          mediaType: 'image'
+          mediaType: 'image',
+          folderData: JSON.stringify(folderData),
+          currentIndex: currentIndex.toString()
         }
       });
     }
@@ -139,6 +143,106 @@ export default function GenerationFolderScreen() {
     } catch (error) {
       console.error('❌ Bulk download error:', error);
       Alert.alert('Download Error', `Unable to download images: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const shareSelected = async () => {
+    try {
+      console.log('📱 Starting bulk share for', selectedItems.size, 'items');
+      
+      if (selectedItems.size === 0) {
+        Alert.alert('No Selection', 'Please select images to share.');
+        return;
+      }
+
+      // For multiple images, we'll share them one by one
+      // First, download all selected images
+      const downloadedFiles: string[] = [];
+      
+      for (const itemId of selectedItems) {
+        const item = folderData.find((m: any) => m.id === itemId);
+        if (item) {
+          try {
+            const imageUrl = item.cloudUrl || item.localUri;
+            const fileName = `stefna_share_${Date.now()}_${itemId}.jpg`;
+            const localPath = FileSystem.cacheDirectory + fileName;
+            
+            console.log('📱 Downloading item for sharing:', itemId, 'from:', imageUrl);
+            const download = await FileSystem.downloadAsync(imageUrl, localPath);
+            
+            if (download.status === 200) {
+              downloadedFiles.push(localPath);
+            }
+          } catch (error) {
+            console.error('❌ Error downloading for share', itemId, ':', error);
+          }
+        }
+      }
+
+      if (downloadedFiles.length === 0) {
+        Alert.alert('Share Error', 'Unable to prepare images for sharing.');
+        return;
+      }
+
+      // Share the images
+      if (downloadedFiles.length === 1) {
+        // Single image - share directly
+        if (Platform.OS === 'ios') {
+          await Share.share({
+            url: downloadedFiles[0],
+            type: 'image/jpeg'
+          });
+        } else {
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(downloadedFiles[0], {
+              mimeType: 'image/jpeg',
+              dialogTitle: 'Share Image'
+            });
+          } else {
+            Alert.alert('Sharing not available', 'Sharing is not available on this device.');
+          }
+        }
+      } else {
+        // Multiple images - share one by one
+        Alert.alert(
+          'Multiple Images',
+          `Sharing ${downloadedFiles.length} images. The share dialog will open for each image.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Share All',
+              onPress: async () => {
+                for (const filePath of downloadedFiles) {
+                  try {
+                    if (Platform.OS === 'ios') {
+                      await Share.share({
+                        url: filePath,
+                        type: 'image/jpeg'
+                      });
+                    } else {
+                      if (await Sharing.isAvailableAsync()) {
+                        await Sharing.shareAsync(filePath, {
+                          mimeType: 'image/jpeg',
+                          dialogTitle: 'Share Image'
+                        });
+                      }
+                    }
+                    // Small delay between shares
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                  } catch (error) {
+                    console.error('❌ Error sharing file:', filePath, error);
+                  }
+                }
+              }
+            }
+          ]
+        );
+      }
+
+      exitSelectionMode();
+    } catch (error) {
+      console.error('❌ Bulk share error:', error);
+      Alert.alert('Share Error', `Unable to share images: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -244,24 +348,6 @@ export default function GenerationFolderScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Transparent Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigateBack.toMain()}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{folderName}</Text>
-          <Text style={styles.headerSubtitle}>
-            {isSelectionMode ? `${selectedItems.size} selected` : `${folderData.length} photos`}
-          </Text>
-        </View>
-        {isSelectionMode && (
-          <TouchableOpacity style={styles.actionButton} onPress={exitSelectionMode}>
-            <Feather name="x" size={20} color="#ffffff" />
-          </TouchableOpacity>
-        )}
-      </View>
-
       {/* Photo Grid */}
       <FlatList
         data={folderData}
@@ -271,7 +357,31 @@ export default function GenerationFolderScreen() {
         contentContainerStyle={styles.gridContainer}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={styles.row}
+        ListHeaderComponent={() => (
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{folderName}</Text>
+            <Text style={styles.subtitle}>
+              {isSelectionMode ? `${selectedItems.size} selected` : `${folderData.length} photos`}
+            </Text>
+          </View>
+        )}
       />
+
+      {/* Floating Back Button */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => navigateBack.toMain()}>
+          <Feather name="arrow-left" size={20} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Floating Action Button (when in selection mode) */}
+      {isSelectionMode && (
+        <View style={styles.floatingActionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={exitSelectionMode}>
+            <Feather name="x" size={20} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Action Bar - appears when in selection mode */}
       {isSelectionMode && (
@@ -283,10 +393,21 @@ export default function GenerationFolderScreen() {
           
           <TouchableOpacity 
             style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
+            onPress={shareSelected}
+            disabled={selectedItems.size === 0}
+          >
+            <Feather name="share-2" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
+            <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
+              Share
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionBarButton, selectedItems.size === 0 && styles.actionBarButtonDisabled]} 
             onPress={downloadSelected}
             disabled={selectedItems.size === 0}
           >
-            <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#4CAF50"} />
+            <Feather name="download" size={20} color={selectedItems.size === 0 ? "#666666" : "#ffffff"} />
             <Text style={[styles.actionBarText, selectedItems.size === 0 && styles.actionBarTextDisabled]}>
               Download
             </Text>
@@ -313,55 +434,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 20,
+  titleContainer: {
     paddingHorizontal: 20,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
+    paddingBottom: 40,
     alignItems: 'center',
-    marginRight: 16,
   },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 20,
+  title: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 6,
+    textAlign: 'center',
   },
-  headerSubtitle: {
-    color: '#888888',
+  subtitle: {
     fontSize: 14,
-    marginTop: 4,
+    color: '#cccccc',
+    textAlign: 'center',
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  // Floating Back Button
+  headerRow: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    paddingTop: 40, 
+    paddingLeft: 8, 
+    zIndex: 1000 
+  },
+  iconBackButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#000000', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  floatingActionButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 1000,
   },
   actionButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333333',
+    backgroundColor: 'rgba(51, 51, 51, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8,
   },
   gridContainer: {
-    paddingTop: 100,
+    paddingTop: 80, // Space for floating back button
     paddingBottom: 100, // Space for action bar when in selection mode
   },
   row: {

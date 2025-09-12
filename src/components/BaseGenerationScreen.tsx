@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
 import { Feather } from '@expo/vector-icons';
+import GenerationProgressNotification from './GenerationProgressNotification';
 
 interface BaseGenerationScreenProps {
   mode: string;
@@ -18,6 +19,17 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
+  const [progressNotification, setProgressNotification] = useState<{
+    visible: boolean;
+    status: 'starting' | 'processing' | 'completed' | 'failed';
+    progress?: number;
+    message?: string;
+    error?: string;
+  }>({
+    visible: false,
+    status: 'starting',
+    progress: 0,
+  });
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Compute original aspect ratio of the selected image
@@ -57,14 +69,30 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
     });
 
     if (!selectedImage) {
-      Alert.alert('Error', 'No image selected');
+      setProgressNotification({
+        visible: true,
+        status: 'failed',
+        message: 'No image selected',
+      });
       return;
     }
 
     if (!user?.id) {
-      Alert.alert('Error', 'User not authenticated');
+      setProgressNotification({
+        visible: true,
+        status: 'failed',
+        message: 'User not authenticated',
+      });
       return;
     }
+
+    // Show generation starting notification
+    setProgressNotification({
+      visible: true,
+      status: 'starting',
+      progress: 0,
+      message: 'Preparing your image for processing...',
+    });
 
     // Start the generation process (non-blocking)
     try {
@@ -77,35 +105,56 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
       console.log('🚀 [BaseGenerationScreen] Generation started in background');
       
-      // Show brief success message and navigate back
-      Alert.alert(
-        'Generation Started', 
-        'Your image is being processed. You can check your gallery for progress.',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Navigate back to upload-mode screen
-              router.push({
-                pathname: '/upload-mode',
-                params: { mode: mode }
-              });
-            }
-          }
-        ]
-      );
+      // Simulate progress updates
+      let progress = 10;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15; // Random progress increments
+        if (progress >= 90) {
+          progress = 90; // Don't go to 100% until actually complete
+          clearInterval(progressInterval);
+        }
+        
+        setProgressNotification({
+          visible: true,
+          status: 'processing',
+          progress: Math.min(progress, 90),
+          message: progress < 30 ? 'Uploading image...' : 
+                   progress < 60 ? 'AI is processing your image...' : 
+                   'Finalizing your creation...',
+        });
+      }, 1000);
+
+      // Show completion after a delay (simulating real completion)
+      setTimeout(() => {
+        clearInterval(progressInterval);
+        setProgressNotification({
+          visible: true,
+          status: 'completed',
+          progress: 100,
+          message: 'Your image is ready!',
+        });
+        
+        // Auto-dismiss after 3 seconds and go to main gallery
+        setTimeout(() => {
+          setProgressNotification(prev => ({ ...prev, visible: false }));
+          router.push('/main'); // Go to main gallery to see the result
+        }, 3000);
+      }, 8000); // Simulate 8 seconds total generation time
+
     } catch (error) {
       console.error('❌ [BaseGenerationScreen] Generation failed:', error);
-      Alert.alert('Generation Failed', error instanceof Error ? error.message : 'Unknown error');
+      setProgressNotification({
+        visible: true,
+        status: 'failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     }
   };
 
   const handleBack = () => {
-    // Navigate back to upload-mode screen with the mode parameter
-    router.push({
-      pathname: '/upload-mode',
-      params: { mode: mode }
-    });
+    // Navigate back to main screen (not upload-mode to avoid loops)
+    router.push('/main');
   };
 
   if (!selectedImage) {
@@ -121,6 +170,20 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   return (
     <View style={styles.container}>
+      {/* Progress Notification */}
+      <GenerationProgressNotification
+        visible={progressNotification.visible}
+        status={progressNotification.status}
+        progress={progressNotification.progress}
+        message={progressNotification.message}
+        error={progressNotification.error}
+        onDismiss={() => setProgressNotification(prev => ({ ...prev, visible: false }))}
+        onViewGallery={() => {
+          setProgressNotification(prev => ({ ...prev, visible: false }));
+          router.push('/main'); // Go to main gallery to see the result
+        }}
+      />
+
       {/* Header Back Button */}
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.iconBackButton} onPress={handleBack}>

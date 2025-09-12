@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
-
-interface GhibliPreset {
-  id: string;
-  label: string;
-  description: string;
-  prompt: string;
-}
+import { GHIBLI_REACTION_PRESETS, GhibliReactionPreset } from '../src/presets/ghibliReact';
 
 interface GhibliReactionModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -19,41 +13,15 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Real Ghibli reaction presets from website (exact same data)
-  const ghibliPresets: GhibliPreset[] = [
-    {
-      id: 'ghibli_tears',
-      label: 'Tears',
-      description: 'Delicate tears and trembling expression',
-      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add delicate tears and a trembling expression. Add delicate tears under the eyes, a trembling mouth, and a soft pink blush. Keep the face fully intact with original skin tone, gender, and identity. Use soft, cinematic lighting and warm pastel tones like a Ghibli film.'
-    },
-    {
-      id: 'ghibli_shock',
-      label: 'Shock',
-      description: 'Wide eyes and parted lips showing surprise',
-      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Widen the eyes and part the lips slightly to show surprise. Slightly widen the eyes, part the lips, and show light tension in the expression. Maintain identity, ethnicity, and facial realism. Add soft sparkles and cinematic warmth — like a frame from a Studio Ghibli film.'
-    },
-    {
-      id: 'ghibli_sparkle',
-      label: 'Sparkle',
-      description: 'Medium sparkles around cheeks with golden highlights',
-      prompt: 'Transform the human face into a magical Ghibli-style sparkle reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add medium sparkles around the cheeks only, shimmering golden highlights in the eyes, and soft pink blush on the cheeks. Keep sparkles focused on the cheek area to complement the blush without overwhelming it. Use pastel cinematic tones with gentle sparkle effects and dreamy lighting. Background should have gentle bokeh with soft light flares. Maintain original composition and realism with subtle magical sparkle effects on cheeks.'
-    },
-    {
-      id: 'ghibli_sadness',
-      label: 'Sadness',
-      description: 'Melancholic emotion with glossy eyes and distant gaze',
-      prompt: 'Transform the human face into a realistic Ghibli-style reaction with soft lighting, identity preservation, and subtle emotional exaggeration. Use pastel cinematic tones like a Studio Ghibli frame. Add melancholic emotion with glossy eyes and distant gaze. Emphasize melancholic emotion through glossy, teary eyes, a distant gaze, and softened facial features. Slight tear trails may appear but no crying mouth. Preserve full identity, ethnicity, skin, and structure. Lighting should be dim, cinematic, and pastel-toned like a Ghibli evening scene.'
-    },
-    {
-      id: 'ghibli_love',
-      label: 'Love',
-      description: 'Soft pink blush, warm sparkle in eyes, gentle smile',
-      prompt: 'Transform the human face into a romantic Ghibli-style love reaction while preserving full identity, ethnicity, skin tone, and facial structure. Add soft pink blush on the cheeks, warm sparkle in the eyes, and a gentle, shy smile. Include subtle floating hearts or sparkles around the face to enhance emotional expression. Use pastel cinematic tones and soft golden lighting to create a dreamy, cozy atmosphere. Background should have gentle bokeh with subtle Ghibli-style light flares. Maintain original composition and realism with only slight anime influence.'
-    }
-  ];
+  // Use centralized presets from website
+  const ghibliPresets = GHIBLI_REACTION_PRESETS.map((preset: GhibliReactionPreset) => ({
+    id: preset.id,
+    label: preset.label,
+    description: preset.features?.join(', ') || 'Ghibli-style transformation',
+    prompt: preset.prompt
+  }));
 
-  const handlePresetClick = (preset: GhibliPreset) => {
+  const handlePresetClick = (preset: { id: string; label: string; description: string; prompt: string }) => {
     // Prevent double-click
     if (isProcessing) {
       console.log('Ghibli preset click ignored - already processing');
@@ -100,9 +68,6 @@ function GhibliReactionMode({ onGenerate }: GhibliReactionModeProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Ghibli Reaction</Text>
-      <Text style={styles.subtitle}>Animated emotions.</Text>
-      
       <View style={styles.presetContainer}>
         <View style={styles.presetGrid}>
           {/* First row - 3 presets */}
@@ -190,22 +155,6 @@ export default function GenerateGhibliScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 6,
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#cccccc',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   presetContainer: {
     marginTop: 4,

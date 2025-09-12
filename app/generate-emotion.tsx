@@ -2,13 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
-
-interface EmotionPreset {
-  id: string;
-  label: string;
-  description: string;
-  prompt: string;
-}
+import { EMOTION_MASK_PRESETS, EmotionMaskPreset } from '../src/presets/emotionmask';
 
 interface EmotionMaskModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
@@ -19,41 +13,15 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Real Emotion Mask presets from website (exact same data)
-  const emotionPresets: EmotionPreset[] = [
-    {
-      id: 'emotion_mask_nostalgia_distance',
-      label: 'Nostalgia + Distance',
-      description: 'Soft memory lens with contemplative expression',
-      prompt: 'Portrait reflecting longing and emotional distance. Subject gazing away as if lost in memory, with a soft, contemplative expression. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    },
-    {
-      id: 'emotion_mask_joy_sadness',
-      label: 'Joy + Sadness',
-      description: 'Smile-through-tears with hopeful eyes',
-      prompt: 'Portrait capturing bittersweet emotions, smiling through tears, hopeful eyes with a melancholic undertone. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    },
-    {
-      id: 'emotion_mask_conf_loneliness',
-      label: 'Confidence + Loneliness',
-      description: 'Powerful pose with solitary atmosphere',
-      prompt: 'Powerful pose with solitary atmosphere. Strong gaze, isolated composition, contrast between inner resilience and quiet sadness. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    },
-    {
-      id: 'emotion_mask_peace_fear',
-      label: 'Peace + Fear',
-      description: 'Calm expression under tense atmosphere',
-      prompt: 'Emotive portrait with calm expression under tense atmosphere. Soft smile with flickers of anxiety in the eyes, dual-toned lighting (cool and warm). Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    },
-    {
-      id: 'emotion_mask_strength_vuln',
-      label: 'Strength + Vulnerability',
-      description: 'Inner strength with subtle vulnerability',
-      prompt: 'A cinematic portrait showing inner strength with a subtle vulnerability. Intense eyes, guarded posture, but soft facial micro-expressions. Retain the subject\'s gender expression, ethnicity, facial structure, and skin texture exactly as in the original image. Emotion should be conveyed through facial micro-expressions, especially the eyes and mouth. Scene should feel grounded in real-world lighting and atmosphere, not stylized or fantasy.'
-    }
-  ];
+  // Use centralized presets from website
+  const emotionPresets = EMOTION_MASK_PRESETS.map((preset: EmotionMaskPreset) => ({
+    id: preset.id,
+    label: preset.label,
+    description: preset.features?.join(', ') || 'Emotional transformation',
+    prompt: preset.prompt
+  }));
 
-  const handlePresetClick = (preset: EmotionPreset) => {
+  const handlePresetClick = (preset: { id: string; label: string; description: string; prompt: string }) => {
     // Prevent double-click
     if (isProcessing) {
       console.log('Emotion preset click ignored - already processing');
@@ -100,9 +68,6 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Emotion Mask</Text>
-      <Text style={styles.subtitle}>Faces that feel.</Text>
-      
       <View style={styles.presetContainer}>
         <View style={styles.presetGrid}>
           {/* First row - 3 presets */}
@@ -190,22 +155,6 @@ export default function GenerateEmotionScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 6,
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#cccccc',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   presetContainer: {
     marginTop: 4,

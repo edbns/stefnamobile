@@ -5,7 +5,9 @@ import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
+import * as FileSystem from 'expo-file-system';
 import { useMediaStore } from '../src/stores/mediaStore';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 
 export default function MediaViewerScreen() {
   const router = useRouter();
@@ -16,19 +18,49 @@ export default function MediaViewerScreen() {
   const cloudId = params.cloudId as string;
   const mediaUri = params.mediaUri as string;
   const mediaType = params.mediaType as string;
+  const folderData = params.folderData ? JSON.parse(params.folderData as string) : null;
+  const currentIndex = params.currentIndex ? parseInt(params.currentIndex as string) : 0;
 
   const [isLoading, setIsLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
 
   // Debug logging
-  console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType });
+  console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
 
   const handleClose = () => {
     navigateBack.toMain();
   };
 
+  const handleSwipeGesture = (event: any) => {
+    if (!folderData || folderData.length <= 1) return;
+    
+    const { translationX, state } = event.nativeEvent;
+    
+    if (state === State.END) {
+      const threshold = 50; // Minimum swipe distance
+      
+      if (translationX > threshold && currentImageIndex > 0) {
+        // Swipe right - go to previous image
+        setCurrentImageIndex(currentImageIndex - 1);
+      } else if (translationX < -threshold && currentImageIndex < folderData.length - 1) {
+        // Swipe left - go to next image
+        setCurrentImageIndex(currentImageIndex + 1);
+      }
+    }
+  };
+
+  const getCurrentImage = () => {
+    if (!folderData || folderData.length === 0) {
+      return { uri: mediaUri, id: mediaId, cloudId };
+    }
+    return folderData[currentImageIndex] || folderData[0];
+  };
+
+  const currentImage = getCurrentImage();
+
   const handleDelete = async () => {
     try {
-      await deleteMedia(mediaId, cloudId);
+      await deleteMedia(currentImage.id, currentImage.cloudId);
       navigateBack.toMain();
     } catch (e) {
       Alert.alert('Delete Error', 'Unable to delete this image.');
@@ -39,24 +71,38 @@ export default function MediaViewerScreen() {
     try {
       setIsLoading(true);
       
-      if (Platform.OS === 'ios') {
-        await Share.share({
-          url: mediaUri,
-          message: 'Check out this image generated with Stefna!'
-        });
-      } else {
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(mediaUri, {
-            mimeType: mediaType === 'image' ? 'image/jpeg' : 'video/mp4',
-            dialogTitle: 'Share Image'
+      const imageUri = currentImage.cloudUrl || currentImage.localUri;
+      
+      // Download the image first to get a local file
+      const fileName = `stefna_share_${Date.now()}_${currentImage.id}.jpg`;
+      const localPath = FileSystem.cacheDirectory + fileName;
+      
+      console.log('📱 Downloading image for sharing from:', imageUri);
+      const download = await FileSystem.downloadAsync(imageUri, localPath);
+      
+      if (download.status === 200) {
+        // Share the actual image file
+        if (Platform.OS === 'ios') {
+          await Share.share({
+            url: localPath,
+            type: 'image/jpeg'
           });
         } else {
-          Alert.alert('Sharing not available', 'Sharing is not available on this device.');
+          if (await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(localPath, {
+              mimeType: 'image/jpeg',
+              dialogTitle: 'Share Image'
+            });
+          } else {
+            Alert.alert('Sharing not available', 'Sharing is not available on this device.');
+          }
         }
+      } else {
+        throw new Error(`Download failed with status: ${download.status}`);
       }
     } catch (error) {
       console.error('Share error:', error);
-      Alert.alert('Share Error', 'Unable to share this image.');
+      Alert.alert('Share Error', 'Unable to share this image. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -72,13 +118,26 @@ export default function MediaViewerScreen() {
         return;
       }
 
-      const asset = await MediaLibrary.createAssetAsync(mediaUri);
-      await MediaLibrary.createAlbumAsync('Stefna', asset, false);
+      // Download the image first
+      const imageUri = currentImage.cloudUrl || currentImage.localUri;
+      const fileName = `stefna_${Date.now()}_${currentImage.id}.jpg`;
+      const localPath = FileSystem.cacheDirectory + fileName;
       
-      Alert.alert('Success', 'Image saved to your photo library!');
+      console.log('📱 Downloading image from:', imageUri);
+      const download = await FileSystem.downloadAsync(imageUri, localPath);
+      
+      if (download.status === 200) {
+        // Save to photo library
+        const asset = await MediaLibrary.createAssetAsync(localPath);
+        await MediaLibrary.createAlbumAsync('Stefna', asset, false);
+        
+        Alert.alert('Success', 'Image saved to your photo library!');
+      } else {
+        throw new Error(`Download failed with status: ${download.status}`);
+      }
     } catch (error) {
       console.error('Save error:', error);
-      Alert.alert('Save Error', 'Unable to save this image.');
+      Alert.alert('Save Error', 'Unable to save this image. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -86,28 +145,40 @@ export default function MediaViewerScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <Feather name="x" size={24} color="#ffffff" />
+      <PanGestureHandler onHandlerStateChange={handleSwipeGesture}>
+        <View style={styles.gestureContainer}>
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            maximumZoomScale={3}
+            minimumZoomScale={1}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+          >
+            <Image
+              source={{ uri: currentImage.cloudUrl || currentImage.localUri }}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </ScrollView>
+        </View>
+      </PanGestureHandler>
+
+      {/* Floating Back Button */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={handleClose}>
+          <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Media Viewer</Text>
-        <View style={styles.placeholder} />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        maximumZoomScale={3}
-        minimumZoomScale={1}
-        showsHorizontalScrollIndicator={false}
-        showsVerticalScrollIndicator={false}
-      >
-        <Image
-          source={{ uri: mediaUri }}
-          style={styles.image}
-          resizeMode="contain"
-        />
-      </ScrollView>
+      {/* Navigation Indicators */}
+      {folderData && folderData.length > 1 && (
+        <View style={styles.navigationIndicators}>
+          <Text style={styles.navigationText}>
+            {currentImageIndex + 1} / {folderData.length}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.actionBar}>
         <TouchableOpacity style={styles.actionButton} onPress={handleShare} disabled={isLoading}>
@@ -136,38 +207,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    zIndex: 1000,
+  gestureContainer: {
+    flex: 1,
   },
-  closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  // Floating Back Button
+  headerRow: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    paddingTop: 40, 
+    paddingLeft: 8, 
+    zIndex: 1000 
   },
-  headerTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  placeholder: {
-    width: 40,
+  iconBackButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#000000', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
   scrollView: {
     flex: 1,
+    paddingTop: 80, // Space for floating back button
   },
   scrollContent: {
     flex: 1,
@@ -202,5 +265,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 5,
     fontWeight: '500',
+  },
+  // Navigation Indicators
+  navigationIndicators: {
+    position: 'absolute',
+    top: 100,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    zIndex: 1000,
+  },
+  navigationText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

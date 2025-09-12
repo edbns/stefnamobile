@@ -1,54 +1,36 @@
-// Media Store - Manages media gallery, uploads, and deletions
-// Uses mediaService and cloudinaryService internally for HTTP calls
+// Media Store - Handles media gallery, uploads, and deletions
+// Mobile app can read/write media - this is a shared feature
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { mediaService, DeleteMediaResponse, UserMediaResponse } from '../services/mediaService';
-import { cloudinaryService, CloudinarySignResponse, CloudinaryUploadResult } from '../services/cloudinaryService';
-import { StorageService, StoredMedia } from '../services/storageService';
-
-interface MediaItem extends StoredMedia {
-  cloudId?: string;
-  isUploading?: boolean;
-  uploadProgress?: number;
-  // Optional fields from backend to support grouping
-  type?: string; // 'presets' | 'custom_prompt' | 'emotion_mask' | 'ghibli_reaction' | 'neo_glitch' | 'edit'
-  prompt?: string;
-  presetKey?: string;
-}
+import { MediaItem, UserMediaResponse, DeleteMediaResponse } from '../types/media';
+import { CloudinaryUploadResult, CloudinarySignResponse } from '../types/cloudinary';
+import { mediaService } from '../services/mediaService';
+import { cloudinaryService } from '../services/cloudinaryService';
+import { StorageService } from '../services/storageService';
 
 interface MediaState {
-  // Media collection
   media: MediaItem[];
   isLoading: boolean;
-
-  // Upload state
   currentUpload: {
     id: string;
     progress: number;
     fileName: string;
   } | null;
-
-  // Error handling
   error: string | null;
 
-  // Actions
   loadUserMedia: () => Promise<void>;
   deleteMedia: (mediaId: string, cloudId?: string) => Promise<boolean>;
   uploadToCloudinary: (imageUri: string, folder?: string) => Promise<CloudinaryUploadResult | null>;
   clearError: () => void;
   reset: () => void;
-
-  // Sync with local storage
   syncWithLocalStorage: () => Promise<void>;
 }
 
 export const useMediaStore = create<MediaState>((set, get) => ({
   media: [],
   isLoading: false,
-
   currentUpload: null,
-
   error: null,
 
   loadUserMedia: async () => {
@@ -63,71 +45,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         }
       } catch {}
 
-      // Development bypass - load test media (DISABLED for production testing)
-      if (false && __DEV__) {
-        console.log('🔧 Development mode: Loading test media');
-        const testMedia: MediaItem[] = [
-          {
-            id: 'test-media-1',
-            localUri: 'https://picsum.photos/400/400?random=1',
-            cloudUrl: 'https://picsum.photos/400/400?random=1',
-            filename: 'test_image_1.jpg',
-            createdAt: new Date(Date.now() - 86400000), // 1 day ago
-            synced: true,
-            prompt: 'neo tokyo glitch aesthetic',
-          },
-          {
-            id: 'test-media-2',
-            localUri: 'https://picsum.photos/400/400?random=2',
-            cloudUrl: 'https://picsum.photos/400/400?random=2',
-            filename: 'test_image_2.jpg',
-            createdAt: new Date(Date.now() - 172800000), // 2 days ago
-            synced: true,
-            prompt: 'custom portrait studio lighting',
-          },
-          {
-            id: 'test-media-3',
-            localUri: 'https://picsum.photos/400/400?random=3',
-            cloudUrl: 'https://picsum.photos/400/400?random=3',
-            filename: 'test_image_3.jpg',
-            createdAt: new Date(Date.now() - 259200000), // 3 days ago
-            synced: true,
-            prompt: 'emotion mask ghibli style',
-          },
-          {
-            id: 'test-media-4',
-            localUri: 'https://picsum.photos/400/400?random=4',
-            cloudUrl: 'https://picsum.photos/400/400?random=4',
-            filename: 'test_image_4.jpg',
-            createdAt: new Date(Date.now() - 345600000), // 4 days ago
-            synced: true,
-            prompt: 'abstract digital art',
-          },
-          {
-            id: 'test-media-5',
-            localUri: 'https://picsum.photos/400/400?random=5',
-            cloudUrl: 'https://picsum.photos/400/400?random=5',
-            filename: 'test_image_5.jpg',
-            createdAt: new Date(Date.now() - 432000000), // 5 days ago
-            synced: true,
-            prompt: 'studio edit professional',
-          },
-          {
-            id: 'test-media-6',
-            localUri: 'https://picsum.photos/400/400?random=6',
-            cloudUrl: 'https://picsum.photos/400/400?random=6',
-            filename: 'test_image_6.jpg',
-            createdAt: new Date(Date.now() - 518400000), // 6 days ago
-            synced: true,
-            prompt: 'ghibli reaction anime style',
-          },
-        ];
-
-        set({ media: testMedia, isLoading: false });
-        console.log('✅ Test media loaded successfully');
-        return;
-      }
-
+      // Load real user media from API
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) {
         throw new Error('Not authenticated');
@@ -180,27 +98,23 @@ export const useMediaStore = create<MediaState>((set, get) => ({
           } else if (item.cloudUrl && !existing.cloudUrl) {
             // If cloud item has URL but local doesn't, replace with cloud version
             const index = acc.findIndex(m => m === existing);
-            if (index !== -1) {
-              acc[index] = item;
-            }
+            acc[index] = item;
           }
           return acc;
         }, []);
 
-        // Sort by creation date (newest first)
-        const sortedMedia = mergedMedia.sort((a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-
         console.log('🌐 [MediaStore] Final merged media:', {
-          totalCount: sortedMedia.length,
-          types: sortedMedia.map(m => m.type).filter(Boolean),
-          folders: [...new Set(sortedMedia.map(m => m.type).filter(Boolean))]
+          total: mergedMedia.length,
+          local: localMedia?.length || 0,
+          cloud: cloudMedia.length,
+          types: mergedMedia.map(m => m.type).filter(Boolean)
         });
 
-        set({ media: sortedMedia, isLoading: false });
+        set({ media: mergedMedia, isLoading: false });
+        await StorageService.storeMedia(mergedMedia);
       } else {
-        throw new Error(response.error);
+        console.error('🌐 [MediaStore] Server error:', response.error);
+        set({ error: response.error, isLoading: false });
       }
     } catch (error) {
       console.error('Load user media error:', error);
@@ -301,30 +215,23 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     }
   },
 
-  clearError: () => set({ error: null }),
+  clearError: () => {
+    set({ error: null });
+  },
 
-  reset: () => set({
-    media: [],
-    isLoading: false,
-    currentUpload: null,
-    error: null,
-  }),
+  reset: () => {
+    set({
+      media: [],
+      isLoading: false,
+      currentUpload: null,
+      error: null
+    });
+  },
 
   syncWithLocalStorage: async () => {
     try {
-      const localMedia = await StorageService.getStoredMedia();
       const { media } = get();
-
-      // Update synced status for local media
-      const syncedMedia = media.map(item => {
-        const localItem = localMedia.find(local => local.id === item.id);
-        return {
-          ...item,
-          synced: !!localItem?.synced,
-        };
-      });
-
-      set({ media: syncedMedia });
+      await StorageService.storeMedia(media);
     } catch (error) {
       console.error('Sync with local storage error:', error);
     }

@@ -178,17 +178,6 @@ export default function EditScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Transparent Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/main')}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Style it Your Way</Text>
-          <Text style={styles.headerSubtitle}>Select a mode to start creating</Text>
-        </View>
-      </View>
-
       {/* Mode Cards Grid */}
       <FlatList
         data={modeCards}
@@ -198,7 +187,20 @@ export default function EditScreen() {
         contentContainerStyle={styles.gridContainer}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={() => (
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>Style it Your Way</Text>
+            <Text style={styles.subtitle}>Select a mode to start creating</Text>
+          </View>
+        )}
       />
+
+      {/* Floating Back Button */}
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => router.push('/main')}>
+          <Feather name="arrow-left" size={20} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -208,47 +210,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 20,
+  gridContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 80, // Space for floating back button
+    paddingBottom: 100, // Space for floating footer
+  },
+  titleContainer: {
     paddingHorizontal: 20,
-    zIndex: 1000,
-  },
-  backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  headerContent: {
-    flex: 1,
+    paddingBottom: 40,
     alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     marginBottom: 6,
     textAlign: 'center',
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
     color: '#cccccc',
     textAlign: 'center',
-  },
-  gridContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 120,
-    paddingBottom: 100, // Space for floating footer
   },
   row: {
     justifyContent: 'space-around',
@@ -449,5 +431,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.08,
     shadowRadius: 5,
+  },
+
+  // Floating Back Button
+  headerRow: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    paddingTop: 40, 
+    paddingLeft: 8, 
+    zIndex: 1000 
+  },
+  iconBackButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#000000', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
 });

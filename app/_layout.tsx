@@ -1,23 +1,27 @@
 import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../src/stores/authStore';
+import SplashScreen from './splash';
 
 export default function Layout() {
   const router = useRouter();
   const pathname = usePathname();
   const { initialize, isAuthenticated, isLoading } = useAuthStore();
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     initialize();
     
-    // Let Expo handle updates automatically via app.config.ts
-    // No manual update checking needed since we have:
-    // - checkAutomatically: 'ON_LOAD' in app.config.ts
-    // - Proper runtime version matching
     console.log('🚀 App initialized - Expo will handle updates automatically');
     
+    // Hide splash screen after a shorter delay to prevent double splash
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1000); // Reduced to 1 second for faster transition
+    
+    return () => clearTimeout(timer);
   }, [initialize]);
 
   // Global auth guard: redirect unauthenticated users away from protected routes
@@ -29,6 +33,11 @@ export default function Layout() {
       router.replace('/welcome');
     }
   }, [isAuthenticated, isLoading, pathname, router]);
+
+  // Show splash screen during initialization
+  if (showSplash) {
+    return <SplashScreen />;
+  }
 
   return (
     <SafeAreaProvider>

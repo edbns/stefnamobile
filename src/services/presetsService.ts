@@ -1,6 +1,9 @@
 // src/services/presetsService.ts
-// Mobile app presets service - connects to database, no fallbacks
+// Mobile Presets Service - Aligned with website's PresetsService
+// Uses the same API endpoints and data structures as the website
+
 import { config } from '../config/environment';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface DatabasePreset {
   id: string;
@@ -47,16 +50,22 @@ class PresetsService {
   /**
    * Fetch available presets from database with rotation system
    * Returns currently available presets for the main presets mode
-   * NO FALLBACKS - if database fails, throws user-friendly error
+   * Uses the same endpoint as the website
    */
   async getAvailablePresets(): Promise<PresetsResponse> {
     try {
       console.log('🎨 [PresetsService] Fetching available presets from database');
 
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
       // Use the same endpoint as the website
       const response = await fetch(config.apiUrl('get-presets'), {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
@@ -121,14 +130,21 @@ class PresetsService {
 
   /**
    * Get current week's available presets (5 presets)
-   * NO FALLBACKS - if database fails, throws user-friendly error
+   * Uses the same endpoint as the website
    */
   async getCurrentWeekPresets(): Promise<DatabasePreset[]> {
     try {
       console.log('🔍 [Presets] Getting current week presets');
       
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
       const response = await fetch(config.apiUrl('get-presets'), {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
@@ -143,7 +159,8 @@ class PresetsService {
 
       let presets: DatabasePreset[];
       try {
-        presets = await response.json();
+        const result = await response.json();
+        presets = result.data?.presets || [];
       } catch (parseError) {
         throw new Error('Presets service returned invalid data. Please try again later.');
       }
@@ -176,14 +193,21 @@ class PresetsService {
   /**
    * Get mode-specific presets from their respective database tables
    * Supports: emotion-mask, ghibli-reaction, neo-glitch
+   * Uses the same endpoint as the website
    */
   async getModeSpecificPresets(mode: string): Promise<PresetsResponse> {
     try {
       console.log(`🎨 [PresetsService] Fetching ${mode} presets from database`);
 
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
       const response = await fetch(`${config.apiUrl('get-presets')}?mode=${mode}`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -237,14 +261,21 @@ class PresetsService {
 
   /**
    * Get all available presets (25 total)
-   * NO FALLBACKS - if database fails, throws user-friendly error
+   * Uses the same endpoint as the website
    */
   async getAllPresets(): Promise<DatabasePreset[]> {
     try {
       console.log('🔍 [Presets] Getting all presets');
       
+      const token = await AsyncStorage.getItem('auth_token');
+      if (!token) throw new Error('No auth token found');
+
       const response = await fetch(config.apiUrl('get-presets'), {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
@@ -259,7 +290,8 @@ class PresetsService {
 
       let presets: DatabasePreset[];
       try {
-        presets = await response.json();
+        const result = await response.json();
+        presets = result.data?.presets || [];
       } catch (parseError) {
         throw new Error('Presets service returned invalid data. Please try again later.');
       }

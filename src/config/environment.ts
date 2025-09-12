@@ -3,9 +3,9 @@
 
 const ENV = {
   development: {
-    // Use EXPO_PUBLIC_API_URL when provided; otherwise default to staging URL
+    // Use EXPO_PUBLIC_API_URL when provided; otherwise default to production URL
     // Avoid localhost for device builds (causes Invalid URL on device)
-    API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://stefna.netlify.app',
+    API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://stefna.xyz',
   },
   production: {
     API_BASE_URL: process.env.EXPO_PUBLIC_API_URL || 'https://stefna.xyz',
@@ -29,7 +29,7 @@ export const config = {
 
   // Feature flags
   ENABLE_OFFLINE_MODE: true,
-  ENABLE_PUSH_NOTIFICATIONS: false, // TODO: Implement later
+  ENABLE_PUSH_NOTIFICATIONS: true, // ✅ Implemented - Push notifications system ready
 
   // Generation settings
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
