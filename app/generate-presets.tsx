@@ -126,7 +126,6 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                         <TouchableOpacity 
                           onPress={() => handlePresetClick(preset.key)}
                           style={styles.presetTouchable}
-                          disabled={isGenerating}
                         >
                           <View style={[
                             styles.presetButton,
@@ -135,16 +134,12 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                             {/* Magical glow overlay */}
                             <View style={styles.magicalGlowOverlay} />
                             
-                            {isGenerating ? (
-                              <ActivityIndicator size="small" color={selectedPreset === preset.key ? "#000000" : "#ffffff"} />
-                            ) : (
-                              <Text style={[
-                                styles.presetText,
-                                selectedPreset === preset.key && styles.presetTextSelected
-                              ]}>
-                                {preset.label}
-                              </Text>
-                            )}
+                            <Text style={[
+                              styles.presetText,
+                              selectedPreset === preset.key && styles.presetTextSelected
+                            ]}>
+                              {preset.label}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       </Animated.View>
@@ -162,7 +157,6 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                         <TouchableOpacity 
                           onPress={() => handlePresetClick(preset.key)}
                           style={styles.presetTouchable}
-                          disabled={isGenerating}
                         >
                           <View style={[
                             styles.presetButton,
@@ -171,16 +165,12 @@ function PresetsMode({ onGenerate }: PresetsModeProps) {
                             {/* Magical glow overlay */}
                             <View style={styles.magicalGlowOverlay} />
                             
-                            {isGenerating ? (
-                              <ActivityIndicator size="small" color={selectedPreset === preset.key ? "#000000" : "#ffffff"} />
-                            ) : (
-                              <Text style={[
-                                styles.presetText,
-                                selectedPreset === preset.key && styles.presetTextSelected
-                              ]}>
-                                {preset.label}
-                              </Text>
-                            )}
+                            <Text style={[
+                              styles.presetText,
+                              selectedPreset === preset.key && styles.presetTextSelected
+                            ]}>
+                              {preset.label}
+                            </Text>
                           </View>
                         </TouchableOpacity>
                       </Animated.View>

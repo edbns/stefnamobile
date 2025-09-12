@@ -46,11 +46,17 @@ export class StorageService {
       const localFilename = `${Date.now()}_${filename}`;
       const localUri = this.MEDIA_DIR + localFilename;
 
-      // Copy image to app storage
-      await FileSystem.copyAsync({
-        from: imageUri,
-        to: localUri,
-      });
+      // Download image first if it's a remote URL
+      if (imageUri.startsWith('http')) {
+        console.log('📥 [StorageService] Downloading image from:', imageUri);
+        await FileSystem.downloadAsync(imageUri, localUri);
+      } else {
+        // Copy local file
+        await FileSystem.copyAsync({
+          from: imageUri,
+          to: localUri,
+        });
+      }
 
       const media: StoredMedia = {
         id: `media_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
