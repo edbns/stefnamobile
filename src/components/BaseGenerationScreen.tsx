@@ -91,7 +91,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
     setProgressNotification({
       visible: true,
       status: 'starting',
-      message: 'Added to queue - we will be processing it shortly',
+      message: 'We will be processing it shortly',
     });
 
     // Start the generation process (non-blocking)
