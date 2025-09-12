@@ -6,7 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-export default function SplashScreen() {
+export default function AppSplashScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuthStore();
 
