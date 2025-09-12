@@ -57,7 +57,7 @@ export default function VerifyScreen() {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../assets/splash-icon.png')} 
+            source={require('../assets/logo.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
@@ -98,11 +98,11 @@ const styles = StyleSheet.create({
   contentWithKeyboard: { justifyContent: 'flex-start', paddingTop: 100 },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
   },
   logo: {
-    width: 160,
-    height: 60,
+    width: 200,
+    height: 80,
   },
   title: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },

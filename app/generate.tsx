@@ -155,10 +155,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     backgroundColor: '#1a1a1a',
+    borderRadius: 0, // Remove border radius
   },
   selectedImage: {
     width: '100%',
-    aspectRatio: 0.9, // Make image bigger - closer to square
+    aspectRatio: 0.8, // Make image bigger - closer to square
     resizeMode: 'contain',
   },
   section: {

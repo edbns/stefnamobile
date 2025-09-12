@@ -30,7 +30,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           id: result.user.id,
           email: result.user.email,
           credits: result.user.credits || 0,
-          loginTime: Date.now(), // Store login time for 30-day persistence
         };
 
         // Store auth data
@@ -44,13 +43,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false
         });
 
-        // Show success notification
-        useNotificationsStore.getState().addNotification(
-          notificationHelpers.success(
-            'Welcome back!',
-            'Successfully logged in to Stefna.'
-          )
-        );
+        // No welcome notification needed - user will see main screen
 
         return true;
       } else {
@@ -61,9 +54,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           ? 'Invalid code. Please check your email and try again.'
           : result.error || 'Login failed';
           
-        useErrorStore.getState().setError(
-          errorHelpers.auth(errorMessage)
-        );
+        useErrorStore.getState().setError(errorMessage);
         set({ isLoading: false });
         return false;
       }
@@ -72,11 +63,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Use centralized error handling
       useErrorStore.getState().setError(
-        errorHelpers.network(
-          'Login failed due to network error',
-          error,
-          async () => { await get().login(email, otp); } // Retry action
-        )
+        'Network error during login'
       );
 
       set({ isLoading: false });
@@ -107,20 +94,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false
       });
 
-      // Show logout notification
-      useNotificationsStore.getState().addNotification(
-        notificationHelpers.info(
-          'Logged out',
-          'You have been successfully logged out.'
-        )
-      );
+      // No logout notification needed - user will see auth screen
       // Note: navigation handled by global guard in _layout via isAuthenticated
     } catch (error) {
       console.error('Logout error:', error);
 
       // Use centralized error handling
       useErrorStore.getState().setError(
-        errorHelpers.auth('Logout failed', error)
+        'Logout failed'
       );
 
       set({ isLoading: false });
@@ -162,41 +143,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 id: profileData.user.id,
                 email: profileData.user.email,
                 credits: profileData.credits.balance,
-                loginTime: Date.now(),
               };
             
-              // Check session age
-              const loginTime = user.loginTime || Date.now();
-              const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+              // Save updated user and restore session
+              await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+              set({
+                user,
+                token: token[1],
+                isAuthenticated: true,
+                isLoading: false
+              });
+              console.log('✅ [Mobile Auth] Session restored successfully');
               
-              if (loginTime > thirtyDaysAgo) {
-                // Save updated user and restore session
-                await AsyncStorage.setItem('user_profile', JSON.stringify(user));
-                set({
-                  user,
-                  token: token[1],
-                  isAuthenticated: true,
-                  isLoading: false
-                });
-                console.log('✅ [Mobile Auth] Session restored successfully');
-                
-                // Initialize credits from cache immediately, then refresh in background
-                setTimeout(async () => {
-                  const creditsStore = useCreditsStore.getState();
-                  await creditsStore.initializeFromCache();
-                  creditsStore.refreshBalance().catch(console.error);
-                }, 100);
-              } else {
-                // Session too old
-                console.log('⏰ [Mobile Auth] Session expired (>30 days)');
-                await AsyncStorage.multiRemove(['user_profile', 'auth_token']);
-                set({
-                  user: null,
-                  token: null,
-                  isAuthenticated: false,
-                  isLoading: false
-                });
-              }
+              // Initialize credits from cache immediately, then refresh in background
+              setTimeout(async () => {
+                const creditsStore = useCreditsStore.getState();
+                await creditsStore.initializeFromCache();
+                creditsStore.refreshBalance().catch(console.error);
+              }, 100);
             } else {
               // Profile fetch failed
               console.log('❌ [Mobile Auth] Failed to fetch user profile');
@@ -255,7 +219,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Use centralized error handling
       useErrorStore.getState().setError(
-        errorHelpers.auth('Initialization failed', error)
+        'Initialization failed'
       );
 
       set({

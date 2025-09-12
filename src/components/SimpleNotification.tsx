@@ -64,20 +64,17 @@ export default function SimpleNotification({
   if (!visible) return null;
 
   const getBackgroundColor = () => {
-    switch (type) {
-      case 'success': return '#4CAF50';
-      case 'error': return '#F44336';
-      case 'info': return '#2196F3';
-      default: return '#2196F3';
-    }
+    // Use consistent dark background for all notifications
+    return '#1a1a1a';
   };
 
   const getIcon = () => {
+    // Remove emojis - use simple text indicators
     switch (type) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'info': return 'ℹ️';
-      default: return 'ℹ️';
+      case 'success': return '•';
+      case 'error': return '•';
+      case 'info': return '•';
+      default: return '•';
     }
   };
 
@@ -112,6 +109,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#333',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -123,22 +122,23 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   icon: {
-    fontSize: 16,
+    fontSize: 12,
     marginRight: 8,
+    color: '#ffffff',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#ffffff',
     fontWeight: '600',
     marginBottom: 2,
   },
   message: {
-    fontSize: 14,
-    color: '#ffffff',
+    fontSize: 13,
+    color: '#cccccc',
     fontWeight: '400',
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });
