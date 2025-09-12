@@ -44,7 +44,9 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         if (localMedia && localMedia.length > 0) {
           set({ media: localMedia, isLoading: false });
         }
-      } catch {}
+      } catch (localError) {
+        console.log('No local media found:', localError);
+      }
 
       // Load real user media from API
       const token = await AsyncStorage.getItem('auth_token');
