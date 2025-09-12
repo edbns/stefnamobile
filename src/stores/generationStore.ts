@@ -221,8 +221,13 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
       )
     }));
 
-    // Show error notification
-    showCompletionNotification(jobId, request.mode, false, error instanceof Error ? error.message : 'Unknown error');
+    // Show error notification with better message for insufficient credits
+    let errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('INSUFFICIENT_CREDITS')) {
+      errorMessage = 'Insufficient credits. Please add more credits to continue.';
+    }
+    
+    showCompletionNotification(jobId, request.mode, false, errorMessage);
   }
 }
 

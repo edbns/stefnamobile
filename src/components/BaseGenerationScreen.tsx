@@ -16,7 +16,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   const router = useRouter();
   const params = useLocalSearchParams();
   const { user } = useAuthStore();
-  const { startGeneration } = useGenerationStore();
+  const { startGeneration, activeGenerations } = useGenerationStore();
 
   const [selectedImage] = useState(params.selectedImage as string);
   const [imageAspect, setImageAspect] = useState<number | null>(null);
@@ -60,6 +60,31 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return () => clearTimeout(timer);
     }
   }, [selectedImage, imageAspect]);
+
+  // Listen to generation completion
+  useEffect(() => {
+    const completedGenerations = activeGenerations.filter(gen => 
+      gen.status === 'completed' || gen.status === 'failed'
+    );
+    
+    if (completedGenerations.length > 0) {
+      const latestGeneration = completedGenerations[completedGenerations.length - 1];
+      
+      if (latestGeneration.status === 'completed') {
+        setProgressNotification({
+          visible: true,
+          status: 'completed',
+          message: 'Your media is ready!',
+        });
+      } else if (latestGeneration.status === 'failed') {
+        setProgressNotification({
+          visible: true,
+          status: 'failed',
+          message: latestGeneration.error || 'Generation failed',
+        });
+      }
+    }
+  }, [activeGenerations]);
 
   const handleGenerate = async (presetId?: string, customPrompt?: string) => {
     console.log('[BaseGenerationScreen] handleGenerate called:', {
