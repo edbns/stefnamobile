@@ -88,12 +88,9 @@ function StudioPromptMode({ onGenerate, setIsTyping }: StudioPromptModeProps) {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={[styles.promptInputWrapper, { backgroundColor: '#0f0f0f', transform: [{ scale: promptAnim }] }]}>
-          {/* Tech grid pattern overlay */}
-          <View style={styles.techGridOverlay} />
-          
-          {/* Camera frame overlay */}
-          <View style={styles.cameraFrameOverlay} />
+        <Animated.View style={[styles.promptInputWrapper, { backgroundColor: '#18181b', transform: [{ scale: promptAnim }] }]}>
+          {/* Grid pattern overlay */}
+          <View style={styles.gridOverlay} />
           
           <TextInput
             style={styles.promptInput}
@@ -189,7 +186,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 12,
   },
-  techGridOverlay: {
+  gridOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -198,17 +195,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 16,
     opacity: 0.1,
-  },
-  cameraFrameOverlay: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
-    bottom: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 8,
-    opacity: 0.3,
   },
         promptInput: {
           backgroundColor: 'transparent',
