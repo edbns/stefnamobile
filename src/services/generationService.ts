@@ -67,7 +67,7 @@ class GenerationService {
    */
   async generate(request: GenerationRequest): Promise<GenerationResult> {
     const startTime = Date.now();
-    console.log('🚀 [Mobile Generation] Starting generation:', {
+    console.log('[Mobile Generation] Starting generation:', {
       mode: request.mode,
       hasImage: !!request.imageUri,
       hasPreset: !!request.presetId,
@@ -97,7 +97,7 @@ class GenerationService {
       // Check network connection
       const isOnline = await this.isOnline();
       if (!isOnline) {
-        console.log('📱 [Mobile Generation] Offline mode - queuing generation');
+        console.log('[Mobile Generation] Offline mode - queuing generation');
         await this.queueOfflineGeneration(request);
         return {
           success: true,
@@ -110,11 +110,11 @@ class GenerationService {
 
       // Upload image to Cloudinary first (like website)
       const cloudinaryUrl = await this.uploadImageToCloudinary(request.imageUri);
-      console.log('☁️ [Mobile Generation] Image uploaded to Cloudinary:', cloudinaryUrl);
+      console.log('[Mobile Generation] Image uploaded to Cloudinary:', cloudinaryUrl);
 
       // Preflight: check user quota before calling background function
       try {
-        console.log('💰 [Mobile Generation] Preflight quota check before generation');
+        console.log('[Mobile Generation] Preflight quota check before generation');
         const token = await AsyncStorage.getItem('auth_token');
         if (!token) throw new Error('No auth token found');
 
@@ -144,8 +144,8 @@ class GenerationService {
       // Prepare request payload based on mode
       const payload = await this.buildPayload(request, cloudinaryUrl);
 
-      console.log('📡 [Mobile Generation] Calling unified-generate endpoint');
-      console.log('📡 [Mobile Generation] Payload being sent:', JSON.stringify(payload, null, 2));
+      console.log('[Mobile Generation] Calling unified-generate endpoint');
+      console.log('[Mobile Generation] Payload being sent:', JSON.stringify(payload, null, 2));
 
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
@@ -159,7 +159,7 @@ class GenerationService {
         body: JSON.stringify(payload)
       });
 
-      console.log('📡 [Mobile Generation] Response received:', {
+      console.log('[Mobile Generation] Response received:', {
         status: response.status,
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries())
@@ -178,7 +178,7 @@ class GenerationService {
 
       // If this is a Netlify background function, it responds 202 with no body
       if (response.status === 202) {
-        console.log('ℹ️ [Mobile Generation] Background accepted (202), starting polling...');
+        console.log('[Mobile Generation] Background accepted (202), starting polling...');
         
         // Start polling for completion
         return await this.pollForCompletion(payload.runId, request.mode);
@@ -236,7 +236,7 @@ class GenerationService {
         normalized.success = false;      // still mark as a failure (e.g. IPA fail)
       }
 
-      console.log('✅ [Mobile Generation] Generation completed (normalized):', {
+      console.log('[Mobile Generation] Generation completed (normalized):', {
         success: normalized.success,
         status: normalized.status,
         hasImage: !!normalized.imageUrl
@@ -289,12 +289,12 @@ class GenerationService {
     const pollInterval = 5000; // 5 seconds
     const startTime = Date.now()
     
-    console.log(`🔄 [Mobile Generation] Starting intelligent polling for runId: ${runId}`);
+    console.log(`[Mobile Generation] Starting intelligent polling for runId: ${runId}`);
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const elapsed = Date.now() - startTime
-        console.log(`📡 [Mobile Generation] Polling attempt ${attempt}/${maxAttempts} (${Math.round(elapsed/1000)}s elapsed) for runId: ${runId}`);
+        console.log(`[Mobile Generation] Polling attempt ${attempt}/${maxAttempts} (${Math.round(elapsed/1000)}s elapsed) for runId: ${runId}`);
         
         const statusResult = await this.checkStatus(runId, mode);
         
@@ -306,7 +306,7 @@ class GenerationService {
         }
         
         if (statusResult.status === 'completed') {
-          console.log(`✅ [Mobile Generation] Generation completed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
+          console.log(`[Mobile Generation] Generation completed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
           return statusResult;
         }
         
@@ -322,7 +322,7 @@ class GenerationService {
           }
 
           // No output at all — real failure
-          console.log(`❌ [Mobile Generation] Generation failed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
+          console.log(`[Mobile Generation] Generation failed after ${attempt} attempts (${Math.round(elapsed/1000)}s total)`);
           return statusResult;
         }
         
@@ -358,7 +358,7 @@ class GenerationService {
    */
   async checkStatus(runId: string, mode: GenerationMode): Promise<GenerationResult> {
     try {
-      console.log(`🔍 [Mobile Generation] Checking status for runId: ${runId}`);
+      console.log(`[Mobile Generation] Checking status for runId: ${runId}`);
       
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
@@ -393,7 +393,7 @@ class GenerationService {
         const result = await response.json();
         
         if (result.success && result.media) {
-          console.log(`✅ [Mobile Generation] Generation completed! Found media:`, {
+          console.log(`[Mobile Generation] Generation completed! Found media:`, {
             id: result.media.id,
             runId: result.media.runId,
             type: result.media.type,
@@ -483,7 +483,7 @@ class GenerationService {
       });
 
       if (matchingMedia) {
-        console.log(`✅ [Mobile Generation] Found media with exact runId match (fallback):`, {
+        console.log(`[Mobile Generation] Found media with exact runId match (fallback):`, {
           id: matchingMedia.id,
           runId: matchingMedia.runId,
           url: matchingMedia.finalUrl || matchingMedia.imageUrl
@@ -528,7 +528,7 @@ class GenerationService {
    * Based on website's SimpleGenerationService.buildPayload()
    */
   private async buildPayload(request: GenerationRequest, cloudinaryUrl: string): Promise<any> {
-    console.log('🔍 [Mobile Generation] buildPayload called with:', {
+    console.log('[Mobile Generation] buildPayload called with:', {
       mode: request.mode,
       presetId: request.presetId,
       hasCustomPrompt: !!request.customPrompt,
@@ -564,14 +564,14 @@ class GenerationService {
     const originalPrompt = this.getPromptForMode(request);
     
     // Apply prompt enhancement (same as website)
-    console.log('🔍 [Mobile Generation] Applying prompt enhancement to:', originalPrompt.substring(0, 100) + '...');
+    console.log('[Mobile Generation] Applying prompt enhancement to:', originalPrompt.substring(0, 100) + '...');
     
     // Detect gender, animals, and groups from the prompt
     const detectedGender = detectGenderFromPrompt(originalPrompt);
     const detectedAnimals = detectAnimalsFromPrompt(originalPrompt);
     const detectedGroups = detectGroupsFromPrompt(originalPrompt);
     
-    console.log('🔍 [Mobile Generation] Detected:', {
+    console.log('[Mobile Generation] Detected:', {
       gender: detectedGender,
       animals: detectedAnimals,
       groups: detectedGroups
@@ -591,10 +591,10 @@ class GenerationService {
     // Apply advanced prompt enhancements
     const ultraEnhancedPrompt = applyAdvancedPromptEnhancements(enhancedPrompt);
     
-    console.log('✨ [Mobile Generation] Original:', originalPrompt.substring(0, 100) + '...');
-    console.log('✨ [Mobile Generation] Enhanced:', ultraEnhancedPrompt.substring(0, 100) + '...');
+    console.log('[Mobile Generation] Original:', originalPrompt.substring(0, 100) + '...');
+    console.log('[Mobile Generation] Enhanced:', ultraEnhancedPrompt.substring(0, 100) + '...');
     if (negativePrompt) {
-      console.log('✨ [Mobile Generation] Negative:', negativePrompt.substring(0, 100) + '...');
+      console.log('[Mobile Generation] Negative:', negativePrompt.substring(0, 100) + '...');
     }
 
     // Get user ID synchronously
@@ -659,7 +659,7 @@ class GenerationService {
    * Uses centralized presets for emotion-mask, ghibli-reaction, neo-glitch modes
    */
   private getPromptForMode(request: GenerationRequest): string {
-    console.log('🔍 [Mobile Generation] getPromptForMode called:', {
+    console.log('[Mobile Generation] getPromptForMode called:', {
       mode: request.mode,
       presetId: request.presetId,
       hasCustomPrompt: !!request.customPrompt,
@@ -668,7 +668,7 @@ class GenerationService {
 
     // Handle undefined mode
     if (!request.mode) {
-      console.warn('⚠️ [Mobile Generation] Mode is undefined, defaulting to presets');
+      console.warn('[Mobile Generation] Mode is undefined, defaulting to presets');
       return 'Transform the image with artistic enhancement';
     }
 
@@ -679,14 +679,14 @@ class GenerationService {
 
     // For presets mode, backend will handle preset lookup
     if (request.mode === 'presets') {
-      return 'Using preset from database';
-    }
+        return 'Using preset from database';
+      }
 
     // For emotion-mask mode, use centralized presets
     if (request.mode === 'emotion-mask' && request.presetId) {
-      console.log('🎭 [Mobile Generation] Looking up emotion mask preset:', request.presetId);
+      console.log('[Mobile Generation] Looking up emotion mask preset:', request.presetId);
       const preset = getEmotionMaskPreset(request.presetId);
-      console.log('🎭 [Mobile Generation] Found preset:', {
+      console.log('[Mobile Generation] Found preset:', {
         found: !!preset,
         prompt: preset?.prompt?.substring(0, 100) + '...',
         label: preset?.label
@@ -715,7 +715,7 @@ class GenerationService {
    */
   private async uploadImageToCloudinary(imageUri: string): Promise<string> {
     try {
-      console.log('🖼️ [Mobile Generation] Compressing and uploading image:', imageUri);
+      console.log('[Mobile Generation] Compressing and uploading image:', imageUri);
       
       // Compress image before upload
       const compressedImage = await ImageManipulator.manipulateAsync(
@@ -729,7 +729,7 @@ class GenerationService {
         }
       );
       
-      console.log('✅ [Mobile Generation] Image compressed successfully');
+      console.log('[Mobile Generation] Image compressed successfully');
       
       // Get Cloudinary signature
       const signatureData = await cloudinaryService.getSignature({
@@ -742,10 +742,10 @@ class GenerationService {
         signatureData
       );
       
-      console.log('☁️ [Mobile Generation] Image uploaded to Cloudinary:', uploadResult.secure_url);
+      console.log('[Mobile Generation] Image uploaded to Cloudinary:', uploadResult.secure_url);
       return uploadResult.secure_url;
     } catch (error) {
-      console.error('❌ [Mobile Generation] Upload failed, trying original:', error);
+      console.error('[Mobile Generation] Upload failed, trying original:', error);
       
       // Fallback: try uploading original image
       try {
@@ -758,10 +758,10 @@ class GenerationService {
           signatureData
         );
         
-        console.log('☁️ [Mobile Generation] Original image uploaded to Cloudinary:', uploadResult.secure_url);
+        console.log('[Mobile Generation] Original image uploaded to Cloudinary:', uploadResult.secure_url);
         return uploadResult.secure_url;
       } catch (fallbackError) {
-        console.error('❌ [Mobile Generation] Fallback upload also failed:', fallbackError);
+        console.error('[Mobile Generation] Fallback upload also failed:', fallbackError);
         throw new Error('Failed to upload image to Cloudinary');
       }
     }
@@ -795,9 +795,9 @@ class GenerationService {
       });
       
       await AsyncStorage.setItem('offline_generation_queue', JSON.stringify(queue));
-      console.log('📱 [Mobile Generation] Queued offline generation:', request.mode);
+      console.log('[Mobile Generation] Queued offline generation:', request.mode);
     } catch (error) {
-      console.error('❌ [Mobile Generation] Failed to queue offline generation:', error);
+      console.error('[Mobile Generation] Failed to queue offline generation:', error);
     }
   }
 }
