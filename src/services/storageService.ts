@@ -107,6 +107,16 @@ export class StorageService {
     }
   }
 
+  // Store media array (used by mediaStore)
+  static async storeMedia(media: StoredMedia[]): Promise<void> {
+    try {
+      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(media));
+    } catch (error) {
+      console.error('Store media error:', error);
+      throw error;
+    }
+  }
+
   // Get all stored media
   static async getStoredMedia(): Promise<StoredMedia[]> {
     try {

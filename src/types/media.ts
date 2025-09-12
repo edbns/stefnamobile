@@ -31,6 +31,9 @@ export interface UserMediaResponse {
 export interface MediaItem extends StoredMedia {
   isUploading?: boolean;
   uploadProgress?: number;
+  type?: string;
+  prompt?: string;
+  presetKey?: string;
 }
 
 export interface MediaState {

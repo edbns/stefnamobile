@@ -53,6 +53,9 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
       // Fetch cloud media in background
       console.log('🌐 [MediaStore] Fetching user media from server...');
+      console.log('🌐 [MediaStore] API URL:', config.apiUrl('getUserMedia'));
+      console.log('🌐 [MediaStore] Token (first 20 chars):', token.substring(0, 20) + '...');
+      
       const response: UserMediaResponse = await mediaService.getUserMedia(token);
 
       console.log('🌐 [MediaStore] Server response:', {
