@@ -183,8 +183,7 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
         {/* Mode-specific content */}
         <View style={styles.section}>
           {children({ 
-            onGenerate: handleGenerate,
-            isGenerating: isGenerating
+            onGenerate: handleGenerate
           })}
         </View>
 

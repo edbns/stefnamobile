@@ -15,6 +15,7 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
   const [magicWandAnim] = useState(new Animated.Value(1));
   const [generateAnim] = useState(new Animated.Value(1));
   const [promptAnim] = useState(new Animated.Value(1));
+  const [isEnhancing, setIsEnhancing] = useState(false);
 
   const handleGenerate = () => {
     if (!customPrompt.trim()) {
@@ -43,6 +44,8 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
     try {
       if (!customPrompt.trim()) return;
       
+      setIsEnhancing(true);
+      
       // Magic wand animation
       Animated.sequence([
         Animated.timing(magicWandAnim, {
@@ -66,6 +69,8 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
       }
     } catch (err: any) {
       Alert.alert('Magic Wand', err?.message || 'Failed to enhance prompt.');
+    } finally {
+      setIsEnhancing(false);
     }
   };
 
@@ -107,11 +112,18 @@ function StudioPromptMode({ onGenerate }: StudioPromptModeProps) {
             <Animated.View style={[styles.magicWandButton, { transform: [{ scale: magicWandAnim }] }]}>
               <TouchableOpacity
                 onPress={handleMagicWand}
-                disabled={!customPrompt.trim()}
-                style={styles.magicWandTouchable}
+                disabled={!customPrompt.trim() || isEnhancing}
+                style={[
+                  styles.magicWandTouchable,
+                  isEnhancing && styles.magicWandTouchableDisabled
+                ]}
               >
-                <Text style={styles.magicWandIcon}>✨</Text>
-                <Text style={styles.magicWandText}>Enhance</Text>
+                {isEnhancing ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.magicWandIcon}>✨</Text>
+                )}
+                <Text style={styles.magicWandText}>{isEnhancing ? 'Enhancing...' : 'Enhance'}</Text>
               </TouchableOpacity>
             </Animated.View>
 
@@ -235,6 +247,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#ffffff',
     fontWeight: '500',
+  },
+  magicWandTouchableDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    opacity: 0.6,
   },
   generateButton: {
     flex: 1,

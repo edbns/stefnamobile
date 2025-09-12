@@ -115,7 +115,11 @@ function CustomPromptMode({ onGenerate }: CustomPromptModeProps) {
                   isEnhancing && styles.magicWandTouchableDisabled
                 ]}
               >
-                <Text style={styles.magicWandIcon}>{isEnhancing ? '⏳' : '✨'}</Text>
+                {isEnhancing ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.magicWandIcon}>✨</Text>
+                )}
                 <Text style={styles.magicWandText}>{isEnhancing ? 'Enhancing...' : 'Enhance'}</Text>
               </TouchableOpacity>
             </Animated.View>
