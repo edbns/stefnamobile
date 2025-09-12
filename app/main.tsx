@@ -443,8 +443,8 @@ const styles = StyleSheet.create({
   folderItem: {
     backgroundColor: '#1a1a1a',
     overflow: 'hidden',
-    marginBottom: 12, // Increased margin between rows
-    marginHorizontal: 4, // Add horizontal margin for 2 columns
+    marginBottom: 12, // Vertical margin between rows
+    marginHorizontal: 6, // Horizontal margin between columns (12px total)
     flex: 1, // Ensure equal width for 2 columns
   },
   folderImage: {
