@@ -187,7 +187,11 @@ export default function MediaViewerScreen() {
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.floatingActionButton} onPress={handleSave} disabled={isLoading}>
-          <Feather name="download" size={24} color="#ffffff" />
+          {isLoading ? (
+            <Feather name="loader" size={24} color="#ffffff" />
+          ) : (
+            <Feather name="download" size={24} color="#ffffff" />
+          )}
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isLoading}>

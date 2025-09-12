@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
 import { Feather } from '@expo/vector-icons';
 import GenerationProgressNotification from './GenerationProgressNotification';
+import { GenerationMode } from '../services/generationService';
 
 interface BaseGenerationScreenProps {
   mode: string;
@@ -96,9 +97,15 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
     // Start the generation process (non-blocking)
     try {
+      // Ensure mode is valid
+      const validMode = mode as GenerationMode;
+      if (!validMode) {
+        throw new Error('Invalid generation mode');
+      }
+
       await startGeneration({
         imageUri: selectedImage,
-        mode: mode as any,
+        mode: validMode,
         presetId: presetId || undefined,
         customPrompt: customPrompt?.trim() || undefined,
       });
