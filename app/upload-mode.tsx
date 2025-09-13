@@ -13,7 +13,7 @@ export default function UploadModeScreen() {
   const modeInfo = {
     custom: { title: 'Custom', subtitle: 'Describe. Create.' },
     studio: { title: 'Studio', subtitle: 'Tools for precision.' },
-    emotion_mask: { title: 'Emotion Mask', subtitle: 'Faces that feel.' },
+    unreal_reflection: { title: 'Unreal Reflection', subtitle: 'Not who you are. Who you could\'ve been.' },
     neo_glitch: { title: 'Neo Tokyo', subtitle: 'Future meets the face.' },
     ghibli: { title: 'Ghibli Reaction', subtitle: 'Animated emotions.' },
     presets: { title: 'Presets', subtitle: 'One-tap styles.' },
@@ -75,7 +75,7 @@ export default function UploadModeScreen() {
       custom: '/generate-custom',
       studio: '/generate-studio',
       presets: '/generate-presets',
-      emotion_mask: '/generate-emotion',
+      unreal_reflection: '/generate-unreal-reflection',
       ghibli: '/generate-ghibli',
       neo_glitch: '/generate-neo',
     };
@@ -87,7 +87,7 @@ export default function UploadModeScreen() {
       params: { 
         selectedImage: imageUri,
         mode: mode === 'ghibli' ? 'ghibli-reaction' : 
-              mode === 'emotion_mask' ? 'emotion-mask' :
+              mode === 'unreal_reflection' ? 'unreal-reflection' :
               mode === 'neo_glitch' ? 'neo-glitch' :
               mode === 'custom' ? 'custom-prompt' :
               mode === 'studio' ? 'edit-photo' :

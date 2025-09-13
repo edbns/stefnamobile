@@ -23,11 +23,11 @@ export default function EditScreen() {
       style: 'studio',
     },
     {
-      id: 'emotion_mask',
+      id: 'unreal_reflection',
       title: 'Emotion Mask',
       subtitle: 'Faces that feel.',
       icon: 'smile',
-      style: 'emotion',
+      style: 'unreal_reflection',
     },
     {
       id: 'neo_glitch',
@@ -93,11 +93,11 @@ export default function EditScreen() {
             </View>
           );
         
-        case 'emotion':
+        case 'unreal_reflection':
           return (
             <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
               <View style={styles.cardOverlay}>
-                <View style={styles.emotionGlow} />
+                <View style={styles.unrealReflectionGlow} />
                 <View style={styles.cardContent}>
                   <Feather name={item.icon as any} size={28} color="#ffffff" />
                   <Text style={styles.cardTitle}>{item.title}</Text>
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
   },
-  emotionGlow: {
+  unrealReflectionGlow: {
     position: 'absolute',
     top: '50%',
     left: '50%',

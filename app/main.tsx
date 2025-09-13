@@ -75,7 +75,7 @@ export default function MainScreen() {
       if (rawType) return rawType;
       const key = (item.presetKey || '').toString().toLowerCase();
       if (key.startsWith('ghibli')) return 'ghibli_reaction';
-      if (key.startsWith('emotion_mask')) return 'emotion_mask';
+      if (key.startsWith('unreal_reflection')) return 'unreal_reflection';
       if (key.startsWith('neo') || key.includes('glitch')) return 'neo_glitch';
       if (key.includes('edit')) return 'edit';
       if (key.includes('custom')) return 'custom_prompt';
@@ -87,8 +87,8 @@ export default function MainScreen() {
       switch (type) {
         case 'neo_glitch':
           return 'Neo Tokyo Glitch';
-        case 'emotion_mask':
-          return 'Emotion Mask';
+        case 'unreal_reflection':
+          return 'Unreal Reflection';
         case 'ghibli_reaction':
           return 'Ghibli Reaction';
         case 'custom_prompt':
@@ -123,7 +123,7 @@ export default function MainScreen() {
       });
     });
     
-    const orderedTitles = ['All Media', 'Neo Tokyo Glitch', 'Emotion Mask', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
+    const orderedTitles = ['All Media', 'Neo Tokyo Glitch', 'Unreal Reflection', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
     const s = Object.keys(groups)
       .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))
       .map(title => ({ title, data: groups[title] }));

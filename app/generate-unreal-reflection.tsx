@@ -2,33 +2,33 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import BaseGenerationScreen from '../src/components/BaseGenerationScreen';
-import { EMOTION_MASK_PRESETS, EmotionMaskPreset } from '../src/presets/emotionmask';
+import { UNREAL_REFLECTION_PRESETS, UnrealReflectionPreset } from '../src/presets/unrealReflection';
 
-interface EmotionMaskModeProps {
+interface UnrealReflectionModeProps {
   onGenerate: (presetId?: string, customPrompt?: string) => void;
 }
 
-function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
+function UnrealReflectionMode({ onGenerate }: UnrealReflectionModeProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [presetAnims] = useState<{ [key: string]: Animated.Value }>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Use centralized presets from website
-  const emotionPresets = EMOTION_MASK_PRESETS.map((preset: EmotionMaskPreset) => ({
+  const unrealPresets = UNREAL_REFLECTION_PRESETS.map((preset: UnrealReflectionPreset) => ({
     id: preset.id,
     label: preset.label,
-    description: preset.features?.join(', ') || 'Emotional transformation',
+    description: preset.features?.join(', ') || 'Unreal transformation',
     prompt: preset.prompt
   }));
 
   const handlePresetClick = (preset: { id: string; label: string; description: string; prompt: string }) => {
     // Prevent double-click
     if (isProcessing) {
-      console.log('Emotion preset click ignored - already processing');
+      console.log('Unreal Reflection preset click ignored - already processing');
       return;
     }
     
-    console.log('Emotion preset clicked:', preset.id);
+    console.log('Unreal Reflection preset clicked:', preset.id);
     setIsProcessing(true);
     
     // Initialize animation if not exists
@@ -72,7 +72,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
         <View style={styles.presetGrid}>
           {/* First row - 3 presets */}
           <View style={styles.presetRow}>
-            {emotionPresets.slice(0, 3).map((preset) => (
+            {unrealPresets.slice(0, 3).map((preset) => (
               <Animated.View 
                 key={preset.id}
                 style={[
@@ -105,7 +105,7 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
           
           {/* Second row - remaining presets */}
           <View style={styles.presetRow}>
-            {emotionPresets.slice(3).map((preset) => (
+            {unrealPresets.slice(3).map((preset) => (
               <Animated.View 
                 key={preset.id}
                 style={[
@@ -141,12 +141,12 @@ function EmotionMaskMode({ onGenerate }: EmotionMaskModeProps) {
   );
 }
 
-export default function GenerateEmotionScreen() {
+export default function GenerateUnrealReflectionScreen() {
   const { mode } = useLocalSearchParams();
   return (
-    <BaseGenerationScreen mode="emotion-mask">
+    <BaseGenerationScreen mode="unreal-reflection">
       {({ onGenerate }) => (
-        <EmotionMaskMode onGenerate={onGenerate} />
+        <UnrealReflectionMode onGenerate={onGenerate} />
       )}
     </BaseGenerationScreen>
   );
