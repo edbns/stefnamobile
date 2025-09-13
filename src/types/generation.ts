@@ -5,7 +5,7 @@ import type { StoredMedia } from './media';
 export interface GenerationJob {
   id: string;
   imageUri: string;
-  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
+  mode: 'presets' | 'custom-prompt' | 'edit-photo' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch';
   presetId?: string; // Now used for all modes - maps to correct database table
   customPrompt?: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';

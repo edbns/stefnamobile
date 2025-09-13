@@ -192,7 +192,7 @@ class PresetsService {
 
   /**
    * Get mode-specific presets from their respective database tables
-   * Supports: emotion-mask, ghibli-reaction, neo-glitch
+   * Supports: unreal-reflection, ghibli-reaction, neo-glitch
    * Uses the same endpoint as the website
    */
   async getModeSpecificPresets(mode: string): Promise<PresetsResponse> {

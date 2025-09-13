@@ -4,7 +4,7 @@ import { ArrowUp } from 'lucide-react-native';
 import { config } from '../config/environment';
 import PresetsService, { DatabasePreset } from '../services/presetsService';
 
-export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch';
+export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
@@ -78,7 +78,7 @@ export default function GenerationModes({
       'custom-prompt': 'Custom',
       'edit-photo': 'Studio',
       'presets': 'Presets',
-      'emotion-mask': 'Emotion Mask',
+      'unreal-reflection': 'Unreal Reflection',
       'ghibli-reaction': 'Ghibli Reaction',
       'neo-glitch': 'Neo Tokyo Glitch',
     };
@@ -132,8 +132,8 @@ export default function GenerationModes({
     return availablePresets.filter(preset => preset.isActive);
   };
 
-  // Define modes in website order: Custom, Edit (Studio), Presets, Emotion Mask, Ghibli React, Neo Tokyo
-  const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'emotion-mask', 'ghibli-reaction', 'neo-glitch'];
+  // Define modes in website order: Custom, Edit (Studio), Presets, Unreal Reflection, Ghibli React, Neo Tokyo
+  const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'unreal-reflection', 'ghibli-reaction', 'neo-glitch'];
   
   // Split into two rows of 3 modes each
   const firstRow = modes.slice(0, 3);
@@ -301,25 +301,25 @@ export default function GenerationModes({
         </View>
         
         {/* Options appear full width under second row */}
-        {selectedMode === 'emotion-mask' && (
+        {selectedMode === 'unreal-reflection' && (
           <View style={styles.presetContainer}>
             <View style={styles.presetGrid}>
               <View style={styles.presetRow}>
-                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_nostalgia_distance')}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('unreal_reflection_digital_monk')}>
                   <Text style={styles.presetText}>Nostalgia + Distance</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_joy_sadness')}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('unreal_reflection_urban_oracle')}>
                   <Text style={styles.presetText}>Joy + Sadness</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_conf_loneliness')}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('unreal_reflection_desert_mirror')}>
                   <Text style={styles.presetText}>Confidence + Loneliness</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.presetRow}>
-                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_peace_fear')}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('unreal_reflection_lumin_void')}>
                   <Text style={styles.presetText}>Peace + Fear</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('emotion_mask_strength_vuln')}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('unreal_reflection_prism_break')}>
                   <Text style={styles.presetText}>Strength + Vulnerability</Text>
                 </TouchableOpacity>
               </View>

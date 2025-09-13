@@ -14,14 +14,14 @@ import {
   detectGroupsFromPrompt, 
   applyAdvancedPromptEnhancements 
 } from '../utils/promptEnhancement';
-import { getEmotionMaskPreset } from '../presets/emotionmask';
+import { getUnrealReflectionPreset } from '../presets/unrealReflection';
 import { getGhibliReactionPreset } from '../presets/ghibliReact';
 import { getNeoTokyoGlitchPreset } from '../presets/neoTokyoGlitch';
 import NotificationService from './notificationService';
 import CacheService from './cacheService';
 import PerformanceService from './performanceService';
 
-export type GenerationMode = 'presets' | 'custom-prompt' | 'emotion-mask' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo';
+export type GenerationMode = 'presets' | 'custom-prompt' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo';
 
 export interface GenerationRequest {
   imageUri: string;
@@ -539,7 +539,7 @@ class GenerationService {
     const modeMap: Record<GenerationMode, string> = {
       'presets': 'presets',
       'custom-prompt': 'custom',
-      'emotion-mask': 'emotion_mask',
+      'unreal-reflection': 'unreal_reflection',
       'ghibli-reaction': 'ghibli_reaction',
       'neo-glitch': 'neo_glitch',
       'edit-photo': 'edit'
@@ -625,10 +625,10 @@ class GenerationService {
       case 'custom-prompt':
         return basePayload;
 
-      case 'emotion-mask':
+      case 'unreal-reflection':
         return {
           ...basePayload,
-          emotionMaskPresetId: request.presetId
+          unrealReflectionPresetId: request.presetId
         };
 
       case 'ghibli-reaction':
@@ -656,7 +656,7 @@ class GenerationService {
 
   /**
    * Get prompt for the generation mode
-   * Uses centralized presets for emotion-mask, ghibli-reaction, neo-glitch modes
+   * Uses centralized presets for unreal-reflection, ghibli-reaction, neo-glitch modes
    */
   private getPromptForMode(request: GenerationRequest): string {
     console.log('[Mobile Generation] getPromptForMode called:', {
@@ -682,10 +682,10 @@ class GenerationService {
         return 'Using preset from database';
       }
 
-    // For emotion-mask mode, use centralized presets
-    if (request.mode === 'emotion-mask' && request.presetId) {
-      console.log('[Mobile Generation] Looking up emotion mask preset:', request.presetId);
-      const preset = getEmotionMaskPreset(request.presetId);
+    // For unreal-reflection mode, use centralized presets
+    if (request.mode === 'unreal-reflection' && request.presetId) {
+      console.log('[Mobile Generation] Looking up unreal reflection preset:', request.presetId);
+      const preset = getUnrealReflectionPreset(request.presetId);
       console.log('[Mobile Generation] Found preset:', {
         found: !!preset,
         prompt: preset?.prompt?.substring(0, 100) + '...',
