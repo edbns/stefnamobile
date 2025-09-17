@@ -60,17 +60,21 @@ export class AuthService {
         url: config.apiUrl('verify-otp') 
       });
 
+      const requestBody = { 
+        email, 
+        code: otp,
+        platform: 'mobile' // Explicitly specify platform
+      };
+
+      console.log('📤 [Mobile Auth] Request body:', requestBody);
+
       const response = await fetch(config.apiUrl('verify-otp'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': 'StefnaMobile/1.0.3', // Identify as mobile app
         },
-        body: JSON.stringify({ 
-          email, 
-          code: otp,
-          platform: 'mobile' // Explicitly specify platform
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('📡 [Mobile Auth] Response status:', response.status);
@@ -92,7 +96,8 @@ export class AuthService {
         success: data.success || !!data.token,
         hasToken: !!data.token,
         hasUser: !!data.user,
-        error: data.error 
+        error: data.error,
+        fullResponse: data // Log the full response for debugging
       });
 
       if (!response.ok) {
@@ -102,10 +107,43 @@ export class AuthService {
         };
       }
 
+      // Check if we have the required data - handle different response formats
+      let token = data.token || data.access_token || data.jwt;
+      let user = data.user || data.userData || data.profile;
+
+      if (!token) {
+        console.error('❌ [Mobile Auth] No token in response:', data);
+        return {
+          success: false,
+          error: 'No authentication token received'
+        };
+      }
+
+      if (!user) {
+        console.error('❌ [Mobile Auth] No user data in response:', data);
+        return {
+          success: false,
+          error: 'No user data received'
+        };
+      }
+
+      // Ensure user has required fields
+      if (!user.id || !user.email) {
+        console.error('❌ [Mobile Auth] User data missing required fields:', user);
+        return {
+          success: false,
+          error: 'Incomplete user data received'
+        };
+      }
+
       return {
         success: true,
-        user: data.user,
-        token: data.token,
+        user: {
+          id: user.id,
+          email: user.email,
+          credits: user.credits || user.balance || 0,
+        },
+        token: token,
       };
     } catch (error) {
       console.error('❌ [Mobile Auth] Verify OTP error:', error);

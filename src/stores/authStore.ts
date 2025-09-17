@@ -52,7 +52,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Use centralized error handling with better error messages
         const errorMessage = result.error === 'Invalid OTP' 
           ? 'Invalid code. Please check your email and try again.'
-          : result.error || 'Login failed';
+          : result.error || 'Login failed. Please try again.';
           
         useErrorStore.getState().setError(errorMessage);
         set({ isLoading: false });

@@ -32,7 +32,11 @@ export default function VerifyScreen() {
   }, [otp]);
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
       {/* Back to Email Button */}
       <TouchableOpacity 
         style={styles.backToEmailButton} 
@@ -41,47 +45,55 @@ export default function VerifyScreen() {
         <Text style={styles.backToEmailButtonText}>← Back to Email</Text>
       </TouchableOpacity>
 
-      <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image 
+              source={require('../assets/logo.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          
+          <Text style={styles.title}>Enter Login Code</Text>
+          <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
+          <Text style={styles.infoPill}>Please check your <Text style={styles.spamText}>Spam</Text> in case</Text>
+
+          <TextInput
+            style={styles.input}
+            value={otp}
+            onChangeText={setOtp}
+            placeholder="Enter 6-digit code"
+            placeholderTextColor="#666"
+            keyboardType="numeric"
+            maxLength={6}
+            autoFocus
           />
+
+          <TouchableOpacity style={[styles.button, (isVerifying || otp.length !== 6) && styles.buttonDisabled]} onPress={handleVerify} disabled={isVerifying || otp.length !== 6}>
+            {isVerifying ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Verify</Text>}
+          </TouchableOpacity>
+
+          <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
         </View>
-        
-        <Text style={styles.title}>Enter Login Code</Text>
-        <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
-        <Text style={styles.infoPill}>Please check your <Text style={styles.spamText}>Spam</Text> in case</Text>
-
-        <TextInput
-          style={styles.input}
-          value={otp}
-          onChangeText={setOtp}
-          placeholder="Enter 6-digit code"
-          placeholderTextColor="#666"
-          keyboardType="numeric"
-          maxLength={6}
-          autoFocus
-        />
-
-        <TouchableOpacity style={[styles.button, (isVerifying || otp.length !== 6) && styles.buttonDisabled]} onPress={handleVerify} disabled={isVerifying || otp.length !== 6}>
-          {isVerifying ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Verify</Text>}
-        </TouchableOpacity>
-
-
-        <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: 100, // Extra padding to ensure button is visible above keyboard
+  },
   content: { 
-    flex: 1, 
-    justifyContent: 'center', 
     paddingHorizontal: 24, 
     paddingTop: 20,
     paddingBottom: 40,
