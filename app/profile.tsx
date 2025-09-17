@@ -67,7 +67,6 @@ export default function ProfileScreen() {
   const loadReferralStats = async () => {
     try {
       // This would normally fetch from your API
-      // For now, using mock data
       setReferralStats({
         invites: 0,
         tokensEarned: 0,

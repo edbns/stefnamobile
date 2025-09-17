@@ -33,6 +33,14 @@ export default function VerifyScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Back to Email Button */}
+      <TouchableOpacity 
+        style={styles.backToEmailButton} 
+        onPress={() => router.replace({ pathname: '/auth', params: { email } })}
+      >
+        <Text style={styles.backToEmailButtonText}>← Back to Email</Text>
+      </TouchableOpacity>
+
       <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
@@ -62,9 +70,6 @@ export default function VerifyScreen() {
           {isVerifying ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Verify</Text>}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.replace({ pathname: '/auth', params: { email } })} style={styles.backToEmail}>
-          <Text style={styles.backToEmailText}>Back to Email</Text>
-        </TouchableOpacity>
 
         <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
       </View>
@@ -86,8 +91,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   logo: {
-    width: 160,
-    height: 60,
+    width: 120,
+    height: 45,
   },
   title: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
@@ -96,8 +101,21 @@ const styles = StyleSheet.create({
   button: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
-  backToEmail: { marginTop: 12, alignItems: 'center' },
-  backToEmailText: { color: '#888', fontSize: 14 },
+  backToEmailButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1000,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+  },
+  backToEmailButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
   resendHint: { marginTop: 12, color: '#888', textAlign: 'center' },
   spamText: { color: '#ff4444', fontWeight: '600' },
 });

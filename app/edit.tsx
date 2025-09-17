@@ -1,177 +1,78 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 // import { LinearGradient } from 'expo-linear-gradient';
 
 export default function EditScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const selectedImage = params.selectedImage as string;
 
   const modeCards = [
     {
       id: 'custom',
       title: 'Custom',
-      subtitle: 'Describe. Create.',
-      icon: 'edit-3',
-      style: 'custom',
     },
     {
       id: 'studio',
       title: 'Studio',
-      subtitle: 'Tools for precision.',
-      icon: 'camera',
-      style: 'studio',
     },
     {
       id: 'unreal_reflection',
-      title: 'Emotion Mask',
-      subtitle: 'Faces that feel.',
-      icon: 'smile',
-      style: 'unreal_reflection',
+      title: 'Unreal Reflection',
     },
     {
       id: 'neo_glitch',
       title: 'Neo Tokyo',
-      subtitle: 'Future meets the face.',
-      icon: 'zap',
-      style: 'glitch',
     },
     {
       id: 'ghibli',
       title: 'Ghibli Reaction',
-      subtitle: 'Animated emotions.',
-      icon: 'heart',
-      style: 'ghibli',
     },
     {
       id: 'presets',
       title: 'Presets',
-      subtitle: 'One-tap styles.',
-      icon: 'layers',
-      style: 'presets',
+    },
+    {
+      id: 'parallel_self',
+      title: 'Parallel Self',
     },
   ];
 
   const handleModePress = (modeId: string) => {
-    // Navigate to upload/camera screen with selected mode
+    // Navigate to the specific generation screen for each mode
+    const screenMap: { [key: string]: string } = {
+      'custom': '/generate-custom',
+      'studio': '/generate-studio', 
+      'unreal_reflection': '/generate-unreal-reflection',
+      'neo_glitch': '/generate-neo',
+      'ghibli': '/generate-ghibli',
+      'presets': '/generate-presets',
+      'parallel_self': '/generate-parallel-self'
+    };
+    
+    const screenPath = screenMap[modeId] || '/generate-presets';
+    
     router.push({
-      pathname: '/upload-mode',
-      params: { mode: modeId }
+      pathname: screenPath,
+      params: { 
+        selectedImage: selectedImage
+      }
     });
   };
 
 
   const renderModeCard = ({ item }: { item: any }) => {
-    const getCardContent = () => {
-      switch (item.style) {
-        case 'custom':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#18181b' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.gridPattern} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        case 'studio':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.techGrid} />
-                <View style={styles.cameraFrame} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        case 'unreal_reflection':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.unrealReflectionGlow} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        case 'glitch':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.glitchPattern} />
-                <View style={styles.digitalLines} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        case 'ghibli':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.magicCircles} />
-                <View style={styles.sparkleDots} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        case 'presets':
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#0f0f0f' }]}>
-              <View style={styles.cardOverlay}>
-                <View style={styles.vintageLines} />
-                <View style={styles.filmStrip} />
-                <View style={styles.cardContent}>
-                  <Feather name={item.icon as any} size={28} color="#ffffff" />
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-                </View>
-              </View>
-            </View>
-          );
-        
-        default:
-          return (
-            <View style={[styles.cardWrapper, { backgroundColor: '#18181b' }]}>
-              <View style={styles.cardContent}>
-                <Feather name={item.icon as any} size={32} color="#ffffff" />
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
-              </View>
-            </View>
-          );
-      }
-    };
-
     return (
       <TouchableOpacity 
         style={styles.modeCard} 
         onPress={() => handleModePress(item.id)}
         activeOpacity={0.8}
       >
-        {getCardContent()}
+        <View style={styles.cardWrapper}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -183,7 +84,7 @@ export default function EditScreen() {
         data={modeCards}
         keyExtractor={(item) => item.id}
         renderItem={renderModeCard}
-        numColumns={2}
+        numColumns={3}
         contentContainerStyle={styles.gridContainer}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
@@ -236,57 +137,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   modeCard: {
-    width: '38%',
+    width: '30%',
     aspectRatio: 1,
     marginBottom: 16,
-    borderRadius: 16,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
+    marginHorizontal: '1.5%',
   },
   cardWrapper: {
     flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  cardOverlay: {
-    flex: 1,
-    padding: 12,
-    position: 'relative',
-  },
-  cardContent: {
-    flex: 1,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
+    padding: 12,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginTop: 8,
-    marginBottom: 2,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  cardSubtitle: {
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '500',
     color: '#ffffff',
     textAlign: 'center',
-    lineHeight: 16,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
-  // Pattern Styles
-  gridPattern: {
+
+  // Floating Back Button
+  headerRow: {
     position: 'absolute',
     top: 0,
     left: 0,

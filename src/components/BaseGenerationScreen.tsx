@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../stores/authStore';
 import { useGenerationStore } from '../stores/generationStore';
 import { Feather } from '@expo/vector-icons';
-import GenerationProgressNotification from './GenerationProgressNotification';
+import ProcessingScreen from './ProcessingScreen';
 import { GenerationMode } from '../services/generationService';
 import { ErrorMessages } from '../constants/errorMessages';
 import SmartScrollView from './SmartScrollView';
@@ -28,17 +28,9 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
   const [imageAspect, setImageAspect] = useState<number | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [progressNotification, setProgressNotification] = useState<{
-    visible: boolean;
-    status: 'starting' | 'processing' | 'completed' | 'failed';
-    progress?: number;
-    message?: string;
-    error?: string;
-  }>({
-    visible: false,
-    status: 'starting',
-    progress: 0,
-  });
+  const [showProcessingScreen, setShowProcessingScreen] = useState(false);
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // Get responsive dimensions
   const dimensions = getResponsiveDimensions();
@@ -72,11 +64,15 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       console.log('[BaseGenerationScreen] latestGeneration:', latestGeneration);
       
       if (latestGeneration.status === 'completed') {
-        // Don't show completion notifications on generation screen
-        // "Media Ready" notifications are handled by the main notification system
+        // Show the generated image in processing screen
+        if (latestGeneration.result?.imageUrl) {
+          setGeneratedImageUrl(latestGeneration.result.imageUrl);
+          setGenerationError(null); // Clear any previous errors
+        }
       } else if (latestGeneration.status === 'failed') {
-        // Don't show error notifications on generation screen
-        // Errors are handled by the main notification system
+        // Show error in processing screen instead of hiding it
+        setGenerationError(latestGeneration.error || 'Generation failed');
+        setGeneratedImageUrl(null); // Clear any previous image
       }
     }
   }, [activeGenerations]);
@@ -101,16 +97,11 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       return;
     }
 
-    // Show simple queue notification
-    setProgressNotification({
-      visible: true,
-      status: 'starting',
-      message: 'We will be processing it shortly',
-    });
-
-    // Set generating state
+    // Show processing screen
+    setShowProcessingScreen(true);
     setIsGenerating(true);
     setIsTyping(false); // Stop typing state when generating
+    setGenerationError(null); // Clear any previous errors
 
     // Start the generation process (non-blocking)
     try {
@@ -128,23 +119,37 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
       });
 
       console.log('[BaseGenerationScreen] Generation started in background');
-      
-      // Redirect to main page immediately
-      setTimeout(() => {
-        setProgressNotification(prev => ({ ...prev, visible: false }));
-        router.push('/main');
-      }, 2000);
 
     } catch (error) {
-      // Don't show error notifications on generation screen - only show "Added to queue"
-      // Errors will be handled by the main notification system
-      setIsGenerating(false); // Reset generating state on error
+      // Show error in processing screen instead of hiding it
+      setGenerationError(error instanceof Error ? error.message : 'Generation failed');
+      setIsGenerating(false);
     }
   };
 
   const handleBack = () => {
     // Navigate back to main screen (not upload-mode to avoid loops)
     router.push('/main');
+  };
+
+  const handleViewMedia = () => {
+    router.push('/main');
+  };
+
+  const handleCloseProcessing = () => {
+    setShowProcessingScreen(false);
+    setIsGenerating(false);
+    setGenerationError(null);
+    router.push('/main');
+  };
+
+  const handleRetryGeneration = async (presetId?: string, customPrompt?: string) => {
+    // Reset error state and retry
+    setGenerationError(null);
+    setGeneratedImageUrl(null);
+    
+    // Retry the generation
+    await handleGenerate(presetId, customPrompt);
   };
 
   if (!selectedImage) {
@@ -160,18 +165,14 @@ export default function BaseGenerationScreen({ mode, children }: BaseGenerationS
 
   return (
     <View style={styles.container}>
-      {/* Progress Notification */}
-      <GenerationProgressNotification
-        visible={progressNotification.visible}
-        status={progressNotification.status}
-        progress={progressNotification.progress}
-        message={progressNotification.message}
-        error={progressNotification.error}
-        onDismiss={() => setProgressNotification(prev => ({ ...prev, visible: false }))}
-        onViewGallery={() => {
-          setProgressNotification(prev => ({ ...prev, visible: false }));
-          router.push('/main'); // Go to main gallery to see the result
-        }}
+      {/* Processing Screen */}
+      <ProcessingScreen
+        visible={showProcessingScreen}
+        generatedImageUrl={generatedImageUrl || undefined}
+        error={generationError || undefined}
+        onViewMedia={handleViewMedia}
+        onClose={handleCloseProcessing}
+        onRetry={() => handleRetryGeneration()}
       />
 
       {/* Header Back Button */}

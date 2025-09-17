@@ -6,11 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import GenerationService, { GenerationRequest, GenerationResult } from '../services/generationService';
 import { useCreditsStore } from './creditsStore';
 import { useAuthStore } from './authStore';
-import { useNotificationsStore } from './notificationsStore';
 import { StorageService } from '../services/storageService';
 import { useMediaStore } from './mediaStore';
 import { ErrorMessages } from '../constants/errorMessages';
-import { mapErrorToUserMessage } from '../utils/errorMapping';
 
 interface GenerationState {
   // Background processing state
@@ -188,8 +186,7 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
         }
       }
 
-      // Show completion notification
-      showCompletionNotification(jobId, request.mode, true);
+      // Completion handled by ProcessingScreen - no notification needed
     } else {
       // Credits are handled automatically by the backend
       console.log('Generation failed - credits handled by backend');
@@ -205,8 +202,7 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
         )
       }));
 
-      // Show failure notification
-      showCompletionNotification(jobId, request.mode, false, result.error);
+      // Failure handled by ProcessingScreen - no notification needed
     }
   } catch (error) {
     console.error('Generation error:', error);
@@ -230,37 +226,10 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
       )
     }));
 
-    // Show user-friendly error notification
-    const errorMapping = mapErrorToUserMessage(error instanceof Error ? error : String(error));
-    const { addNotification } = useNotificationsStore.getState();
-    
-    addNotification({
-      type: 'error',
-      title: errorMapping.title,
-      message: errorMapping.message
-    });
+    // Error handled by ProcessingScreen - no notification needed
   }
 }
 
-// Simple notification function
-function showCompletionNotification(jobId: string, mode: string, success: boolean, error?: string) {
-  const { addNotification } = useNotificationsStore.getState();
-  
-  if (success) {
-    addNotification({
-      type: 'success',
-      title: 'Media Ready',
-      message: 'Your media is ready'
-    });
-  } else if (error) {
-    const errorMapping = mapErrorToUserMessage(String(error));
-    addNotification({
-      type: 'error',
-      title: errorMapping.title,
-      message: errorMapping.message
-    });
-  }
-}
 
 // Helper function to extract Cloudinary public ID from URL
 function extractCloudinaryPublicId(imageUrl: string): string | undefined {

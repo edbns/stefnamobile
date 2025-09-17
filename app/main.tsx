@@ -11,6 +11,7 @@ import {
   Animated,
   ActivityIndicator,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
@@ -21,6 +22,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ImagePickerService } from '../src/services/imagePickerService';
 import ModernSpinner from '../src/components/ModernSpinner';
+import { Skeleton, SkeletonMediaFolder } from '../src/components/Skeleton';
 
 export default function MainScreen() {
   const router = useRouter();
@@ -40,16 +42,13 @@ export default function MainScreen() {
 
   const [showCamera, setShowCamera] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Check if there are any active generations
   const isGenerating = activeGenerations.some(gen => 
     gen.status === 'pending' || gen.status === 'processing'
   );
 
-  // Animation states for footer buttons
-  const [profileAnim] = useState(new Animated.Value(1));
-  const [mediaAnim] = useState(new Animated.Value(1));
-  const [editAnim] = useState(new Animated.Value(1));
 
   // Load user's media on mount
   useEffect(() => {
@@ -168,107 +167,42 @@ export default function MainScreen() {
 
   const handleUploadPress = async () => {
     try {
-      console.log('Upload button pressed');
-
-      // Use unified image picker service
+      // Use the unified image picker that shows both camera and gallery options
       const result = await ImagePickerService.pickFromGallery();
-
+      
       if (result.success && result.uri) {
-        console.log('Selected image:', result.uri);
-        // Navigate to generate screen with selected image
+        // Navigate to edit screen with selected image
         router.push({
-          pathname: '/generate',
+          pathname: '/edit',
           params: { selectedImage: result.uri }
         });
       } else {
-        // Handle errors or cancellation
-        if (result.error === 'Media library permission denied') {
-          ImagePickerService.showErrorAlert(
-            'Permission Required',
-            'Please grant photo library access to upload images. You can enable this in your device settings.',
-            () => handleUploadPress(),
-            () => {}
-          );
-          return;
-        }
-        
-        if (result.error === 'Image selection cancelled') {
-          console.log('Image selection was canceled');
-          return;
-        }
-        
-        // Other errors
-        ImagePickerService.showErrorAlert(
-          'Upload Failed',
-          'Unable to access photo library. This might be due to device restrictions. Please try again or use the camera instead.',
-          () => handleUploadPress(),
-          () => handleCameraPress()
-        );
+        // User cancelled or permission denied - stay on current screen
+        console.log('Photo selection cancelled or permission denied');
       }
     } catch (error) {
       console.error('Upload error:', error);
-      ImagePickerService.showErrorAlert(
-        'Upload Failed',
-        'Unable to access photo library. This might be due to device restrictions. Please try again or use the camera instead.',
-        () => handleUploadPress(),
-        () => handleCameraPress()
-      );
     }
   };
 
-  const handleEditPress = () => {
-    // Magic animation
-    Animated.sequence([
-      Animated.timing(editAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(editAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
-    router.push('/edit');
-  };
-
   const handleMediaPress = () => {
-    // Magic animation
-    Animated.sequence([
-      Animated.timing(mediaAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(mediaAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
     // Already on media screen, no action needed
   };
 
   const handleProfilePress = () => {
-    // Magic animation
-    Animated.sequence([
-      Animated.timing(profileAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(profileAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    
     router.push('/profile');
   };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadUserMedia();
+      await refreshBalance();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
 
   // Component for folder items that can use hooks
   const FolderItem = ({ section }: { section: any }) => {
@@ -313,10 +247,17 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Media Gallery - Full Screen */}
+      {/* Media Gallery */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ffffff" />
+          <FlatList
+            data={Array.from({ length: 6 })}
+            keyExtractor={(_, index) => `skeleton-${index}`}
+            renderItem={() => <SkeletonMediaFolder style={styles.skeletonCard} />}
+            contentContainerStyle={styles.galleryContainer}
+            showsVerticalScrollIndicator={false}
+            numColumns={2}
+          />
         </View>
       ) : sections && sections.length > 0 ? (
         <FlatList
@@ -326,6 +267,14 @@ export default function MainScreen() {
           contentContainerStyle={styles.galleryContainer}
           showsVerticalScrollIndicator={false}
           numColumns={2}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor="#ffffff"
+              colors={['#ffffff']}
+            />
+          }
         />
       ) : (
         <View style={styles.emptyContainer}>
@@ -337,36 +286,22 @@ export default function MainScreen() {
         </View>
       )}
 
-      {/* Floating Footer */}
-      <View style={styles.footerContainer}>
-        <View style={styles.floatingFooter}>
+      {/* Bottom Footer */}
+      <View style={styles.bottomFooter}>
+        <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
+          <Feather name="user" size={24} color="#ffffff" />
+          <Text style={styles.footerButtonText}>Profile</Text>
+        </TouchableOpacity>
         
-        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: profileAnim }] }]}>
-          <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-            <Feather name="user" size={20} color="#ffffff" />
-          </TouchableOpacity>
-        </Animated.View>
+        <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
+          <Feather name="plus" size={24} color="#ffffff" />
+          <Text style={styles.footerButtonText}>Upload</Text>
+        </TouchableOpacity>
         
-        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: mediaAnim }] }]}>
-          <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
-            <Feather name="image" size={20} color="#ffffff" />
-          </TouchableOpacity>
-        </Animated.View>
-        
-        <Animated.View style={[styles.footerButtonWrapper, { transform: [{ scale: editAnim }] }]}>
-          <TouchableOpacity 
-            style={styles.footerButton} 
-            onPress={handleEditPress}
-            disabled={isGenerating}
-          >
-            {isGenerating ? (
-              <ModernSpinner size={20} color="#ffffff" />
-            ) : (
-              <Feather name="edit-3" size={20} color="#ffffff" />
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-        </View>
+        <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
+          <Feather name="image" size={24} color="#ffffff" />
+          <Text style={styles.footerButtonText}>Gallery</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -381,9 +316,12 @@ const styles = StyleSheet.create({
   // Loading State
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  skeletonCard: {
+    marginHorizontal: 6,
+    marginBottom: 12,
+    flex: 1,
   },
 
   // Empty State
@@ -412,8 +350,8 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingTop: 60, // Increased top margin for better spacing
-    paddingBottom: 100, // Space for floating footer
+    paddingTop: 20, // Reduced top margin since no floating footer
+    paddingBottom: 20, // Reduced bottom margin since we have bottom footer
     paddingHorizontal: 16, // Add horizontal padding for 2 columns
   },
   sectionHeaderContainer: {
@@ -539,68 +477,28 @@ const styles = StyleSheet.create({
     color: '#cccccc',
   },
 
-  // Footer Container
-  footerContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Floating Footer - No background, just floating icons
-  floatingFooter: {
+  // Bottom Footer
+  bottomFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 40,
-    position: 'relative',
-    minWidth: 280,
-    maxWidth: 350,
-  },
-  techGridOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'transparent',
-    borderRadius: 28,
-    opacity: 0.1,
-    // Tech grid pattern using borders
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  digitalLinesOverlay: {
-    position: 'absolute',
-    top: 8,
-    left: 8,
-    right: 8,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 0.5,
-  },
-  footerButtonWrapper: {
-    zIndex: 2,
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingBottom: 34, // Account for safe area
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
   },
   footerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    justifyContent: 'center',
+    flex: 1,
+  },
+  footerButtonText: {
+    fontSize: 12,
+    color: '#ffffff',
+    marginTop: 4,
+    fontWeight: '500',
   },
 });
+

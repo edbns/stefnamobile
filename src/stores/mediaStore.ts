@@ -48,6 +48,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
+
       // Show locally stored media immediately for fast UX
       try {
         const localMedia = await StorageService.getStoredMedia(userId);
@@ -263,4 +264,5 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       console.error('Sync with local storage error:', error);
     }
   },
+
 }));

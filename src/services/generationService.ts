@@ -17,11 +17,12 @@ import {
 import { getUnrealReflectionPreset } from '../presets/unrealReflection';
 import { getGhibliReactionPreset } from '../presets/ghibliReact';
 import { getNeoTokyoGlitchPreset } from '../presets/neoTokyoGlitch';
+import { getParallelSelfPreset } from '../presets/parallelSelf';
 import NotificationService from './notificationService';
 import CacheService from './cacheService';
 import PerformanceService from './performanceService';
 
-export type GenerationMode = 'presets' | 'custom-prompt' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo';
+export type GenerationMode = 'presets' | 'custom-prompt' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo' | 'parallel-self';
 
 export interface GenerationRequest {
   imageUri: string;
@@ -246,12 +247,7 @@ class GenerationService {
       const duration = Date.now() - startTime;
       this.performanceService.trackGeneration(request.mode, duration, normalized.success, normalized.error);
 
-      // Send notification
-      if (normalized.success && normalized.imageUrl) {
-        await this.notificationService.notifyGenerationComplete(normalized.runId || 'unknown', normalized.imageUrl);
-      } else if (!normalized.success) {
-        await this.notificationService.notifyGenerationFailed(normalized.runId || 'unknown', normalized.error);
-      }
+      // Notifications handled by ProcessingScreen - no push notifications needed
 
       return normalized;
 
@@ -262,8 +258,7 @@ class GenerationService {
       const duration = Date.now() - startTime;
       this.performanceService.trackGeneration(request.mode, duration, false, error instanceof Error ? error.message : 'Unknown error');
 
-      // Send failure notification
-      await this.notificationService.notifyGenerationFailed('unknown', error instanceof Error ? error.message : 'Unknown error');
+      // Notifications handled by ProcessingScreen - no push notifications needed
 
       // Re-throw INSUFFICIENT_CREDITS errors so frontend can handle them properly
       if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
@@ -542,7 +537,8 @@ class GenerationService {
       'unreal-reflection': 'unreal_reflection',
       'ghibli-reaction': 'ghibli_reaction',
       'neo-glitch': 'neo_glitch',
-      'edit-photo': 'edit'
+      'edit-photo': 'edit',
+      'parallel-self': 'parallel_self'
     };
 
     // Get user ID from token
@@ -703,6 +699,18 @@ class GenerationService {
     // For neo-glitch mode, use centralized presets
     if (request.mode === 'neo-glitch' && request.presetId) {
       const preset = getNeoTokyoGlitchPreset(request.presetId);
+      return preset?.prompt || 'Transform the image with artistic enhancement';
+    }
+
+    // For parallel-self mode, use centralized presets
+    if (request.mode === 'parallel-self' && request.presetId) {
+      console.log('[Mobile Generation] Looking up parallel self preset:', request.presetId);
+      const preset = getParallelSelfPreset(request.presetId);
+      console.log('[Mobile Generation] Found preset:', {
+        found: !!preset,
+        prompt: preset?.prompt?.substring(0, 100) + '...',
+        label: preset?.label
+      });
       return preset?.prompt || 'Transform the image with artistic enhancement';
     }
 

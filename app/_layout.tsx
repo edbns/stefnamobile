@@ -50,6 +50,8 @@ export default function Layout() {
           contentStyle: {
             backgroundColor: '#000000',
           },
+          animation: 'slide_from_right',
+          animationDuration: 300,
         }}
       >
         <Stack.Screen
@@ -74,12 +76,16 @@ export default function Layout() {
           name="main"
           options={{
             title: 'Generate',
+            animation: 'fade',
+            animationDuration: 400,
           }}
         />
         <Stack.Screen
           name="profile"
           options={{
             title: 'Profile',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen

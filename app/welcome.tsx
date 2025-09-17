@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuthStore } from '../src/stores/authStore';
+import AnimatedButton from '../src/components/AnimatedButton';
 
 const { width, height } = Dimensions.get('window');
 const columnWidth = width / 3; // True 3 columns, no margins for fullscreen
@@ -20,10 +22,12 @@ const backgroundImages = [
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { login } = useAuthStore();
 
   const handleGetStarted = () => {
     router.replace('/auth');
   };
+
 
   return (
     <View style={styles.container}>
@@ -52,9 +56,14 @@ export default function WelcomeScreen() {
           <Text style={styles.title}>Welcome to Stefna</Text>
           <Text style={styles.subtitle}>One photo. One transformation. Which preset?</Text>
           
-          <TouchableOpacity style={styles.getStartedButton} onPress={handleGetStarted}>
-            <Text style={styles.buttonText}>Get Started</Text>
-          </TouchableOpacity>
+          <AnimatedButton
+            title="Get Started"
+            onPress={handleGetStarted}
+            variant="primary"
+            size="large"
+            style={styles.getStartedButton}
+          />
+          
         </View>
 
         {/* Legal Text with clickable links */}
@@ -129,17 +138,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   getStartedButton: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 12,
     minWidth: 200,
-  },
-  buttonText: {
-    color: '#000000',
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
   },
   legalContainer: {
     flexDirection: 'row',

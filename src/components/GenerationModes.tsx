@@ -4,7 +4,7 @@ import { ArrowUp } from 'lucide-react-native';
 import { config } from '../config/environment';
 import PresetsService, { DatabasePreset } from '../services/presetsService';
 
-export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch';
+export type GenerationMode = 'custom-prompt' | 'edit-photo' | 'presets' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch' | 'parallel-self';
 
 interface GenerationModesProps {
   selectedMode: GenerationMode;
@@ -81,6 +81,7 @@ export default function GenerationModes({
       'unreal-reflection': 'Unreal Reflection',
       'ghibli-reaction': 'Ghibli Reaction',
       'neo-glitch': 'Neo Tokyo Glitch',
+      'parallel-self': 'Parallel Self',
     };
     return titles[mode] || mode;
   };
