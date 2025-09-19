@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
@@ -67,7 +68,14 @@ export default function CommunityGuidelinesScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>6. Reporting Content</Text>
           <Text style={styles.sectionText}>
-            We don't yet have automatic moderation. If you see something harmful, dangerous, or inappropriate, email us directly at hello@stefna.xyz. We'll take it seriously and review promptly.
+            We don't yet have automatic moderation. If you see something harmful, dangerous, or inappropriate, email us directly at{' '}
+            <Text 
+              style={styles.emailLink}
+              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=Content Report')}
+            >
+              hello@stefna.xyz
+            </Text>
+            . We'll take it seriously and review promptly.
           </Text>
         </View>
 
@@ -96,7 +104,13 @@ export default function CommunityGuidelinesScreen() {
           <Text style={styles.sectionTitle}>Contact Us</Text>
           <Text style={styles.sectionText}>
             If you have questions, concerns, or want to report a user or post:{'\n\n'}
-            Contact us at hello@stefna.xyz
+            Contact us at{' '}
+            <Text 
+              style={styles.emailLink}
+              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=General Inquiry')}
+            >
+              hello@stefna.xyz
+            </Text>
           </Text>
         </View>
       </ScrollView>
@@ -129,5 +143,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#cccccc',
     lineHeight: 24,
+  },
+  emailLink: {
+    color: '#4A9EFF',
+    textDecorationLine: 'underline',
   },
 });

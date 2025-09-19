@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { navigateBack } from '../src/utils/navigation';
@@ -96,7 +97,14 @@ export default function HelpCenterScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Need help or want to report something?</Text>
           <Text style={styles.sectionText}>
-            Email us at hello@stefna.xyz and we'll handle it. We don't use bots — real humans reply.
+            Email us at{' '}
+            <Text 
+              style={styles.emailLink}
+              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=Help Request')}
+            >
+              hello@stefna.xyz
+            </Text>
+            {' '}and we'll handle it. We don't use bots — real humans reply.
           </Text>
         </View>
       </ScrollView>
@@ -129,5 +137,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#cccccc',
     lineHeight: 24,
+  },
+  emailLink: {
+    color: '#4A9EFF',
+    textDecorationLine: 'underline',
   },
 });

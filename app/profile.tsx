@@ -5,7 +5,7 @@ import { useAuthStore } from '../src/stores/authStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
 import { Feather } from '@expo/vector-icons';
 import { StorageService } from '../src/services/storageService';
-import { navigateBack } from '../src/utils/navigation';
+import { navigateBack, smoothNavigate } from '../src/utils/navigation';
 import { config } from '../src/config/environment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -38,7 +38,7 @@ export default function ProfileScreen() {
   const [showLegalDropdown, setShowLegalDropdown] = useState(false);
   
   // Community dropdown state
-  const [showCommunityDropdown, setShowCommunityDropdown] = useState(false);
+  const [showChangeEmailDropdown, setShowChangeEmailDropdown] = useState(false);
   
   // Referral stats state
   const [referralStats, setReferralStats] = useState({
@@ -325,6 +325,10 @@ export default function ProfileScreen() {
     router.push('/help-center');
   };
 
+  const navigateToCommunityGuidelines = () => {
+    router.push('/community-guidelines');
+  };
+
   const navigateToPrivacy = () => {
     router.push('/privacy');
   };
@@ -364,10 +368,9 @@ export default function ProfileScreen() {
     },
     {
       iconName: 'users' as const,
-      title: 'Community',
+      title: 'Community Guidelines',
       subtitle: '',
-      onPress: () => setShowCommunityDropdown(!showCommunityDropdown),
-      hasDropdown: true,
+      onPress: navigateToCommunityGuidelines,
     },
     {
       iconName: 'file-text' as const,
@@ -414,7 +417,6 @@ export default function ProfileScreen() {
                   {item.hasDropdown ? (
                     (item.title === 'Invite Friends' ? showInviteDropdown : 
                      item.title === 'Change Email' ? showChangeEmailDropdown : 
-                     item.title === 'Community' ? showCommunityDropdown :
                      item.title === 'Legal' ? showLegalDropdown : false) ? 
                     <Feather name="chevron-up" size={16} color="#ffffff" /> : 
                     <Feather name="chevron-down" size={16} color="#ffffff" />
@@ -551,28 +553,6 @@ export default function ProfileScreen() {
                         {otpSent ? 'Update Email' : 'Send Verification Code'}
                     </Text>
                     )}
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {/* Community Dropdown */}
-            {item.hasDropdown && item.title === 'Community' && showCommunityDropdown && (
-              <View style={styles.inviteDropdown}>
-                <View style={styles.communityContainer}>
-                  <TouchableOpacity 
-                    style={styles.communityItem}
-                    onPress={() => {
-                      smoothNavigate.push('/community-guidelines');
-                    }}
-                  >
-                    <View style={styles.communityIcon}>
-                      <Feather name="users" size={20} color="#ffffff" />
-                    </View>
-                    <View style={styles.communityContent}>
-                      <Text style={styles.communityTitle}>Community Guidelines</Text>
-                    </View>
-                    <Feather name="chevron-right" size={16} color="#ffffff" />
                   </TouchableOpacity>
                 </View>
               </View>
