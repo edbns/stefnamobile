@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingTop: 20, // Reverted back to original - no extra margin on main gallery
+    paddingTop: 60, // Add top margin to main gallery where folders are displayed
     paddingBottom: 20, // Reduced bottom margin since we have bottom footer
     paddingHorizontal: 16, // Add horizontal padding for 2 columns
   },
