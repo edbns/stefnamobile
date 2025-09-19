@@ -1,16 +1,21 @@
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 
 /**
- * Navigate with smooth transitions
+ * Navigate with smooth transitions and haptic feedback
  */
 export const smoothNavigate = {
   push: (pathname: string, params?: any) => {
+    // Light haptic feedback for navigation
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({ pathname, params });
   },
   replace: (pathname: string, params?: any) => {
     router.replace({ pathname, params });
   },
   back: () => {
+    // Light haptic feedback for back navigation
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (router.canGoBack()) {
       router.back();
     } else {

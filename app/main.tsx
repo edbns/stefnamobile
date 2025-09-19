@@ -215,7 +215,13 @@ export default function MainScreen() {
 
   // Component for folder items that can use hooks
   const FolderItem = ({ section }: { section: any }) => {
+    const [isPressed, setIsPressed] = useState(false);
+    
     const handleFolderPress = () => {
+      setIsPressed(true);
+      // Reset pressed state after animation
+      setTimeout(() => setIsPressed(false), 150);
+      
       console.log('📁 [MainScreen] Navigating to folder:', {
         title: section.title,
         dataLength: section.data?.length || 0,
@@ -231,7 +237,11 @@ export default function MainScreen() {
     const coverImage = Array.isArray(section.data) && section.data.length > 0 ? section.data[0] : null;
 
     return (
-      <TouchableOpacity style={styles.folderItem} onPress={handleFolderPress}>
+      <TouchableOpacity 
+        style={[styles.folderItem, isPressed && styles.folderItemPressed]} 
+        onPress={handleFolderPress}
+        activeOpacity={0.8}
+      >
         <View style={styles.folderImage}>
           {coverImage?.cloudUrl ? (
             <Image 
@@ -403,6 +413,10 @@ const styles = StyleSheet.create({
     marginBottom: 12, // Vertical margin between rows
     marginHorizontal: 6, // Horizontal margin between columns (12px total)
     flex: 1, // Ensure equal width for 2 columns
+  },
+  folderItemPressed: {
+    backgroundColor: '#2a2a2a', // Slightly lighter when pressed
+    transform: [{ scale: 0.98 }], // Slight scale down effect
   },
   folderImage: {
     position: 'relative',

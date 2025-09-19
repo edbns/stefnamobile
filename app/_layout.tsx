@@ -51,7 +51,7 @@ export default function Layout() {
             backgroundColor: '#000000',
           },
           animation: 'slide_from_right',
-          animationDuration: 300,
+          animationDuration: 200, // Faster animations
           gestureEnabled: true,
           gestureDirection: 'horizontal',
         }}
@@ -109,7 +109,7 @@ export default function Layout() {
           options={{
             title: 'Folder',
             animation: 'slide_from_right',
-            animationDuration: 300,
+            animationDuration: 200, // Faster animation
           }}
         />
         <Stack.Screen
