@@ -28,7 +28,6 @@ export default function ProfileScreen() {
   const [inviteError, setInviteError] = useState('');
   
   // Change email state
-  const [showChangeEmailDropdown, setShowChangeEmailDropdown] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -37,7 +36,7 @@ export default function ProfileScreen() {
   // Legal dropdown state
   const [showLegalDropdown, setShowLegalDropdown] = useState(false);
   
-  // Community dropdown state
+  // Change email dropdown state
   const [showChangeEmailDropdown, setShowChangeEmailDropdown] = useState(false);
   
   // Referral stats state
