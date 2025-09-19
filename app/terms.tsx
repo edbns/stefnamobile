@@ -1,158 +1,113 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { navigateBack } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
+import { navigateBack } from '../src/utils/navigation';
 
-export default function TermsScreen() {
+export default function TermsOfServiceScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Terms of Service</Text>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Interpretation and Definitions</Text>
+            <Text style={styles.text}>
+              The words of which the initial letter is capitalized have meanings defined under the following conditions. 
+              The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.
+            </Text>
+            
+            <Text style={styles.subsectionTitle}>Definitions</Text>
+            <Text style={styles.text}>
+              For the purposes of these Terms and Conditions:
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Affiliate</Text> means an entity that controls, is controlled by or is under common control with a party, where "control" means ownership of 50% or more of the shares, equity interest or other securities entitled to vote for election of directors or other managing authority.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Platform</Text> (referred to as either "the Platform", "We", "Us" or "Our" in this Agreement) refers to Stefna, an AI-powered photo and video editing platform.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Device</Text> means any device that can access the Service such as a computer, a cellphone or a digital tablet.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Service</Text> refers to the Website, Stefna, which provides AI-powered photo and video editing tools through an easy-to-use web interface, with mobile applications launching soon.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Terms and Conditions</Text> (also referred as "Terms") mean these Terms and Conditions that form the entire agreement between You and the Platform regarding the use of the Service.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Third-party Social Media Service</Text> means any services or content (including data, information, products or services) provided by a third-party that may be displayed, included or made available by the Service.
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>Website</Text> refers to Stefna, accessible from stefna.xyz
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • <Text style={styles.bold}>You</Text> means the individual accessing or using the Service, or the Platform, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Acknowledgment</Text>
+            <Text style={styles.text}>
+              These are the Terms and Conditions governing the use of this Service and the agreement that operates between You and the Platform. These Terms and Conditions set out the rights and obligations of all users regarding the use of the Service.
+            </Text>
+            <Text style={styles.text}>
+              Your access to and use of the Service is conditioned on Your acceptance of and compliance with these Terms and Conditions. These Terms and Conditions apply to all visitors, users and others who access or use the Service.
+            </Text>
+            <Text style={styles.text}>
+              By accessing or using the Service You agree to be bound by these Terms and Conditions. If You disagree with any part of these Terms and Conditions then You may not access the Service.
+            </Text>
+            <Text style={styles.text}>
+              You must be at least 13 years old to create an account and use Stefna. If you are under the age required by the laws of your country to consent to data processing (e.g., 16 in some jurisdictions), you may only use Stefna with parental consent.
+            </Text>
+            <Text style={styles.text}>
+              Your access to and use of the Service is also conditioned on Your acceptance of and compliance with the Privacy Policy of the Platform. Our Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your personal information when You use the Application or the Website and tells You about Your privacy rights and how the law protects You. Please read Our Privacy Policy carefully before using Our Service.
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>User Content</Text>
+            <Text style={styles.text}>
+              By uploading, submitting, or generating content (including photos, videos, and AI-generated images/videos) on Stefna, you grant Stefna a non-exclusive, worldwide, royalty-free license to use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, and display such content solely for the purpose of providing, securing, and improving Stefna's services, including enabling features like editing and remixing. You represent and warrant that you own or have the necessary licenses, rights, consents, and permissions to use and authorize Stefna to use all intellectual property rights in and to any User Content you upload or generate.
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Changes to These Terms and Conditions</Text>
+            <Text style={styles.text}>
+              We reserve the right, at Our sole discretion, to modify or replace these Terms at any time. If a revision is material We will make reasonable efforts to provide at least 30 days' notice prior to any new terms taking effect. What constitutes a material change will be determined at Our sole discretion.
+            </Text>
+            <Text style={styles.text}>
+              By continuing to access or use Our Service after those revisions become effective, You agree to be bound by the revised terms. If You do not agree to the new terms, in whole or in part, please stop using the website and the Service.
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contact Us</Text>
+            <Text style={styles.text}>
+              If you have any questions about these Terms and Conditions, You can contact us:
+            </Text>
+            <Text style={styles.bulletPoint}>
+              • By email: hello@stefna.xyz
+            </Text>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Last updated: August 4, 2025</Text>
+          </View>
+        </View>
+      </ScrollView>
+
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigateBack.toProfile()} style={styles.iconBackButton}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => navigateBack.toMain()}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Last Updated: December 2024</Text>
-          <Text style={styles.sectionText}>
-            These Terms of Service ("Terms") govern your use of Stefna's AI-powered image generation service ("Service"). By using our Service, you agree to these Terms.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
-          <Text style={styles.sectionText}>
-            By accessing or using Stefna, you agree to be bound by these Terms and our Privacy Policy. If you disagree with any part of these terms, you may not access the Service.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Description of Service</Text>
-          <Text style={styles.sectionText}>
-            Stefna is an AI-powered platform that allows users to transform images using various AI models and styles. The Service includes:{'\n'}
-            • Image upload and processing{'\n'}
-            • AI-powered image generation{'\n'}
-            • Credit-based usage system{'\n'}
-            • Social sharing features{'\n'}
-            • User account management
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. User Accounts</Text>
-          <Text style={styles.sectionText}>
-            • You must provide accurate information when creating an account{'\n'}
-            • You are responsible for maintaining account security{'\n'}
-            • You must be at least 13 years old to use the Service{'\n'}
-            • One account per person - no sharing or transferring{'\n'}
-            • We reserve the right to suspend or terminate accounts that violate these Terms
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Acceptable Use</Text>
-          <Text style={styles.sectionText}>
-            You agree to use the Service only for lawful purposes and in accordance with these Terms. You may not:{'\n'}
-            • Upload inappropriate, illegal, or harmful content{'\n'}
-            • Violate any laws or regulations{'\n'}
-            • Infringe on others' intellectual property rights{'\n'}
-            • Attempt to hack, disrupt, or damage the Service{'\n'}
-            • Use the Service for commercial purposes without permission{'\n'}
-            • Spam, harass, or abuse other users
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. Content and Intellectual Property</Text>
-          <Text style={styles.sectionText}>
-            <Text style={styles.bold}>Your Content:</Text>{'\n'}
-            • You retain ownership of images you upload{'\n'}
-            • You grant us a license to process and store your content{'\n'}
-            • You are responsible for ensuring you have rights to upload content{'\n\n'}
-            
-            <Text style={styles.bold}>Generated Content:</Text>{'\n'}
-            • AI-generated images are created using your input and our AI models{'\n'}
-            • You may use generated images for personal purposes{'\n'}
-            • Commercial use may require additional permissions
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. Credits and Usage</Text>
-          <Text style={styles.sectionText}>
-            • Credits are provided daily and reset every 24 hours{'\n'}
-            • Credits cannot be transferred or sold{'\n'}
-            • We reserve the right to modify credit amounts and costs{'\n'}
-            • Credits may expire if unused for extended periods{'\n'}
-            • No refunds for unused credits
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. Privacy and Data</Text>
-          <Text style={styles.sectionText}>
-            Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and protect your information. By using the Service, you consent to our data practices as described in the Privacy Policy.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. Service Availability</Text>
-          <Text style={styles.sectionText}>
-            • We strive to maintain high service availability but cannot guarantee 100% uptime{'\n'}
-            • We may perform maintenance that temporarily affects service{'\n'}
-            • We reserve the right to modify or discontinue features{'\n'}
-            • We are not liable for service interruptions or data loss
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>9. Limitation of Liability</Text>
-          <Text style={styles.sectionText}>
-            To the maximum extent permitted by law:{'\n'}
-            • Stefna is provided "as is" without warranties{'\n'}
-            • We are not liable for any indirect, incidental, or consequential damages{'\n'}
-            • Our total liability is limited to the amount you paid for the Service{'\n'}
-            • We are not responsible for AI-generated content accuracy or appropriateness
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>10. Termination</Text>
-          <Text style={styles.sectionText}>
-            • You may terminate your account at any time{'\n'}
-            • We may terminate accounts that violate these Terms{'\n'}
-            • Upon termination, your data may be deleted{'\n'}
-            • Some provisions of these Terms survive termination
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>11. Changes to Terms</Text>
-          <Text style={styles.sectionText}>
-            We may update these Terms from time to time. We will notify you of material changes by email or through the Service. Your continued use after changes constitutes acceptance of the new Terms.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>12. Contact Information</Text>
-          <Text style={styles.sectionText}>
-            If you have questions about these Terms, please contact us at:{'\n\n'}
-            Email: hello@stefna.xyz{'\n\n'}
-            We will respond to all inquiries within 30 days.
-          </Text>
-        </View>
-      </ScrollView>
     </View>
   );
 }
@@ -162,12 +117,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
-  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
-  content: {
+  scrollView: {
     flex: 1,
+    paddingTop: 60,
+  },
+  content: {
     paddingHorizontal: 20,
-    paddingTop: 100,
+    paddingBottom: 40,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   section: {
     marginBottom: 24,
@@ -178,13 +141,56 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 12,
   },
-  sectionText: {
+  subsectionTitle: {
     fontSize: 16,
+    fontWeight: '500',
+    color: '#ffffff',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  text: {
+    fontSize: 14,
     color: '#cccccc',
-    lineHeight: 24,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  bulletPoint: {
+    fontSize: 14,
+    color: '#cccccc',
+    lineHeight: 20,
+    marginBottom: 8,
+    paddingLeft: 8,
   },
   bold: {
     fontWeight: '600',
     color: '#ffffff',
+  },
+  footer: {
+    marginTop: 32,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+  },
+  headerRow: { 
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
+    right: 0, 
+    paddingTop: 40, 
+    paddingLeft: 8, 
+    zIndex: 1000 
+  },
+  iconBackButton: { 
+    width: 36, 
+    height: 36, 
+    borderRadius: 18, 
+    backgroundColor: '#000000', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
   },
 });
