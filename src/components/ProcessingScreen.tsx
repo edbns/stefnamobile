@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingTop: 60,
+    paddingTop: 40, // Reduced from 60
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20, // Reduced from 40
   },
   closeButton: {
     width: 40,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: width * 0.8,
     height: width * 0.8,
-    borderRadius: 20,
+    borderRadius: 0, // Removed border radius
     marginBottom: 40,
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30, // Reduced from 40
     minHeight: 60,
     justifyContent: 'center',
   },
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: 60, // Increased margin to move progress bar up
+    marginBottom: 40, // Reduced from 60
   },
   progressBar: {
     width: '100%',
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     alignItems: 'center',
-    marginTop: 20, // Reduced margin to bring button closer to progress bar
+    marginTop: 30, // Increased from 20 for better spacing
   },
   viewButton: {
     flexDirection: 'row',
