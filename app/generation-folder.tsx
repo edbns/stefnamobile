@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    paddingTop: 20, // Reduced top margin
+    paddingTop: 0, // Remove top margin - media should be directly under back button
   },
   titleContainer: {
     paddingHorizontal: 20,
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridContainer: {
-    paddingTop: 80, // Space for floating back button
+    paddingTop: 60, // Reduced space for floating back button - media directly under it
     paddingBottom: 100, // Space for action bar when in selection mode
   },
   row: {

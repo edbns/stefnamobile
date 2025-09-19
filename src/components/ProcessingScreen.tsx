@@ -188,7 +188,8 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
       smoothNavigate.push('/media-viewer', { 
         mediaUri: generatedImageUrl,
         mediaId: 'generated',
-        mediaType: 'image'
+        mediaType: 'image',
+        cloudId: 'generated'
       });
     }
     onClose();
