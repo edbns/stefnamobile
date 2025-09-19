@@ -44,7 +44,7 @@ export default function ProfileScreen() {
   const [referralStats, setReferralStats] = useState({
     invites: 0,
     tokensEarned: 0,
-    referralCode: user?.id || ''
+    referralCode: user?.email || ''
   });
 
   useEffect(() => {
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
   };
 
   const copyReferralLink = async () => {
-    const referralLink = `https://stefna.xyz?ref=${referralStats.referralCode}`;
+    const referralLink = `https://stefna.xyz?ref=${user?.email || ''}`;
     try {
       await Share.share({
         message: `Join me on Stefna! Use my referral link to get +10 credits: ${referralLink}`,
@@ -434,11 +434,11 @@ export default function ProfileScreen() {
                 <View style={styles.benefitsContainer}>
                   <View style={styles.benefitCard}>
                     <Text style={styles.benefitTitle}>You Get</Text>
-                    <Text style={styles.benefitText}>+10 credits after friend's first media</Text>
+                    <Text style={styles.benefitText}>10 Credits</Text>
                   </View>
                   <View style={styles.benefitCard}>
                     <Text style={styles.benefitTitle}>Friend Gets</Text>
-                    <Text style={styles.benefitText}>+10 credits on signup</Text>
+                    <Text style={styles.benefitText}>10 Credits</Text>
                   </View>
                 </View>
 
@@ -485,7 +485,7 @@ export default function ProfileScreen() {
                   <Text style={styles.referralLabel}>Your Referral Link</Text>
                   <View style={styles.referralLinkContainer}>
                     <Text style={styles.referralLink}>
-                      https://stefna.xyz?ref={referralStats.referralCode}
+                      https://stefna.xyz?ref={user?.email || ''}
                     </Text>
                     <TouchableOpacity onPress={copyReferralLink} style={styles.copyButton}>
                       <Feather name="share" size={16} color="#ffffff" />
@@ -708,13 +708,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   benefitTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#ffffff',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   benefitText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#cccccc',
     textAlign: 'center',
   },
