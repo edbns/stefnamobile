@@ -136,13 +136,14 @@ export default function GenerationModes({
   // Define modes in website order: Custom, Edit (Studio), Presets, Unreal Reflection, Ghibli React, Neo Tokyo, Parallel Self
   const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'unreal-reflection', 'ghibli-reaction', 'neo-glitch', 'parallel-self'];
   
-  // Split into two rows: first row has 4 modes, second row has 3 modes
-  const firstRow = modes.slice(0, 4);
-  const secondRow = modes.slice(4, 7);
+  // Split into three rows: 3 modes each for first two rows, 1 mode for third row
+  const firstRow = modes.slice(0, 3);
+  const secondRow = modes.slice(3, 6);
+  const thirdRow = modes.slice(6, 7);
 
   return (
     <View style={styles.container}>
-      {/* Mode Selection - first row has 4 modes, second row has 3 modes */}
+      {/* Mode Selection - 3 modes per row */}
       <View style={styles.modesGrid}>
         {/* First Row */}
         <View style={styles.modesRow}>
@@ -288,7 +289,23 @@ export default function GenerationModes({
         {/* Second Row */}
         <View style={styles.modesRow}>
           {secondRow.map((mode) => (
-      <TouchableOpacity
+            <TouchableOpacity
+              key={mode}
+              style={[
+                styles.modeButton,
+                selectedMode === mode && styles.modeButtonSelected,
+              ]}
+              onPress={() => handleModePress(mode)}
+            >
+              <Text style={styles.modeTitle}>{getModeTitle(mode)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Third Row - Single mode centered */}
+        <View style={styles.modesRow}>
+          {thirdRow.map((mode) => (
+            <TouchableOpacity
               key={mode}
               style={[
                 styles.modeButton,
