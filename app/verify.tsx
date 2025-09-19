@@ -22,11 +22,30 @@ export default function VerifyScreen() {
         if (inputRef.current) {
           inputRef.current.focus();
         }
-      }, 100);
+      }, 200); // Increased delay to ensure screen is fully loaded
       
       return () => clearTimeout(timer);
     }, [])
   );
+
+  // Also handle app state changes
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        // App came back to foreground, refocus input
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }, 300);
+      }
+    };
+
+    const { AppState } = require('react-native');
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    
+    return () => subscription?.remove();
+  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -140,7 +159,7 @@ const styles = StyleSheet.create({
     color: '#fff', 
     textAlign: 'center', 
     letterSpacing: 2, 
-    marginBottom: 6, // Further reduced to minimize space between keypad and button
+    marginBottom: 2, // Minimized space between keypad and button
     borderWidth: 1, 
     borderColor: '#333', 
     minHeight: 56 

@@ -16,7 +16,17 @@ export default function GenerationFolderScreen() {
   const { deleteMedia } = useMediaStore();
   
   const folderName = params.folderName as string;
-  const folderData = JSON.parse(params.folderData as string);
+  let folderData: any[] = [];
+  
+  try {
+    if (params.folderData && typeof params.folderData === 'string') {
+      folderData = JSON.parse(params.folderData);
+    }
+  } catch (error) {
+    console.error('❌ [GenerationFolder] Failed to parse folderData:', error);
+    console.error('❌ [GenerationFolder] Raw folderData:', params.folderData);
+    folderData = [];
+  }
   
   console.log('🔍 [GenerationFolder] Debug info:', {
     folderName,
