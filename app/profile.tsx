@@ -563,8 +563,7 @@ export default function ProfileScreen() {
                   <TouchableOpacity 
                     style={styles.communityItem}
                     onPress={() => {
-                      // Navigate to community guidelines or external link
-                      Alert.alert('Community', 'Community features coming soon!');
+                      smoothNavigate.push('/community-guidelines');
                     }}
                   >
                     <View style={styles.communityIcon}>
@@ -572,22 +571,6 @@ export default function ProfileScreen() {
                     </View>
                     <View style={styles.communityContent}>
                       <Text style={styles.communityTitle}>Community Guidelines</Text>
-                    </View>
-                    <Feather name="chevron-right" size={16} color="#ffffff" />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.communityItem}
-                    onPress={() => {
-                      // Navigate to share creations or external link
-                      Alert.alert('Share', 'Share your creations coming soon!');
-                    }}
-                  >
-                    <View style={styles.communityIcon}>
-                      <Feather name="share-2" size={20} color="#ffffff" />
-                    </View>
-                    <View style={styles.communityContent}>
-                      <Text style={styles.communityTitle}>Share Your Creations</Text>
                     </View>
                     <Feather name="chevron-right" size={16} color="#ffffff" />
                   </TouchableOpacity>

@@ -1,50 +1,105 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
 import { navigateBack } from '../src/utils/navigation';
+import { Feather } from '@expo/vector-icons';
 
 export default function HelpCenterScreen() {
   const router = useRouter();
 
-  const openEmail = () => {
-    Linking.openURL('mailto:hello@stefna.xyz?subject=Help Request');
-  };
-
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Help Center</Text>
-          <Text style={styles.subtitle}>Need assistance? We're here to help.</Text>
-          
-          <View style={styles.contactSection}>
-            <Text style={styles.contactTitle}>Contact Support</Text>
-            <Text style={styles.contactText}>
-              If you have any questions or need help with Stefna, please contact our support team.
-            </Text>
-            <TouchableOpacity style={styles.contactButton} onPress={openEmail}>
-              <Feather name="mail" size={20} color="#000000" />
-              <Text style={styles.contactButtonText}>Contact Support</Text>
-            </TouchableOpacity>
-            <Text style={styles.contactEmail}>hello@stefna.xyz</Text>
-          </View>
-
-          <View style={styles.infoSection}>
-            <Text style={styles.infoTitle}>About Stefna</Text>
-            <Text style={styles.infoText}>
-              Stefna is an AI-powered photo and video editing platform that transforms your photos into stunning AI art with cinematic effects, anime reactions, glitch art, and more.
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.iconBackButton} onPress={() => navigateBack.toMain()}>
+        <TouchableOpacity onPress={() => navigateBack.toProfile()} style={styles.iconBackButton}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Stefna Help Center</Text>
+          <Text style={styles.sectionText}>
+            Welcome to Stefna — your AI-powered creative studio. Whether you're here to glitch your face into neon chaos, cry anime tears, or turn a simple photo into art, you're in the right place.
+            {'\n\n'}Below are answers to your most common questions.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>How do I use Stefna?</Text>
+          <Text style={styles.sectionText}>
+            1. Upload a photo{'\n'}
+            • Use a clear, well-lit image with a visible face.{'\n'}
+            • You must be logged in to generate.{'\n\n'}
+            2. Pick a mode{'\n'}
+            • Each mode transforms your image differently — from subtle edits to full glitch chaos.{'\n'}
+            • New modes drop regularly. No spoilers.{'\n\n'}
+            3. Tap generate{'\n'}
+            • Your creation will appear in your gallery shortly.{'\n'}
+            • You can save, share, or delete any result.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>How do credits work?</Text>
+          <Text style={styles.sectionText}>
+            • You get 14 free credits daily (reset every 24h).{'\n'}
+            • Most generations cost 2 credits.{'\n'}
+            • No payment needed — it's free.{'\n'}
+            • If you run out, come back tomorrow.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>How does referral work?</Text>
+          <Text style={styles.sectionText}>
+            • Invite a friend using your referral link.{'\n'}
+            • They get +10 credits, you get +10 credits once they generate.{'\n'}
+            • Win-win.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Why does the AI sometimes get it wrong?</Text>
+          <Text style={styles.sectionText}>
+            AI can be powerful, weird, and unpredictable.{'\n\n'}
+            It may:{'\n'}
+            • Bend reality{'\n'}
+            • Change expressions{'\n'}
+            • Confuse genders, ages, or backgrounds{'\n\n'}
+            That's part of the fun — and the art. If anything feels wrong, just regenerate or try another mode.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Can I delete my photos?</Text>
+          <Text style={styles.sectionText}>
+            Yes. Tap the trash icon on any photo in your gallery to remove it from Stefna and the cloud.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Is my data private?</Text>
+          <Text style={styles.sectionText}>
+            • Your uploads are private by default.{'\n'}
+            • You can choose to share to the public feed.{'\n'}
+            • You control what stays or goes.
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Need help or want to report something?</Text>
+          <Text style={styles.sectionText}>
+            Email us at hello@stefna.xyz and we'll handle it. We don't use bots — real humans reply.
+          </Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -54,98 +109,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
-  scrollView: {
-    flex: 1,
-    paddingTop: 60,
-  },
+  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
+  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
   content: {
+    flex: 1,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingTop: 100,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  contactSection: {
-    backgroundColor: '#1a1a1a',
-    padding: 24,
-    borderRadius: 16,
-    alignItems: 'center',
+  section: {
     marginBottom: 24,
   },
-  contactTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  contactText: {
-    fontSize: 14,
-    color: '#cccccc',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 20,
-  },
-  contactButton: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  contactButtonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  contactEmail: {
-    fontSize: 14,
-    color: '#4A9EFF',
-    textDecorationLine: 'underline',
-  },
-  infoSection: {
-    backgroundColor: '#1a1a1a',
-    padding: 20,
-    borderRadius: 12,
-  },
-  infoTitle: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#ffffff',
     marginBottom: 12,
   },
-  infoText: {
-    fontSize: 14,
+  sectionText: {
+    fontSize: 16,
     color: '#cccccc',
-    lineHeight: 20,
-  },
-  headerRow: { 
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    paddingTop: 40, 
-    paddingLeft: 8, 
-    zIndex: 1000 
-  },
-  iconBackButton: { 
-    width: 36, 
-    height: 36, 
-    borderRadius: 18, 
-    backgroundColor: '#000000', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+    lineHeight: 24,
   },
 });
