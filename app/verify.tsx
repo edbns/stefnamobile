@@ -36,7 +36,7 @@ export default function VerifyScreen() {
       {/* Back to Email Button */}
       <TouchableOpacity 
         style={styles.backToEmailButton} 
-        onPress={() => router.replace({ pathname: '/auth', params: { email } })}
+        onPress={() => router.push({ pathname: '/auth', params: { email } })}
       >
         <Text style={styles.backToEmailButtonText}>← Back to Email</Text>
       </TouchableOpacity>
@@ -113,7 +113,20 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
   infoPill: { alignSelf: 'center', color: '#bbb', backgroundColor: '#1a1a1a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 16, fontSize: 12 },
-  input: { backgroundColor: '#1a1a1a', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 16, fontSize: 20, color: '#fff', textAlign: 'center', letterSpacing: 2, marginBottom: 20, borderWidth: 1, borderColor: '#333', minHeight: 56 },
+  input: { 
+    backgroundColor: '#1a1a1a', 
+    borderRadius: 8, 
+    paddingHorizontal: 16, 
+    paddingVertical: 16, 
+    fontSize: 20, 
+    color: '#fff', 
+    textAlign: 'center', 
+    letterSpacing: 2, 
+    marginBottom: 12, // Reduced from 20 to bring button closer to keypad
+    borderWidth: 1, 
+    borderColor: '#333', 
+    minHeight: 56 
+  },
   button: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
