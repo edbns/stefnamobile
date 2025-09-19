@@ -1,6 +1,25 @@
 import { router } from 'expo-router';
 
 /**
+ * Navigate with smooth transitions
+ */
+export const smoothNavigate = {
+  push: (pathname: string, params?: any) => {
+    router.push({ pathname, params });
+  },
+  replace: (pathname: string, params?: any) => {
+    router.replace({ pathname, params });
+  },
+  back: () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push('/main');
+    }
+  }
+};
+
+/**
  * Safely navigate back, falling back to main screen if no previous screen exists
  */
 export const safeGoBack = (fallbackRoute: string = '/main') => {

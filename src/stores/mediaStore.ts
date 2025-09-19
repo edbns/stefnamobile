@@ -92,6 +92,7 @@ export const useMediaStore = create<MediaState>((set, get) => ({
           type: item.type,
           prompt: item.prompt,
           presetKey: item.presetKey,
+          metadata: item.metadata, // Pass through metadata for aspect ratio calculation
         }));
 
         console.log('🌐 [MediaStore] Transformed cloud media:', {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
+import { smoothNavigate } from '../utils/navigation';
 import { Feather } from '@expo/vector-icons';
 
 interface ProcessingScreenProps {
@@ -183,13 +184,10 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
   const handleViewMedia = () => {
     if (generatedImageUrl) {
       // Navigate directly to media viewer with the generated image
-      router.push({
-        pathname: '/media-viewer',
-        params: { 
-          mediaUri: generatedImageUrl,
-          mediaId: 'generated',
-          mediaType: 'image'
-        }
+      smoothNavigate.push('/media-viewer', { 
+        mediaUri: generatedImageUrl,
+        mediaId: 'generated',
+        mediaType: 'image'
       });
     }
     onClose();

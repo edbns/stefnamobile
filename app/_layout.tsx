@@ -52,24 +52,40 @@ export default function Layout() {
           },
           animation: 'slide_from_right',
           animationDuration: 300,
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
         }}
       >
         <Stack.Screen
           name="index"
           options={{
             title: 'Stefna',
+            animation: 'fade',
+            animationDuration: 400,
+          }}
+        />
+        <Stack.Screen
+          name="welcome"
+          options={{
+            title: 'Welcome',
+            animation: 'fade',
+            animationDuration: 400,
           }}
         />
         <Stack.Screen
           name="auth"
           options={{
             title: 'Sign In',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen
           name="verify"
           options={{
             title: 'Verify',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen
@@ -89,27 +105,131 @@ export default function Layout() {
           }}
         />
         <Stack.Screen
+          name="generation-folder"
+          options={{
+            title: 'Folder',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="media-viewer"
+          options={{
+            title: 'Media Viewer',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="edit"
+          options={{
+            title: 'Edit',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="camera"
+          options={{
+            title: 'Camera',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="upload-mode"
+          options={{
+            title: 'Upload',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-presets"
+          options={{
+            title: 'Presets',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-custom"
+          options={{
+            title: 'Custom',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-studio"
+          options={{
+            title: 'Studio',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-unreal-reflection"
+          options={{
+            title: 'Unreal Reflection',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-ghibli"
+          options={{
+            title: 'Ghibli',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-neo"
+          options={{
+            title: 'Neo Tokyo',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
+          name="generate-parallel-self"
+          options={{
+            title: 'Parallel Self',
+            animation: 'slide_from_right',
+            animationDuration: 300,
+          }}
+        />
+        <Stack.Screen
           name="community-guidelines"
           options={{
             title: 'Community Guidelines',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen
           name="help-center"
           options={{
             title: 'Help Center',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen
           name="privacy"
           options={{
             title: 'Privacy Policy',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
         <Stack.Screen
           name="terms"
           options={{
             title: 'Terms of Service',
+            animation: 'slide_from_right',
+            animationDuration: 300,
           }}
         />
       </Stack>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, FlatList, Image, Alert, Platform, Dimensions, Share } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { navigateBack } from '../src/utils/navigation';
+import { navigateBack, smoothNavigate } from '../src/utils/navigation';
 import { Feather } from '@expo/vector-icons';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
@@ -44,16 +44,13 @@ export default function GenerationFolderScreen() {
     } else {
       // Navigate to fullscreen media view
       const currentIndex = folderData.findIndex((mediaItem: any) => mediaItem.id === item.id);
-      router.push({
-        pathname: '/media-viewer',
-        params: { 
-          mediaUri: item.cloudUrl || item.localUri,
-          mediaId: item.id,
-          cloudId: item.cloudId,
-          mediaType: 'image',
-          folderData: JSON.stringify(folderData),
-          currentIndex: currentIndex.toString()
-        }
+      smoothNavigate.push('/media-viewer', { 
+        mediaUri: item.cloudUrl || item.localUri,
+        mediaId: item.id,
+        cloudId: item.cloudId,
+        mediaType: 'image',
+        folderData: JSON.stringify(folderData),
+        currentIndex: currentIndex.toString()
       });
     }
   };

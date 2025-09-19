@@ -14,6 +14,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { smoothNavigate } from '../src/utils/navigation';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
@@ -155,10 +156,7 @@ export default function MainScreen() {
       if (result.success && result.uri) {
         const normalizedUri = await ImagePickerService.normalizeImage(result.uri, result.exif, result.cameraType);
         // Navigate to generate screen with captured image
-        router.push({
-          pathname: '/generate',
-          params: { selectedImage: normalizedUri }
-        });
+        smoothNavigate.push('/generate', { selectedImage: normalizedUri });
       } else {
         ImagePickerService.showErrorAlert(
           'Camera Error',
@@ -185,10 +183,7 @@ export default function MainScreen() {
       
       if (result.success && result.uri) {
         // Navigate to edit screen with selected image
-        router.push({
-          pathname: '/edit',
-          params: { selectedImage: result.uri }
-        });
+        smoothNavigate.push('/edit', { selectedImage: result.uri });
       } else {
         // User cancelled or permission denied - stay on current screen
         console.log('Photo selection cancelled or permission denied');
@@ -203,7 +198,7 @@ export default function MainScreen() {
   };
 
   const handleProfilePress = () => {
-    router.push('/profile');
+    smoothNavigate.push('/profile');
   };
 
   const handleRefresh = async () => {
@@ -220,12 +215,9 @@ export default function MainScreen() {
   // Component for folder items that can use hooks
   const FolderItem = ({ section }: { section: any }) => {
     const handleFolderPress = () => {
-      router.push({
-        pathname: '/generation-folder',
-        params: { 
-          folderName: section.title,
-          folderData: JSON.stringify(section.data)
-        }
+      smoothNavigate.push('/generation-folder', { 
+        folderName: section.title,
+        folderData: JSON.stringify(section.data)
       });
     };
 

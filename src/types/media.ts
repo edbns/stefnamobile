@@ -34,6 +34,7 @@ export interface MediaItem extends StoredMedia {
   type?: string;
   prompt?: string;
   presetKey?: string;
+  metadata?: any; // Add metadata field for aspect ratio calculation
 }
 
 export interface MediaState {
