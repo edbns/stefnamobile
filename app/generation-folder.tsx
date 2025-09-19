@@ -569,11 +569,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     marginBottom: 6, // Add small margin between items
     borderRadius: 0, // No border radius to match website
+    aspectRatio: 1, // Force square for now to ensure display
   },
   mediaImage: {
     width: '100%',
-    height: 'auto', // Let height be determined by aspect ratio
-    aspectRatio: undefined, // Remove any forced aspect ratio
+    height: '100%', // Fill the container
+    resizeMode: 'cover', // Ensure image covers the container
   },
   deleteButton: {
     position: 'absolute',

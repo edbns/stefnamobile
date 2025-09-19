@@ -457,11 +457,10 @@ const styles = StyleSheet.create({
   },
   mediaImage: {
     width: '100%',
-    height: 'auto', // Let height be determined by aspect ratio
+    height: 200, // Fixed height to ensure images display
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
-    aspectRatio: undefined, // Remove any forced aspect ratio
   },
   mediaImageContent: {
     width: '100%',
