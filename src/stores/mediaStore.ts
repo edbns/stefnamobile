@@ -69,13 +69,17 @@ export const useMediaStore = create<MediaState>((set, get) => ({
       console.log('🌐 [MediaStore] Fetching user media from server...');
       console.log('🌐 [MediaStore] API URL:', config.apiUrl('getUserMedia'));
       console.log('🌐 [MediaStore] Token (first 20 chars):', token.substring(0, 20) + '...');
+      console.log('🌐 [MediaStore] User ID:', userId);
       
       const response: UserMediaResponse = await mediaService.getUserMedia(token);
 
       console.log('🌐 [MediaStore] Server response:', {
         hasError: !!response.error,
         mediaCount: response.media?.length || 0,
-        error: response.error
+        error: response.error,
+        total: response.total,
+        hasMore: response.hasMore,
+        sampleMedia: response.media?.slice(0, 2)
       });
 
       if (!response.error) {

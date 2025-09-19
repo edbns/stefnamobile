@@ -149,40 +149,18 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
       // Credits are handled automatically by the backend
       console.log('Generation completed successfully - credits handled by backend');
 
-      // Save generated media to local storage
+      // Don't save to local storage - the backend already saves it
+      // Just refresh the media store to pick up the new media from the server
       if (result.imageUrl) {
         try {
-          console.log('💾 [Background] Saving generated media to local storage:', result.imageUrl);
+          console.log('🔄 [Background] Refreshing media store to pick up new media from server');
           
-          // Download and save the generated image
-          const filename = `generated_${request.mode}_${Date.now()}.jpg`;
-          const savedMedia = await StorageService.saveGeneratedImage(
-            result.imageUrl,
-            filename,
-            jobId,
-            userId
-          );
+          // Refresh media from server instead of saving locally
+          await useMediaStore.getState().loadUserMedia();
           
-          // Update the saved media with cloud URL and cloud ID
-          const updatedMedia = {
-            ...savedMedia,
-            cloudUrl: result.imageUrl,
-            cloudId: extractCloudinaryPublicId(result.imageUrl), // Proper Cloudinary ID extraction
-            synced: true,
-            type: request.mode // Add the generation mode as the type field
-          };
-          
-          // Update local storage
-          await StorageService.updateMediaInStorage(updatedMedia, userId);
-          
-          // Update media store directly instead of reloading everything
-          const { media } = useMediaStore.getState();
-          const updatedMediaList = [...media, updatedMedia];
-          useMediaStore.setState({ media: updatedMediaList });
-          
-          console.log('✅ [Background] Media saved successfully to local storage');
-        } catch (saveError) {
-          console.error('❌ [Background] Failed to save media to local storage:', saveError);
+          console.log('✅ [Background] Media store refreshed from server');
+        } catch (refreshError) {
+          console.error('❌ [Background] Failed to refresh media store:', refreshError);
         }
       }
 

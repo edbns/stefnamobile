@@ -268,7 +268,7 @@ export default function ProfileScreen() {
   const settingsItems = [
     {
       iconName: 'award' as const,
-      title: 'Tokens',
+      title: 'Credits',
       subtitle: '',
       onPress: undefined, // Non-clickable - just display
       showCount: true, // Special flag to show count on the right
@@ -288,10 +288,11 @@ export default function ProfileScreen() {
       hasDropdown: true,
     },
     {
-      iconName: 'users' as const,
-      title: 'Community Guidelines',
+      iconName: 'trash-2' as const,
+      title: 'Delete Account',
       subtitle: '',
-      onPress: navigateToCommunityGuidelines,
+      onPress: handleDeleteAccount,
+      isDestructive: true,
     },
     {
       iconName: 'help-circle' as const,
@@ -322,10 +323,10 @@ export default function ProfileScreen() {
               disabled={!item.onPress}
             >
               <View style={styles.settingIcon}>
-                <Feather name={item.iconName} size={20} color="#ffffff" />
+                <Feather name={item.iconName} size={20} color={item.isDestructive ? "#ff4444" : "#ffffff"} />
               </View>
               <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>{item.title}</Text>
+                <Text style={[styles.settingTitle, item.isDestructive && styles.destructiveText]}>{item.title}</Text>
                 {item.subtitle && (
                   <Text style={styles.settingSubtitle}>{item.subtitle}</Text>
                 )}
@@ -343,7 +344,7 @@ export default function ProfileScreen() {
                     <Feather name="chevron-up" size={16} color="#ffffff" /> : 
                     <Feather name="chevron-down" size={16} color="#ffffff" />
                   ) : (
-                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                    <Feather name="chevron-right" size={16} color={item.isDestructive ? "#ff4444" : "#ffffff"} />
                   )}
                 </View>
               ) : null}
@@ -504,17 +505,6 @@ export default function ProfileScreen() {
           </View>
           <Feather name="chevron-right" size={16} color="#ffffff" />
         </TouchableOpacity>
-
-        {/* Delete Account Button */}
-        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
-          <View style={styles.deleteIcon}>
-            <Feather name="trash-2" size={20} color="#ff4444" />
-          </View>
-          <View style={styles.deleteContent}>
-            <Text style={styles.deleteText}>Delete Account</Text>
-          </View>
-          <Feather name="chevron-right" size={16} color="#ff4444" />
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Floating Back Button */}
@@ -588,6 +578,9 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 14,
     color: '#cccccc',
+  },
+  destructiveText: {
+    color: '#ff4444',
   },
   settingArrow: {
     marginLeft: 8,
