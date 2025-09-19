@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
-import { useGenerationStore } from '../src/stores/generationStore';
 import { Feather } from '@expo/vector-icons';
 import { StorageService } from '../src/services/storageService';
 import { navigateBack } from '../src/utils/navigation';
@@ -12,7 +11,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { balance, refreshBalance, initializeFromCache } = useCreditsStore();
-  const { jobQueue, loadJobHistory } = useGenerationStore();
 
   const [storageInfo, setStorageInfo] = useState({
     totalSize: 0,
@@ -22,7 +20,6 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadStorageInfo();
-    loadJobHistory();
     initializeFromCache();
     refreshBalance();
   }, [initializeFromCache, refreshBalance]);
@@ -85,6 +82,18 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleShareReferral = async () => {
+    const referralLink = `https://stefna.xyz?ref=${user?.id}`;
+    try {
+      await Share.share({
+        message: `Join me on Stefna! Use my referral link to get +10 credits: ${referralLink}`,
+        url: referralLink,
+      });
+    } catch (error) {
+      console.error('Failed to share:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -120,10 +129,20 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Generation History</Text>
-            <Text style={styles.historyText}>
-              {jobQueue.length} jobs in queue
-            </Text>
+            <Text style={styles.sectionTitle}>Invite Friends</Text>
+            <View style={styles.inviteInfo}>
+              <View style={styles.inviteCard}>
+                <Text style={styles.inviteTitle}>You Get</Text>
+                <Text style={styles.inviteText}>+10 credits after friend's first media</Text>
+              </View>
+              <View style={styles.inviteCard}>
+                <Text style={styles.inviteTitle}>Friend Gets</Text>
+                <Text style={styles.inviteText}>+10 credits on signup</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.inviteButton} onPress={handleShareReferral}>
+              <Text style={styles.inviteButtonText}>Share Referral Link</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -256,6 +275,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     padding: 16,
     borderRadius: 12,
+  },
+  inviteInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#1a1a1a',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  inviteCard: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  inviteTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  inviteText: {
+    fontSize: 12,
+    color: '#cccccc',
+    textAlign: 'center',
+  },
+  inviteButton: {
+    backgroundColor: '#ffffff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  inviteButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
   },
   communityButton: {
     backgroundColor: '#1a1a1a',
