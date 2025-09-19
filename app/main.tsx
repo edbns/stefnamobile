@@ -70,14 +70,18 @@ export default function MainScreen() {
     });
 
     const normalizeType = (item: any): string => {
-      const rawType = (item.type || '').toString().toLowerCase().replace(/-/g, '_');
-      if (rawType) return rawType;
+      // Use the actual media_type from the API first
+      if (item.type) {
+        return item.type.toLowerCase().replace(/-/g, '_');
+      }
+      
+      // Fallback to presetKey analysis if type is not available
       const key = (item.presetKey || '').toString().toLowerCase();
       if (key.startsWith('ghibli')) return 'ghibli_reaction';
       if (key.startsWith('unreal_reflection')) return 'unreal_reflection';
       if (key.startsWith('neo') || key.includes('glitch')) return 'neo_glitch';
       if (key.startsWith('parallel_self') || key.includes('parallel')) return 'parallel_self';
-      if (key.includes('edit')) return 'edit_photo';
+      if (key.includes('edit')) return 'edit';
       if (key.includes('custom')) return 'custom_prompt';
       return 'presets';
     };
@@ -95,8 +99,10 @@ export default function MainScreen() {
           return 'Parallel Self';
         case 'custom_prompt':
           return 'Custom';
-        case 'edit_photo':
+        case 'edit':
           return 'Studio';
+        case 'presets':
+          return 'Presets';
         default:
           return 'Presets';
       }
@@ -125,9 +131,13 @@ export default function MainScreen() {
       });
     });
     
-    const orderedTitles = ['All Media', 'Neo Tokyo Glitch', 'Unreal Reflection', 'Ghibli Reaction', 'Presets', 'Custom', 'Studio'];
-    const s = Object.keys(groups)
-      .sort((a, b) => orderedTitles.indexOf(a) - orderedTitles.indexOf(b))
+    // Sort folders dynamically - All Media first, then by count (most items first)
+    const orderedTitles = ['All Media'];
+    const otherFolders = Object.keys(groups)
+      .filter(title => title !== 'All Media')
+      .sort((a, b) => groups[b].length - groups[a].length); // Sort by count descending
+    
+    const s = [...orderedTitles, ...otherFolders]
       .map(title => ({ title, data: groups[title] }));
     
     console.log('📁 [MainScreen] Final folders:', {
@@ -353,7 +363,7 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: {
-    paddingTop: 20, // Reduced top margin since no floating footer
+    paddingTop: 20, // Reverted back to original - no extra margin on main gallery
     paddingBottom: 20, // Reduced bottom margin since we have bottom footer
     paddingHorizontal: 16, // Add horizontal padding for 2 columns
   },
