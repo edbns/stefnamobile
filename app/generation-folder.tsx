@@ -313,6 +313,19 @@ export default function GenerationFolderScreen() {
   const MediaItem = ({ item }: { item: any }) => {
     const isSelected = selectedItems.has(item.id);
     
+    // Calculate aspect ratio from metadata or use default
+    const getAspectRatio = (item: any) => {
+      if (item.metadata && typeof item.metadata === 'object') {
+        const metadata = typeof item.metadata === 'string' ? JSON.parse(item.metadata) : item.metadata;
+        if (metadata.width && metadata.height) {
+          return metadata.width / metadata.height;
+        }
+      }
+      return 1; // Default to square if no metadata
+    };
+    
+    const aspectRatio = getAspectRatio(item);
+    
     const handleDelete = () => {
       Alert.alert(
         'Delete Photo',
@@ -341,7 +354,7 @@ export default function GenerationFolderScreen() {
     
     return (
       <TouchableOpacity 
-        style={[styles.mediaItem, isSelected && styles.selectedItem]} 
+        style={[styles.mediaItem, isSelected && styles.selectedItem, { aspectRatio }]} 
         onPress={() => handleMediaPress(item)}
         onLongPress={() => handleLongPress(item)}
         delayLongPress={500}
@@ -481,7 +494,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
-    paddingTop: 60, // Add top margin to avoid clutter
+    paddingTop: 20, // Reduced top margin
   },
   titleContainer: {
     paddingHorizontal: 20,
@@ -545,12 +558,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
-    minHeight: 150, // Minimum height for consistency
-    maxHeight: 300, // Maximum height to prevent extremely tall images
+    marginBottom: 6, // Add small margin between items
   },
   mediaImage: {
     width: '100%',
-    height: '100%', // Let the image maintain its natural aspect ratio
+    height: '100%', // Fill the container with proper aspect ratio
   },
   deleteButton: {
     position: 'absolute',
