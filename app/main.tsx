@@ -216,6 +216,12 @@ export default function MainScreen() {
   // Component for folder items that can use hooks
   const FolderItem = ({ section }: { section: any }) => {
     const handleFolderPress = () => {
+      console.log('📁 [MainScreen] Navigating to folder:', {
+        title: section.title,
+        dataLength: section.data?.length || 0,
+        dataSample: section.data?.slice(0, 2),
+        stringifiedLength: JSON.stringify(section.data).length
+      });
       smoothNavigate.push('/generation-folder', { 
         folderName: section.title,
         folderData: JSON.stringify(section.data)

@@ -32,6 +32,8 @@ export default function GenerationFolderScreen() {
     folderName,
     folderDataLength: folderData?.length || 0,
     folderData: folderData?.slice(0, 2), // Show first 2 items for debugging
+    rawParams: params,
+    parsedSuccessfully: folderData?.length > 0
   });
   
   const [isSelectionMode, setIsSelectionMode] = useState(false);
