@@ -14,38 +14,15 @@ export default function VerifyScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
-  // Ensure screen stays visible when returning from background
+  // Simple focus effect without complex state management
   useFocusEffect(
     React.useCallback(() => {
-      // Re-focus the input when screen comes back into focus
-      const timer = setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
-      }, 200); // Increased delay to ensure screen is fully loaded
-      
-      return () => clearTimeout(timer);
+      // Simple refocus when screen comes into focus
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }, [])
   );
-
-  // Also handle app state changes
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active') {
-        // App came back to foreground, refocus input
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.focus();
-          }
-        }, 300);
-      }
-    };
-
-    const { AppState } = require('react-native');
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    
-    return () => subscription?.remove();
-  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -77,7 +54,7 @@ export default function VerifyScreen() {
 
       <KeyboardAvoidingView 
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         enabled={true}
       >
@@ -159,7 +136,7 @@ const styles = StyleSheet.create({
     color: '#fff', 
     textAlign: 'center', 
     letterSpacing: 2, 
-    marginBottom: 2, // Minimized space between keypad and button
+    marginBottom: 20, // Added space between input and button
     borderWidth: 1, 
     borderColor: '#333', 
     minHeight: 56 
