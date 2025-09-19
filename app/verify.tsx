@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 
 export default function VerifyScreen() {
@@ -8,10 +8,25 @@ export default function VerifyScreen() {
   const { email: emailParam } = useLocalSearchParams();
   const email = (emailParam as string) || '';
   const { login } = useAuthStore();
+  const inputRef = useRef<TextInput>(null);
 
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(60);
+
+  // Ensure screen stays visible when returning from background
+  useFocusEffect(
+    React.useCallback(() => {
+      // Re-focus the input when screen comes back into focus
+      const timer = setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }, [])
+  );
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -45,12 +60,14 @@ export default function VerifyScreen() {
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        enabled={true}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           bounces={false}
+          keyboardDismissMode="interactive"
         >
           <View style={styles.content}>
             {/* Logo */}
@@ -67,6 +84,7 @@ export default function VerifyScreen() {
             <Text style={styles.infoPill}>Please check your <Text style={styles.spamText}>Spam</Text> in case</Text>
 
             <TextInput
+              ref={inputRef}
               style={styles.input}
               value={otp}
               onChangeText={setOtp}
@@ -122,7 +140,7 @@ const styles = StyleSheet.create({
     color: '#fff', 
     textAlign: 'center', 
     letterSpacing: 2, 
-    marginBottom: 12, // Reduced from 20 to bring button closer to keypad
+    marginBottom: 6, // Further reduced to minimize space between keypad and button
     borderWidth: 1, 
     borderColor: '#333', 
     minHeight: 56 
