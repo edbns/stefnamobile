@@ -64,9 +64,9 @@ export default function MainScreen() {
   // Group media by mode/type
   useEffect(() => {
     console.log('📁 [MainScreen] Grouping media - START:', {
-      totalMedia: media?.length || 0,
+      totalMedia: Array.isArray(media) ? media.length : 0,
       isLoading: isLoading,
-      mediaTypes: media?.map(m => ({ type: m.type, presetKey: m.presetKey, prompt: m.prompt?.substring(0, 50) })) || [],
+      mediaTypes: Array.isArray(media) ? media.map(m => ({ type: m.type, presetKey: m.presetKey, prompt: m.prompt?.substring(0, 50) })) : [],
       media: media
     });
 
@@ -112,12 +112,13 @@ export default function MainScreen() {
     const groups: Record<string, any[]> = {};
     
     // Add "All Media" folder with all media
-    if (media && media.length > 0) {
+    if (media && Array.isArray(media) && media.length > 0) {
       groups['All Media'] = [...media]; // Copy all media for All Media folder
     }
     
     // Group media by mode/type for individual folders
-    for (const m of media || []) {
+    const mediaArray = Array.isArray(media) ? media : [];
+    for (const m of mediaArray) {
       const key = labelFor(m);
       if (!groups[key]) groups[key] = [];
       groups[key].push(m);
@@ -143,7 +144,7 @@ export default function MainScreen() {
     
     console.log('📁 [MainScreen] Final folders:', {
       folderCount: s.length,
-      folders: s.map(f => ({ title: f.title, count: f.data.length })),
+      folders: s.map(f => ({ title: f.title, count: Array.isArray(f.data) ? f.data.length : 0 })),
       sections: s
     });
     
@@ -221,7 +222,7 @@ export default function MainScreen() {
       });
     };
 
-    const coverImage = section.data[0];
+    const coverImage = Array.isArray(section.data) && section.data.length > 0 ? section.data[0] : null;
 
     return (
       <TouchableOpacity style={styles.folderItem} onPress={handleFolderPress}>
@@ -239,7 +240,7 @@ export default function MainScreen() {
           )}
           <View style={styles.folderOverlay}>
             <Text style={styles.folderTitleOverlay}>{section.title}</Text>
-            <Text style={styles.folderCountOverlay}>{section.data.length} photos</Text>
+            <Text style={styles.folderCountOverlay}>{Array.isArray(section.data) ? section.data.length : 0} photos</Text>
           </View>
         </View>
       </TouchableOpacity>
