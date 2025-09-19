@@ -446,15 +446,16 @@ const styles = StyleSheet.create({
   mediaItem: {
     width: '100%',
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: 0, // No border radius to match website
     overflow: 'hidden',
   },
   mediaImage: {
     width: '100%',
-    height: 200, // Fixed height to ensure images display
+    height: 'auto', // Let height be determined by aspect ratio
     backgroundColor: '#333333',
     justifyContent: 'center',
     alignItems: 'center',
+    aspectRatio: undefined, // Remove any forced aspect ratio
   },
   mediaImageContent: {
     width: '100%',

@@ -361,7 +361,7 @@ export default function GenerationFolderScreen() {
     
     return (
       <TouchableOpacity 
-        style={[styles.mediaItem, isSelected && styles.selectedItem, { aspectRatio }]} 
+        style={[styles.mediaItem, isSelected && styles.selectedItem]} 
         onPress={() => handleMediaPress(item)}
         onLongPress={() => handleLongPress(item)}
         delayLongPress={500}
@@ -561,15 +561,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mediaItem: {
-    width: '50%',
+    width: '48%', // Slightly less than 50% to allow for gaps
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
     marginBottom: 6, // Add small margin between items
+    borderRadius: 0, // No border radius to match website
   },
   mediaImage: {
     width: '100%',
-    height: '100%', // Fill the container with proper aspect ratio
+    height: 'auto', // Let height be determined by aspect ratio
+    aspectRatio: undefined, // Remove any forced aspect ratio
   },
   deleteButton: {
     position: 'absolute',
