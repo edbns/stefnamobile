@@ -133,16 +133,16 @@ export default function GenerationModes({
     return availablePresets.filter(preset => preset.isActive);
   };
 
-  // Define modes in website order: Custom, Edit (Studio), Presets, Unreal Reflection, Ghibli React, Neo Tokyo
-  const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'unreal-reflection', 'ghibli-reaction', 'neo-glitch'];
+  // Define modes in website order: Custom, Edit (Studio), Presets, Unreal Reflection, Ghibli React, Neo Tokyo, Parallel Self
+  const modes: GenerationMode[] = ['custom-prompt', 'edit-photo', 'presets', 'unreal-reflection', 'ghibli-reaction', 'neo-glitch', 'parallel-self'];
   
-  // Split into two rows of 3 modes each
-  const firstRow = modes.slice(0, 3);
-  const secondRow = modes.slice(3, 6);
+  // Split into two rows: first row has 4 modes, second row has 3 modes
+  const firstRow = modes.slice(0, 4);
+  const secondRow = modes.slice(4, 7);
 
   return (
     <View style={styles.container}>
-      {/* Mode Selection - 2 rows of 3 modes each */}
+      {/* Mode Selection - first row has 4 modes, second row has 3 modes */}
       <View style={styles.modesGrid}>
         {/* First Row */}
         <View style={styles.modesRow}>
@@ -371,7 +371,33 @@ export default function GenerationModes({
               <View style={styles.presetRow}>
                 <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('neo_tokyo_scanlines')}>
                   <Text style={styles.presetText}>Scanline FX</Text>
-      </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {selectedMode === 'parallel-self' && (
+          <View style={styles.presetContainer}>
+            <View style={styles.presetGrid}>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('parallel_self_rain_dancer')}>
+                  <Text style={styles.presetText}>Rain Dancer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('parallel_self_cyberpunk')}>
+                  <Text style={styles.presetText}>Cyberpunk</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('parallel_self_vintage')}>
+                  <Text style={styles.presetText}>Vintage</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.presetRow}>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('parallel_self_fantasy')}>
+                  <Text style={styles.presetText}>Fantasy</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.presetButton} onPress={() => handlePresetClick('parallel_self_minimalist')}>
+                  <Text style={styles.presetText}>Minimalist</Text>
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -383,7 +409,9 @@ export default function GenerationModes({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
+    justifyContent: 'center',
   },
   modesGrid: {
     marginBottom: 16,
