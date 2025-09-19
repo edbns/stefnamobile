@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { smoothNavigate } from '../utils/navigation';
+import { mapErrorToUserMessage } from '../utils/errorMessages';
 import { Feather } from '@expo/vector-icons';
 
 interface ProcessingScreenProps {
@@ -202,27 +203,9 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
   const getErrorMessage = () => {
     if (!error) return '';
     
-    // Map technical errors to user-friendly messages
-    if (error.includes('INSUFFICIENT_CREDITS') || error.includes('Insufficient credits')) {
-      return 'No Credits\nWait for daily reset or upgrade your plan.';
-    }
-    if (error.includes('timeout') || error.includes('timed out')) {
-      return 'Request Timed Out\nTry again with a smaller image.';
-    }
-    if (error.includes('Network') || error.includes('Failed to fetch')) {
-      return 'Network Error\nCheck your internet connection.';
-    }
-    if (error.includes('Server error') || error.includes('500')) {
-      return 'Server Error\nTry again in a few minutes.';
-    }
-    if (error.includes('Unauthorized') || error.includes('401')) {
-      return 'Authentication Error\nPlease sign in again.';
-    }
-    if (error.includes('File too large') || error.includes('Invalid file')) {
-      return 'Upload Error\nTry a different image.';
-    }
-    
-    return 'Something went wrong\nPlease try again.';
+    // Use the same error mapping as the website
+    const { title, message } = mapErrorToUserMessage(error);
+    return `${title}\n${message}`;
   };
 
   if (!visible) return null;
