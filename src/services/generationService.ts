@@ -511,11 +511,15 @@ class GenerationService {
 
     } catch (error) {
       console.error('❌ [Mobile Generation] Fallback status check failed:', error);
-
+      
+      // Return a processing status instead of failed to prevent polling from stopping
+      // This allows the main polling to continue even if fallback fails
       return {
-        success: false,
-        status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        success: true,
+        jobId: runId,
+        runId: runId,
+        status: 'processing',
+        error: undefined,
         type: mode
       };
     }

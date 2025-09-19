@@ -76,7 +76,8 @@ export default function MainScreen() {
       if (key.startsWith('ghibli')) return 'ghibli_reaction';
       if (key.startsWith('unreal_reflection')) return 'unreal_reflection';
       if (key.startsWith('neo') || key.includes('glitch')) return 'neo_glitch';
-      if (key.includes('edit')) return 'edit';
+      if (key.startsWith('parallel_self') || key.includes('parallel')) return 'parallel_self';
+      if (key.includes('edit')) return 'edit_photo';
       if (key.includes('custom')) return 'custom_prompt';
       return 'presets';
     };
@@ -90,9 +91,11 @@ export default function MainScreen() {
           return 'Unreal Reflection';
         case 'ghibli_reaction':
           return 'Ghibli Reaction';
+        case 'parallel_self':
+          return 'Parallel Self';
         case 'custom_prompt':
           return 'Custom';
-        case 'edit':
+        case 'edit_photo':
           return 'Studio';
         default:
           return 'Presets';

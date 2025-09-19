@@ -186,6 +186,11 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
         }
       }
 
+      // Clear completed jobs to free up memory and prevent accumulation
+      setTimeout(() => {
+        useGenerationStore.getState().clearCompletedJobs();
+      }, 5000); // Clear after 5 seconds to allow UI to show completion
+      
       // Completion handled by ProcessingScreen - no notification needed
     } else {
       // Credits are handled automatically by the backend
@@ -201,6 +206,11 @@ async function processGenerationInBackground(jobId: string, request: GenerationR
           } : job
         )
       }));
+
+      // Clear failed jobs after a delay to prevent accumulation
+      setTimeout(() => {
+        useGenerationStore.getState().clearCompletedJobs();
+      }, 10000); // Clear after 10 seconds for failed jobs
 
       // Failure handled by ProcessingScreen - no notification needed
     }
