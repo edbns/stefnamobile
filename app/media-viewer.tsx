@@ -63,6 +63,8 @@ export default function MediaViewerScreen() {
 
   // Debug logging
   console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
+  console.log('MediaViewer currentImage:', currentImage);
+  console.log('MediaViewer currentImage keys:', currentImage ? Object.keys(currentImage) : 'no currentImage');
 
   const handleClose = () => {
     navigateBack.toMain();
@@ -93,7 +95,7 @@ export default function MediaViewerScreen() {
     try {
       setIsSharing(true);
       
-      const imageUri = currentImage.cloudUrl || currentImage.localUri;
+      const imageUri = currentImage.cloudUrl || currentImage.localUri || mediaUri;
       
       // Download the image first to get a local file
       const fileName = `stefna_share_${Date.now()}_${currentImage.id}.jpg`;
@@ -141,7 +143,7 @@ export default function MediaViewerScreen() {
       }
 
       // Download the image first
-      const imageUri = currentImage.cloudUrl || currentImage.localUri;
+      const imageUri = currentImage.cloudUrl || currentImage.localUri || mediaUri;
       const fileName = `stefna_${Date.now()}_${currentImage.id}.jpg`;
       const localPath = FileSystem.cacheDirectory + fileName;
       
@@ -177,7 +179,7 @@ export default function MediaViewerScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Image
-            source={{ uri: currentImage.cloudUrl || currentImage.localUri }}
+            source={{ uri: currentImage.cloudUrl || currentImage.localUri || mediaUri }}
             style={styles.image}
             resizeMode="contain"
           />
