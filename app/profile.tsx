@@ -27,9 +27,27 @@ export default function ProfileScreen() {
   const loadStorageInfo = async () => {
     try {
       const info = await StorageService.getStorageInfo();
-      setStorageInfo(info);
+      if (info && typeof info === 'object') {
+        setStorageInfo({
+          totalSize: info.totalSize || 0,
+          mediaCount: info.mediaCount || 0,
+          syncedCount: info.syncedCount || 0,
+        });
+      } else {
+        console.warn('StorageService.getStorageInfo() returned invalid data:', info);
+        setStorageInfo({
+          totalSize: 0,
+          mediaCount: 0,
+          syncedCount: 0,
+        });
+      }
     } catch (error) {
       console.error('Load storage info error:', error);
+      setStorageInfo({
+        totalSize: 0,
+        mediaCount: 0,
+        syncedCount: 0,
+      });
     }
   };
 
@@ -83,7 +101,12 @@ export default function ProfileScreen() {
   };
 
   const handleShareReferral = async () => {
-    const referralLink = `https://stefna.xyz?ref=${user?.id}`;
+    if (!user?.id) {
+      Alert.alert('Error', 'User ID not available. Please try again.');
+      return;
+    }
+    
+    const referralLink = `https://stefna.xyz?ref=${user.id}`;
     try {
       await Share.share({
         message: `Join me on Stefna! Use my referral link to get +10 credits: ${referralLink}`,
@@ -104,7 +127,7 @@ export default function ProfileScreen() {
         <View style={styles.content}>
           <View style={styles.userInfo}>
             <Text style={styles.emailText}>{user?.email}</Text>
-            <Text style={styles.creditsText}>Credits: {balance}</Text>
+            <Text style={styles.creditsText}>Credits: {balance || 0}</Text>
           </View>
 
           <View style={styles.section}>
