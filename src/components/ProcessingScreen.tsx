@@ -30,8 +30,7 @@ const PROCESSING_STEPS = [
   'Locking frame in high resolution…',
   'Finalizing transformation pipeline…',
   'Preparing secure output…',
-  'Almost there…',
-  'Done. Your reflection is ready.'
+  'Almost there…'
 ];
 
 export default function ProcessingScreen({ visible, generatedImageUrl, error, onViewMedia, onClose, onRetry }: ProcessingScreenProps) {
@@ -182,7 +181,17 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
   };
 
   const handleViewMedia = () => {
-    onViewMedia();
+    if (generatedImageUrl) {
+      // Navigate directly to media viewer with the generated image
+      router.push({
+        pathname: '/media-viewer',
+        params: { 
+          mediaUri: generatedImageUrl,
+          mediaId: 'generated',
+          mediaType: 'image'
+        }
+      });
+    }
     onClose();
   };
 
@@ -341,7 +350,7 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
                 onPress={handleViewMedia}
               >
                 <Feather name="eye" size={20} color="#000000" />
-                <Text style={styles.viewButtonText}>View Your Reflection</Text>
+                <Text style={styles.viewButtonText}>View Media</Text>
               </TouchableOpacity>
             ) : hasError ? (
               <View style={styles.errorActions}>
@@ -443,6 +452,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     width: '100%',
     alignItems: 'center',
+    marginBottom: 60, // Increased margin to move progress bar up
   },
   progressBar: {
     width: '100%',
@@ -464,7 +474,7 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     alignItems: 'center',
-    marginTop: 40,
+    marginTop: 20, // Reduced margin to bring button closer to progress bar
   },
   viewButton: {
     flexDirection: 'row',
