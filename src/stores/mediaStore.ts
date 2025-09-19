@@ -86,11 +86,11 @@ export const useMediaStore = create<MediaState>((set, get) => ({
         // Transform cloud media to local format and merge with local storage
         const cloudMedia: MediaItem[] = (response.media || []).map((item: any) => ({
           id: item.id || `cloud_${Date.now()}_${Math.random()}`,
-          localUri: item.url || item.finalUrl || '',
-          cloudUrl: item.url || item.finalUrl,
+          localUri: item.finalUrl || item.url || '', // Use finalUrl first (from API)
+          cloudUrl: item.finalUrl || item.url, // Use finalUrl first (from API)
           cloudId: item.id,
           filename: `cloud_${item.id}.jpg`,
-          createdAt: new Date(item.timestamp || item.createdAt || Date.now()),
+          createdAt: new Date(item.createdAt || item.timestamp || Date.now()),
           synced: true,
           generationJobId: item.runId || item.id,
           type: item.type,

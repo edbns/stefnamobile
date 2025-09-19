@@ -98,7 +98,7 @@ export default function EditScreen() {
 
       {/* Floating Back Button */}
       <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.iconBackButton} onPress={() => router.push('/main')}>
+        <TouchableOpacity style={styles.iconBackButton} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
       </View>
