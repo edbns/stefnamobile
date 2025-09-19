@@ -302,17 +302,17 @@ export default function MainScreen() {
       {/* Bottom Footer */}
       <View style={styles.bottomFooter}>
         <TouchableOpacity style={styles.footerButton} onPress={handleProfilePress}>
-          <Feather name="user" size={24} color="#ffffff" />
+          <Feather name="user" size={20} color="#ffffff" />
           <Text style={styles.footerButtonText}>Profile</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.footerButton} onPress={handleUploadPress}>
-          <Feather name="plus" size={24} color="#ffffff" />
+          <Feather name="plus" size={20} color="#ffffff" />
           <Text style={styles.footerButtonText}>Upload</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.footerButton} onPress={handleMediaPress}>
-          <Feather name="image" size={24} color="#ffffff" />
+          <Feather name="image" size={20} color="#ffffff" />
           <Text style={styles.footerButtonText}>Gallery</Text>
         </TouchableOpacity>
       </View>
@@ -496,9 +496,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingVertical: 16,
+    paddingVertical: 8, // Reduced from 16
     paddingHorizontal: 20,
-    paddingBottom: 34, // Account for safe area
+    paddingBottom: 20, // Reduced from 34
     borderTopWidth: 1,
     borderTopColor: '#333333',
   },
@@ -508,9 +508,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerButtonText: {
-    fontSize: 12,
+    fontSize: 11, // Reduced from 12
     color: '#ffffff',
-    marginTop: 4,
+    marginTop: 2, // Reduced from 4
     fontWeight: '500',
   },
 });
