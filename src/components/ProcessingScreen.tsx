@@ -51,10 +51,13 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
   useEffect(() => {
     if (visible) {
       if (error) {
+        console.log('[ProcessingScreen] Error detected:', error);
         setHasError(true);
         setIsComplete(false);
         setShowImage(false);
+        // Don't start processing when there's an error
       } else if (generatedImageUrl) {
+        console.log('[ProcessingScreen] Success - generated image available:', generatedImageUrl);
         setHasError(false);
         setIsComplete(true);
         setShowImage(true);
@@ -72,6 +75,7 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
           useNativeDriver: true,
         }).start();
       } else {
+        console.log('[ProcessingScreen] Starting processing...');
         startProcessing();
       }
     } else {
@@ -326,34 +330,49 @@ export default function ProcessingScreen({ visible, generatedImageUrl, error, on
               }
             ]}
           >
-            {isComplete && !hasError ? (
-              <TouchableOpacity 
-                style={styles.viewButton}
-                onPress={handleViewMedia}
-              >
-                <Feather name="eye" size={20} color="#000000" />
-                <Text style={styles.viewButtonText}>View Media</Text>
-              </TouchableOpacity>
-            ) : hasError ? (
-              <View style={styles.errorActions}>
-                {onRetry && (
+            {(() => {
+              console.log('[ProcessingScreen] Action buttons state:', { isComplete, hasError, error, generatedImageUrl });
+              
+              // Show View Media button only if we have a successful generation (image + no error)
+              if (isComplete && !hasError && generatedImageUrl) {
+                return (
                   <TouchableOpacity 
-                    style={styles.retryButton}
-                    onPress={handleRetry}
+                    style={styles.viewButton}
+                    onPress={handleViewMedia}
                   >
-                    <Feather name="refresh-cw" size={20} color="#000000" />
-                    <Text style={styles.retryButtonText}>Try Again</Text>
+                    <Feather name="eye" size={20} color="#000000" />
+                    <Text style={styles.viewButtonText}>View Media</Text>
                   </TouchableOpacity>
-                )}
-                <TouchableOpacity 
-                  style={styles.closeErrorButton}
-                  onPress={onClose}
-                >
-                  <Feather name="x" size={20} color="#ffffff" />
-                  <Text style={styles.closeErrorButtonText}>Close</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
+                );
+              }
+              
+              // Show error actions if there's an error
+              if (hasError && error) {
+                return (
+                  <View style={styles.errorActions}>
+                    {onRetry && (
+                      <TouchableOpacity 
+                        style={styles.retryButton}
+                        onPress={handleRetry}
+                      >
+                        <Feather name="refresh-cw" size={20} color="#000000" />
+                        <Text style={styles.retryButtonText}>Try Again</Text>
+                      </TouchableOpacity>
+                    )}
+                    <TouchableOpacity 
+                      style={styles.closeErrorButton}
+                      onPress={onClose}
+                    >
+                      <Feather name="x" size={20} color="#ffffff" />
+                      <Text style={styles.closeErrorButtonText}>Close</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
+              
+              // No action buttons if neither condition is met
+              return null;
+            })()}
           </Animated.View>
         )}
       </View>

@@ -37,6 +37,9 @@ export default function ProfileScreen() {
   // Legal dropdown state
   const [showLegalDropdown, setShowLegalDropdown] = useState(false);
   
+  // Community dropdown state
+  const [showCommunityDropdown, setShowCommunityDropdown] = useState(false);
+  
   // Referral stats state
   const [referralStats, setReferralStats] = useState({
     invites: 0,
@@ -330,9 +333,6 @@ export default function ProfileScreen() {
     router.push('/terms');
   };
 
-  const navigateToCookies = () => {
-    router.push('/cookies');
-  };
 
   const settingsItems = [
     {
@@ -361,6 +361,13 @@ export default function ProfileScreen() {
       title: 'Help Center',
       subtitle: '',
       onPress: navigateToHelpCenter,
+    },
+    {
+      iconName: 'users' as const,
+      title: 'Community',
+      subtitle: '',
+      onPress: () => setShowCommunityDropdown(!showCommunityDropdown),
+      hasDropdown: true,
     },
     {
       iconName: 'file-text' as const,
@@ -407,6 +414,7 @@ export default function ProfileScreen() {
                   {item.hasDropdown ? (
                     (item.title === 'Invite Friends' ? showInviteDropdown : 
                      item.title === 'Change Email' ? showChangeEmailDropdown : 
+                     item.title === 'Community' ? showCommunityDropdown :
                      item.title === 'Legal' ? showLegalDropdown : false) ? 
                     <Feather name="chevron-up" size={16} color="#ffffff" /> : 
                     <Feather name="chevron-down" size={16} color="#ffffff" />
@@ -548,6 +556,45 @@ export default function ProfileScreen() {
               </View>
             )}
 
+            {/* Community Dropdown */}
+            {item.hasDropdown && item.title === 'Community' && showCommunityDropdown && (
+              <View style={styles.inviteDropdown}>
+                <View style={styles.communityContainer}>
+                  <TouchableOpacity 
+                    style={styles.communityItem}
+                    onPress={() => {
+                      // Navigate to community guidelines or external link
+                      Alert.alert('Community', 'Community features coming soon!');
+                    }}
+                  >
+                    <View style={styles.communityIcon}>
+                      <Feather name="users" size={20} color="#ffffff" />
+                    </View>
+                    <View style={styles.communityContent}>
+                      <Text style={styles.communityTitle}>Community Guidelines</Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.communityItem}
+                    onPress={() => {
+                      // Navigate to share creations or external link
+                      Alert.alert('Share', 'Share your creations coming soon!');
+                    }}
+                  >
+                    <View style={styles.communityIcon}>
+                      <Feather name="share-2" size={20} color="#ffffff" />
+                    </View>
+                    <View style={styles.communityContent}>
+                      <Text style={styles.communityTitle}>Share Your Creations</Text>
+                    </View>
+                    <Feather name="chevron-right" size={16} color="#ffffff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             {/* Legal Dropdown */}
             {item.hasDropdown && item.title === 'Legal' && showLegalDropdown && (
               <View style={styles.inviteDropdown}>
@@ -574,19 +621,6 @@ export default function ProfileScreen() {
                     </View>
                     <View style={styles.legalContent}>
                       <Text style={styles.legalTitle}>Privacy Policy</Text>
-                    </View>
-                    <Feather name="chevron-right" size={16} color="#ffffff" />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={styles.legalItem}
-                    onPress={navigateToCookies}
-                  >
-                    <View style={styles.legalIcon}>
-                      <Feather name="shield" size={20} color="#ffffff" />
-                    </View>
-                    <View style={styles.legalContent}>
-                      <Text style={styles.legalTitle}>Cookies Policy</Text>
                     </View>
                     <Feather name="chevron-right" size={16} color="#ffffff" />
                   </TouchableOpacity>
@@ -856,6 +890,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   legalTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#ffffff',
+  },
+  communityContainer: {
+    paddingVertical: 8,
+  },
+  communityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  communityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  communityContent: {
+    flex: 1,
+  },
+  communityTitle: {
     fontSize: 16,
     fontWeight: '500',
     color: '#ffffff',
