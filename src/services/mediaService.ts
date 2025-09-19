@@ -43,12 +43,12 @@ export const mediaService = {
     const data = await response.json();
 
     if (!response.ok) {
-      return {
-        success: false,
-        deletedId: request.mediaId,
-        deletedFromTable: '',
-        error: data.error || 'Failed to delete media',
-      };
+        return {
+          success: false,
+          deletedId: request.mediaId,
+          deletedFromTable: '',
+          error: data.error || `Failed to delete media (${response.status})`,
+        };
     }
 
     return {
@@ -76,7 +76,7 @@ export const mediaService = {
         console.error('API request failed:', response.status, textResponse);
         return {
           media: [],
-          error: `API request failed with status ${response.status}`,
+          error: `Failed to load media (${response.status})`,
         };
       }
 

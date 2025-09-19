@@ -28,7 +28,7 @@ export const config = {
   APP_VERSION: '1.0.0',
 
   // Feature flags
-  ENABLE_OFFLINE_MODE: true,
+  ENABLE_OFFLINE_MODE: false, // Disabled - incomplete implementation
   ENABLE_PUSH_NOTIFICATIONS: true, // ✅ Implemented - Push notifications system ready
 
   // Generation settings

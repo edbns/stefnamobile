@@ -151,7 +151,7 @@ class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      const response = await fetch(config.apiUrl('unified-generate'), {
+      const response = await fetch(config.apiUrl('unified-generate-background'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -280,11 +280,12 @@ class GenerationService {
    * Based on website's SimpleGenerationService.pollForCompletion()
    */
   private async pollForCompletion(runId: string, mode: GenerationMode): Promise<GenerationResult> {
-    const maxAttempts = 72; // 6 minutes with 5-second intervals (increased for longer generations)
-    const pollInterval = 5000; // 5 seconds
+    const maxAttempts = 30; // Reduced from 72 - exponential backoff makes this more efficient
+    const baseInterval = 2000; // Start with 2 seconds
+    const maxInterval = 10000; // Cap at 10 seconds
     const startTime = Date.now()
     
-    console.log(`[Mobile Generation] Starting intelligent polling for runId: ${runId}`);
+    console.log(`[Mobile Generation] Starting exponential backoff polling for runId: ${runId}`);
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -321,18 +322,29 @@ class GenerationService {
           return statusResult;
         }
         
-        // Still processing, wait before next poll
+        // Still processing, wait before next poll with exponential backoff
         if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          const interval = Math.min(baseInterval * Math.pow(1.5, attempt - 1), maxInterval);
+          console.log(`[Mobile Generation] Still processing, waiting ${interval}ms before next poll...`);
+          await new Promise(resolve => setTimeout(resolve, interval));
         }
         
       } catch (error) {
-        console.warn(`⚠️ [Mobile Generation] Polling attempt ${attempt} failed:`, error);
+        console.error(`❌ [Mobile Generation] Polling attempt ${attempt} failed:`, error);
         
-        // Don't fail immediately on polling errors, continue trying
-        if (attempt < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, pollInterval));
+        // If this is the last attempt, return the error
+        if (attempt === maxAttempts) {
+          return {
+            success: false,
+            status: 'failed',
+            error: error instanceof Error ? error.message : 'Polling failed',
+            type: mode
+          };
         }
+        
+        // Wait before retrying on error with exponential backoff
+        const interval = Math.min(baseInterval * Math.pow(1.5, attempt - 1), maxInterval);
+        await new Promise(resolve => setTimeout(resolve, interval));
       }
     }
     
@@ -442,17 +454,8 @@ class GenerationService {
       const token = await AsyncStorage.getItem('auth_token');
       if (!token) throw new Error('No auth token found');
 
-      // Get user ID from token
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const userId = payload.userId;
-      
-      if (!userId) {
-        console.error('❌ [Mobile Generation] No user ID available for polling')
-        throw new Error('User not authenticated')
-      }
-      
-      // Use getUserMedia as fallback
-      const response = await fetch(config.apiUrl(`getUserMedia?userId=${userId}&limit=50`), {
+      // Use getUserMedia as fallback without userId parameter - backend will extract from JWT
+      const response = await fetch(config.apiUrl('getUserMedia'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

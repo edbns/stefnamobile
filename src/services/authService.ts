@@ -36,7 +36,7 @@ export class AuthService {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || 'Failed to send OTP'
+          error: data.error || `Failed to send OTP (${response.status})`
         };
       }
 
@@ -87,14 +87,15 @@ export class AuthService {
         console.error('❌ Non-JSON response from verify-otp:', textResponse);
         return {
           success: false,
-          error: 'Server error. Please try again.'
+          error: `Server error (${response.status}). Please try again.`
         };
       }
 
       const data = await response.json();
       console.log('📊 [Mobile Auth] Response data:', { 
-        success: data.success || !!data.token,
+        success: data.success || !!data.token || !!data.accessToken,
         hasToken: !!data.token,
+        hasAccessToken: !!data.accessToken,
         hasUser: !!data.user,
         error: data.error,
         fullResponse: data // Log the full response for debugging
@@ -108,8 +109,14 @@ export class AuthService {
       }
 
       // Check if we have the required data - handle different response formats
-      let token = data.token || data.access_token || data.jwt;
+      let token = data.token || data.accessToken || data.access_token || data.jwt;
       let user = data.user || data.userData || data.profile;
+
+      console.log('🔍 [Mobile Auth] Token extraction:', {
+        foundToken: !!token,
+        tokenSource: data.token ? 'token' : data.accessToken ? 'accessToken' : data.access_token ? 'access_token' : data.jwt ? 'jwt' : 'none',
+        tokenLength: token ? token.length : 0
+      });
 
       if (!token) {
         console.error('❌ [Mobile Auth] No token in response:', data);
