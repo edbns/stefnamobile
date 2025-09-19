@@ -481,6 +481,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
+    paddingTop: 60, // Add top margin to avoid clutter
   },
   titleContainer: {
     paddingHorizontal: 20,
@@ -544,10 +545,12 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     backgroundColor: '#1a1a1a',
+    minHeight: 150, // Minimum height for consistency
+    maxHeight: 300, // Maximum height to prevent extremely tall images
   },
   mediaImage: {
     width: '100%',
-    aspectRatio: 1, // Square images
+    height: '100%', // Let the image maintain its natural aspect ratio
   },
   deleteButton: {
     position: 'absolute',

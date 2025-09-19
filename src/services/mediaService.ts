@@ -18,6 +18,8 @@ export interface DeleteMediaResponse {
 
 export interface UserMediaResponse {
   media: any[];
+  total?: number;
+  hasMore?: boolean;
   error?: string;
 }
 
@@ -59,10 +61,18 @@ export const mediaService = {
   },
 
   // Get user's media from cloud (userId extracted from JWT by backend)
-  async getUserMedia(token: string, type?: 'photo' | 'video'): Promise<UserMediaResponse> {
+  async getUserMedia(token: string, type?: 'photo' | 'video', limit?: number, offset?: number): Promise<UserMediaResponse> {
     try {
+      // Build query parameters for pagination
+      const params = new URLSearchParams();
+      if (limit) params.append('limit', limit.toString());
+      if (offset) params.append('offset', offset.toString());
+      if (type) params.append('type', type);
+      
+      const url = params.toString() ? `${config.apiUrl('getUserMedia')}?${params.toString()}` : config.apiUrl('getUserMedia');
+      
       // Don't pass userId - backend will extract from JWT token
-      const response = await fetch(config.apiUrl('getUserMedia'), {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -94,9 +104,11 @@ export const mediaService = {
       const data = await response.json();
 
       // Backend returns { success: true, items: [...], total: count, hasMore: boolean }
-      // Transform to expected format { media: [...] }
+      // Transform to expected format with pagination info
       return {
         media: data.items || [],
+        total: data.total,
+        hasMore: data.hasMore,
       };
     } catch (error) {
       // Don't log authentication errors - they're expected during logout
