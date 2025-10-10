@@ -338,13 +338,9 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   promptContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: COLORS.background,
     padding: SPACING.sm,
-    zIndex: 20,
+    marginTop: 'auto', // Push to bottom naturally
   },
   orText: {
     textAlign: 'center',

@@ -5,9 +5,13 @@ import {
   Alert,
   SafeAreaView,
   StatusBar,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COLORS } from '../src/constants/colors';
+import { COLORS, SPACING } from '../src/constants/colors';
+import { X } from 'lucide-react-native';
 import UnifiedComposer from '../src/components/UnifiedComposer';
 import { ImagePickerService } from '../src/services/imagePickerService';
 import { GenerationService } from '../src/services/generationService';
@@ -97,13 +101,28 @@ export default function ComposerScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      <UnifiedComposer
-        selectedImage={selectedImage}
-        onClearImage={handleClearImage}
-        onUploadPress={handleUploadPress}
-        onGenerate={handleGenerate}
-        isGenerating={isGenerating}
-      />
+      {/* Back Button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        activeOpacity={0.8}
+      >
+        <X size={24} color={COLORS.text} />
+      </TouchableOpacity>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
+        <UnifiedComposer
+          selectedImage={selectedImage}
+          onClearImage={handleClearImage}
+          onUploadPress={handleUploadPress}
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -112,6 +131,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 10 : 10,
+    left: SPACING.lg,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  keyboardView: {
+    flex: 1,
   },
 });
 

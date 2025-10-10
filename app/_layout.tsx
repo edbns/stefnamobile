@@ -28,7 +28,7 @@ export default function Layout() {
   // Global auth guard: redirect unauthenticated users away from protected routes
   useEffect(() => {
     if (isLoading) return;
-    const publicRoutes = ['/index', '/', '/welcome', '/auth', '/verify'];
+    const publicRoutes = ['/index', '/', '/welcome', '/auth', '/verify', '/splash'];
     const isPublic = publicRoutes.includes(pathname || '/');
     if (!isAuthenticated && !isPublic) {
       router.replace('/welcome');

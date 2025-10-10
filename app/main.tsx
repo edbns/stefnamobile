@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -12,7 +12,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import { useMediaStore } from '../src/stores/mediaStore';
 import { useCreditsStore } from '../src/stores/creditsStore';
@@ -38,13 +38,16 @@ export default function MainScreen() {
     gen.status === 'pending' || gen.status === 'processing'
   );
 
-  // Load user media on mount
-  useEffect(() => {
-    loadUserMedia();
-    if (user?.id) {
-      refreshBalance();
-    }
-  }, [user?.id]);
+  // Load data on mount and when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      console.log('📱 Main screen focused - loading data...');
+      loadUserMedia();
+      if (user?.id) {
+        refreshBalance();
+      }
+    }, [user?.id, loadUserMedia, refreshBalance])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -147,7 +150,7 @@ export default function MainScreen() {
         <FlatList
           data={allItems}
           renderItem={({ item, index }) => 
-            item.isPlaceholder 
+            'isPlaceholder' in item && item.isPlaceholder
               ? renderGeneratingPlaceholder({ index })
               : renderMediaItem({ item, index })
           }
