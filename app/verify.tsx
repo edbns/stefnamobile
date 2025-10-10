@@ -1,166 +1,368 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView, Image } from 'react-native';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ScrollView,
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
+import { AuthService } from '../src/services/authService';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../src/constants/colors';
+import { ArrowRight, ArrowLeft } from 'lucide-react-native';
 
 export default function VerifyScreen() {
   const router = useRouter();
-  const { email: emailParam } = useLocalSearchParams();
-  const email = (emailParam as string) || '';
+  const params = useLocalSearchParams();
   const { login } = useAuthStore();
-  const inputRef = useRef<TextInput>(null);
-
+  
+  const email = (params.email as string) || '';
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [resendTimer, setResendTimer] = useState(60);
 
-  // Simple focus effect without complex state management
-  useFocusEffect(
-    React.useCallback(() => {
-      // Simple refocus when screen comes into focus
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, [])
-  );
-
+  // Countdown timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0) timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [countdown]);
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
-  const handleVerify = async () => {
-    if (otp.length !== 6) return;
-    setIsVerifying(true);
-    const ok = await login(email, otp);
-    setIsVerifying(false);
-    if (ok) router.replace('/main');
-  };
-
+  // Auto-verify when 6 digits entered
   useEffect(() => {
-    if (otp.length === 6 && !isVerifying) handleVerify();
+    if (otp.length === 6 && !isVerifying) {
+      handleVerifyOTP(otp);
+    }
   }, [otp]);
 
+  const handleVerifyOTP = async (code: string) => {
+    setIsVerifying(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const result = await AuthService.verifyOTP(email, code);
+      
+      if (result.success) {
+        setSuccess('Login successful!');
+        // Store auth and navigate
+        await login(result.token!, result.user!);
+        router.replace('/main');
+      } else {
+        setError(result.error || 'Invalid code');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Verification failed');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+
+    setIsResending(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await AuthService.requestOTP(email);
+      setSuccess('New login code sent!');
+      setOtp(''); // Clear OTP input
+      setResendTimer(60); // Restart timer
+    } catch (err: any) {
+      setError(err.message || 'Failed to resend code');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  const formatCountdown = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Back to Email Button */}
-      <TouchableOpacity 
-        style={styles.backToEmailButton} 
-        onPress={() => router.push({ pathname: '/auth', params: { email } })}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.backToEmailButtonText}>← Back to Email</Text>
-      </TouchableOpacity>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Enter Login Code</Text>
+          <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
+          <Text style={styles.hint}>No code? Check your spam folder</Text>
+        </View>
 
-      <KeyboardAvoidingView 
-        style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-        enabled={true}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          keyboardDismissMode="interactive"
-        >
-          <View style={styles.content}>
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image 
-                source={require('../assets/logo.png')} 
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-            
-            <Text style={styles.title}>Enter Login Code</Text>
-            <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
-            <Text style={styles.infoPill}>Please check your <Text style={styles.spamText}>Spam</Text> in case</Text>
-
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          {/* OTP Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Login Code</Text>
             <TextInput
-              ref={inputRef}
-              style={styles.input}
+              style={styles.otpInput}
               value={otp}
-              onChangeText={setOtp}
+              onChangeText={(text) => {
+                const cleaned = text.replace(/\D/g, '').slice(0, 6);
+                setOtp(cleaned);
+                if (cleaned.length > 0) {
+                  setError('');
+                  setSuccess('');
+                }
+              }}
               placeholder="Enter 6-digit code"
-              placeholderTextColor="#666"
-              keyboardType="numeric"
+              placeholderTextColor={COLORS.placeholder}
+              keyboardType="number-pad"
               maxLength={6}
-              autoFocus
+              editable={!isVerifying}
+              autoFocus={true}
             />
+          </View>
 
-            <TouchableOpacity style={[styles.button, (isVerifying || otp.length !== 6) && styles.buttonDisabled]} onPress={handleVerify} disabled={isVerifying || otp.length !== 6}>
-              {isVerifying ? <ActivityIndicator color="#000" /> : <Text style={styles.buttonText}>Verify</Text>}
+          {/* Resend Button */}
+          <TouchableOpacity
+            style={styles.resendButton}
+            onPress={handleResendOTP}
+            disabled={isResending || resendTimer > 0}
+          >
+            <Text style={[
+              styles.resendText,
+              (isResending || resendTimer > 0) && styles.resendTextDisabled
+            ]}>
+              {isResending ? 'Sending...' : 
+               resendTimer > 0 ? `Resend code (${formatCountdown(resendTimer)})` : 
+               'Resend code'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Action Buttons */}
+          <View style={styles.actionButtons}>
+            {/* Sign In Button */}
+            <TouchableOpacity
+              style={[
+                styles.button,
+                (otp.length !== 6 || isVerifying) && styles.buttonDisabled
+              ]}
+              onPress={() => handleVerifyOTP(otp)}
+              disabled={otp.length !== 6 || isVerifying}
+              activeOpacity={0.8}
+            >
+              {isVerifying ? (
+                <ActivityIndicator color={COLORS.buttonPrimaryText} />
+              ) : (
+                <View style={styles.buttonContent}>
+                  <Text style={styles.buttonText}>Sign In</Text>
+                  <ArrowRight size={16} color={COLORS.buttonPrimaryText} />
+                </View>
+              )}
             </TouchableOpacity>
 
-            <Text style={styles.resendHint}>{countdown > 0 ? `Resend in ${countdown}s` : 'You can resend from the previous screen'}</Text>
+            {/* Back Button */}
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+              disabled={isVerifying}
+              activeOpacity={0.8}
+            >
+              <View style={styles.buttonContent}>
+                <ArrowLeft size={16} color={COLORS.text} />
+                <Text style={styles.backButtonText}>Back to Email</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          {/* Success/Error Messages */}
+          {success ? (
+            <View style={styles.successContainer}>
+              <Text style={styles.successText}>{success}</Text>
+            </View>
+          ) : null}
+          
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  keyboardContainer: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingBottom: 0, // No extra padding
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xxl,
   },
-  content: { 
-    paddingHorizontal: 24, 
-    paddingTop: 20,
-    paddingBottom: 20, // Reduced padding
-  },
-  logoContainer: {
+  header: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.lg,
   },
-  logo: {
-    width: 120,
-    height: 45,
+  title: {
+    fontSize: FONT_SIZES.xl,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
   },
-  title: { fontSize: 20, fontWeight: '700', color: '#fff', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#ccc', textAlign: 'center', marginBottom: 24 },
-  infoPill: { alignSelf: 'center', color: '#bbb', backgroundColor: '#1a1a1a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 16, fontSize: 12 },
-  input: { 
-    backgroundColor: '#1a1a1a', 
-    borderRadius: 8, 
-    paddingHorizontal: 16, 
-    paddingVertical: 16, 
-    fontSize: 20, 
-    color: '#fff', 
-    textAlign: 'center', 
-    letterSpacing: 2, 
-    marginBottom: 20, // Added space between input and button
-    borderWidth: 1, 
-    borderColor: '#333', 
-    minHeight: 56 
+  subtitle: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.sm,
   },
-  button: { backgroundColor: '#fff', borderRadius: 8, paddingVertical: 16, alignItems: 'center' },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#000', fontSize: 16, fontWeight: '600' },
-  backToEmailButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1000,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
+  hint: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
   },
-  backToEmailButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  inputGroup: {
+    marginBottom: SPACING.lg,
+  },
+  label: {
+    fontSize: FONT_SIZES.sm,
     fontWeight: '500',
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
   },
-  resendHint: { marginTop: 12, color: '#888', textAlign: 'center' },
-  spamText: { color: '#ff4444', fontWeight: '600' },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  inputIcon: {
+    marginRight: SPACING.sm,
+  },
+  input: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text,
+  },
+  otpInput: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    fontSize: FONT_SIZES.xl,
+    color: COLORS.text,
+    textAlign: 'center',
+    letterSpacing: 8,
+  },
+  resendButton: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  resendText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm,
+  },
+  resendTextDisabled: {
+    color: COLORS.textTertiary,
+  },
+  actionButtons: {
+    gap: SPACING.sm,
+  },
+  button: {
+    backgroundColor: COLORS.buttonPrimary,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  buttonDisabled: {
+    backgroundColor: COLORS.buttonDisabled,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  buttonText: {
+    color: COLORS.buttonPrimaryText,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+  },
+  backButton: {
+    backgroundColor: COLORS.buttonSecondary,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  backButtonText: {
+    color: COLORS.buttonSecondaryText,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+  },
+  successContainer: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: '#D1FAE5',
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  successText: {
+    color: COLORS.success,
+    fontSize: FONT_SIZES.sm,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: '#FEE2E2',
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: FONT_SIZES.sm,
+    textAlign: 'center',
+  },
+  footer: {
+    marginTop: SPACING.xl,
+    alignItems: 'center',
+  },
+  footerText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm,
+  },
 });
-
-

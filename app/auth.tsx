@@ -5,32 +5,32 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
   Image,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthStore } from '../src/stores/authStore';
 import { AuthService } from '../src/services/authService';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../src/constants/colors';
+import { Mail, ArrowRight } from 'lucide-react-native';
 
 export default function AuthScreen() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading, error } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [isRequestingOTP, setIsRequestingOTP] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [error, setError] = useState('');
 
+  // Redirect if already authenticated
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    if (isAuthenticated) {
+      router.replace('/main');
     }
-    return () => clearTimeout(timer);
-  }, [countdown]);
+  }, [isAuthenticated]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,32 +39,26 @@ export default function AuthScreen() {
 
   const handleRequestOTP = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
+      setError('Please enter your email address');
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setError('Please enter a valid email address');
       return;
     }
 
     setIsRequestingOTP(true);
-    // Navigate immediately to match website UX; send OTP in background
-    router.replace({ pathname: '/verify', params: { email } });
+    setError('');
+
     try {
       await AuthService.requestOTP(email);
-      setCountdown(60);
-    } catch (error) {
-      // Silent fail; user can go Back to Email or wait and try again
+      // Navigate to verify screen
+      router.push({ pathname: '/verify', params: { email } });
+    } catch (err: any) {
+      setError(err.message || 'Failed to send code. Please try again.');
     } finally {
       setIsRequestingOTP(false);
-    }
-  };
-
-
-  const handleResendOTP = () => {
-    if (countdown === 0) {
-      handleRequestOTP();
     }
   };
 
@@ -73,46 +67,82 @@ export default function AuthScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <View style={styles.header}>
           <Image 
             source={require('../assets/logo.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
+          <Text style={styles.title}>Sign in to Stefna</Text>
+          <Text style={styles.subtitle}>Enter your email to receive a login code</Text>
         </View>
-        
-        <Text style={styles.title}>Sign in to Stefna</Text>
-        <Text style={styles.subtitle}>Enter your email to receive a login code</Text>
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            placeholderTextColor="#666"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
+        {/* Form Card */}
+        <View style={styles.formCard}>
+          {/* Email Input */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email Address</Text>
+            <View style={styles.inputWrapper}>
+              <Mail size={16} color={COLORS.textTertiary} style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setError(''); // Clear error when typing
+                }}
+                placeholder="Enter your email"
+                placeholderTextColor={COLORS.placeholder}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isRequestingOTP}
+              />
+            </View>
+          </View>
 
+          {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.button, isRequestingOTP && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              (!email || isRequestingOTP) && styles.buttonDisabled
+            ]}
             onPress={handleRequestOTP}
-            disabled={isRequestingOTP}
+            disabled={!email || isRequestingOTP}
+            activeOpacity={0.8}
           >
             {isRequestingOTP ? (
-              <ActivityIndicator color="#000" />
+              <ActivityIndicator color={COLORS.buttonPrimaryText} />
             ) : (
-              <Text style={styles.buttonText}>Get Login Code</Text>
+              <View style={styles.buttonContent}>
+                <Text style={styles.buttonText}>Get Login Code</Text>
+                <ArrowRight size={16} color={COLORS.buttonPrimaryText} />
+              </View>
             )}
           </TouchableOpacity>
 
+          {/* Error Message */}
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
         </View>
 
-      </View>
+        {/* Footer */}
+        <TouchableOpacity 
+          style={styles.footer}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.footerText}>← Back to Home</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -120,80 +150,107 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xxl,
   },
-  logoContainer: {
+  header: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.lg,
   },
   logo: {
-    width: 120,
-    height: 45,
+    width: 48,
+    height: 48,
+    marginBottom: SPACING.md,
   },
   title: {
-    fontSize: 24,
+    fontSize: FONT_SIZES.xl,
     fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 8,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#cccccc',
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: 40,
   },
-  inputContainer: {
-    width: '100%',
+  formCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  inputGroup: {
+    marginBottom: SPACING.lg,
+  },
+  label: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '500',
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  inputIcon: {
+    marginRight: SPACING.sm,
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#ffffff',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#333',
-    letterSpacing: 0,
+    flex: 1,
+    paddingVertical: SPACING.md,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text,
   },
   button: {
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    paddingVertical: 16,
+    backgroundColor: COLORS.buttonPrimary,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
-    marginTop: 8,
+    justifyContent: 'center',
+    minHeight: 48,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    backgroundColor: COLORS.buttonDisabled,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   buttonText: {
-    color: '#000000',
-    fontSize: 16,
+    color: COLORS.buttonPrimaryText,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
   },
-  buttonTextDisabled: {
-    color: '#666666',
+  errorContainer: {
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    backgroundColor: '#FEE2E2',
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
-  resendButton: {
-    marginTop: 16,
+  errorText: {
+    color: COLORS.error,
+    fontSize: FONT_SIZES.sm,
+  },
+  footer: {
+    marginTop: SPACING.xl,
     alignItems: 'center',
   },
-  resendButtonDisabled: {
-    opacity: 0.6,
-  },
-  resendText: {
-    color: '#007AFF',
-    fontSize: 14,
-  },
-  resendTextDisabled: {
-    color: '#666',
+  footerText: {
+    color: COLORS.textSecondary,
+    fontSize: FONT_SIZES.sm,
   },
 });
