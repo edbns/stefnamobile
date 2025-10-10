@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   },
   gridContent: {
     padding: GRID_SPACING,
+    paddingTop: SPACING.lg,
   },
   row: {
     gap: GRID_SPACING,

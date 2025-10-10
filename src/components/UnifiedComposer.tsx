@@ -36,32 +36,11 @@ export default function UnifiedComposer({
 }: UnifiedComposerProps) {
   const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState<'edit' | 'combined-presets'>('edit');
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
 
-  // Keyboard visibility detection
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
-      setIsKeyboardVisible(true);
-    });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setIsKeyboardVisible(false);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  // Smart media height based on mode and keyboard (matching mobile website clamp values)
+  // Smart media height based on mode (matching mobile website)
   const getMediaHeight = () => {
     const vh = SCREEN_HEIGHT / 100;
-    
-    // Keyboard is open - very small: clamp(100px, 12vh, 120px)
-    if (isKeyboardVisible) {
-      return Math.max(100, Math.min(12 * vh, 120));
-    }
     
     // "Get These Looks" mode - smaller: clamp(140px, 16vh, 170px)
     if (mode === 'combined-presets') {
@@ -118,6 +97,14 @@ export default function UnifiedComposer({
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
+    
+    console.log('🚀 [Composer] Generate button pressed:', {
+      mode,
+      hasImage: !!selectedImage,
+      promptLength: prompt.length
+    });
+    
+    // Always call onGenerate - let parent handle mode logic
     onGenerate(mode === 'edit' ? 'edit' : 'custom', prompt);
   };
 
@@ -287,10 +274,10 @@ export default function UnifiedComposer({
           <TouchableOpacity
             style={[
               styles.generateButton,
-              (!prompt.trim() || isGenerating || (mode === 'edit' && !selectedImage)) && styles.generateButtonDisabled
+              (!prompt.trim() || isGenerating) && styles.generateButtonDisabled
             ]}
             onPress={handleGenerate}
-            disabled={!prompt.trim() || isGenerating || (mode === 'edit' && !selectedImage)}
+            disabled={!prompt.trim() || isGenerating}
             activeOpacity={0.8}
           >
             {isGenerating ? (
@@ -441,7 +428,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   promptInput: {
-    fontSize: FONT_SIZES.xs,
+    fontSize: FONT_SIZES.md,
     color: COLORS.text,
     minHeight: 90,
     paddingBottom: 24,

@@ -84,20 +84,31 @@ export const useMediaStore = create<MediaState>((set, get) => ({
 
       if (!response.error) {
         // Transform cloud media to local format and merge with local storage
-        const cloudMedia: MediaItem[] = (response.media || []).map((item: any) => ({
-          id: item.id || `cloud_${Date.now()}_${Math.random()}`,
-          localUri: item.finalUrl || item.url || '', // Use finalUrl first (from API)
-          cloudUrl: item.finalUrl || item.url, // Use finalUrl first (from API)
-          cloudId: item.id,
-          filename: `cloud_${item.id}.jpg`,
-          createdAt: new Date(item.createdAt || item.timestamp || Date.now()),
-          synced: true,
-          generationJobId: item.runId || item.id,
-          type: item.type,
-          prompt: item.prompt,
-          presetKey: item.presetKey,
-          metadata: item.metadata, // Pass through metadata for aspect ratio calculation
-        }));
+        const cloudMedia: MediaItem[] = (response.media || []).map((item: any) => {
+          const imageUrl = item.finalUrl || item.url || item.imageUrl || item.image_url || '';
+          
+          console.log('📸 [MediaStore] Mapping item:', {
+            id: item.id,
+            finalUrl: item.finalUrl,
+            url: item.url,
+            mappedUrl: imageUrl,
+          });
+          
+          return {
+            id: item.id || `cloud_${Date.now()}_${Math.random()}`,
+            localUri: imageUrl, // Use finalUrl from API
+            cloudUrl: imageUrl, // Same URL for both
+            cloudId: item.id,
+            filename: `cloud_${item.id}.jpg`,
+            createdAt: new Date(item.createdAt || item.timestamp || Date.now()),
+            synced: true,
+            generationJobId: item.runId || item.id,
+            type: item.type,
+            prompt: item.prompt,
+            presetKey: item.presetKey,
+            metadata: item.metadata,
+          };
+        });
 
         console.log('🌐 [MediaStore] Transformed cloud media:', {
           count: cloudMedia.length,

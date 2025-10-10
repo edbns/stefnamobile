@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  Share,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
@@ -34,21 +35,28 @@ export default function ProfileScreen() {
   const { balance } = useCreditsStore();
 
   const handleInviteFriend = async () => {
-    // TODO: Get referral link from API
-    const referralCode = user?.id?.substring(0, 8) || 'STEFNA';
-    const shareMessage = `Join me on Stefna - AI image generation!\n\nUse my code: ${referralCode}\n\nhttps://stefna.xyz?ref=${referralCode}`;
-    
-    Alert.alert(
-      'Invite Friends',
-      shareMessage,
-      [
-        { text: 'Copy Link', onPress: () => {
-          // TODO: Copy to clipboard
-          Alert.alert('Link Copied', 'Referral link copied to clipboard');
-        }},
-        { text: 'Close', style: 'cancel' },
-      ]
-    );
+    try {
+      // Build referral link with user's email
+      const referrerEmail = encodeURIComponent(user?.email || '');
+      const referralUrl = `https://stefna.xyz/auth?referrer=${referrerEmail}`;
+      
+      const shareMessage = `Join me on Stefna — the AI photo transformation studio!\n\n` +
+        `Sign up and we both get +25 free credits:\n${referralUrl}\n\n` +
+        `Create AI-generated images in seconds. No limits.`;
+      
+      const result = await Share.share({
+        message: shareMessage,
+        url: referralUrl, // iOS will use this
+        title: 'Join Stefna - AI Image Generation',
+      });
+
+      if (result.action === Share.sharedAction) {
+        console.log('✅ Invite shared successfully');
+      }
+    } catch (error) {
+      console.error('Share error:', error);
+      Alert.alert('Error', 'Failed to share invite');
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -59,8 +67,8 @@ export default function ProfileScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete Account',
-          style: 'destructive',
-          onPress: async () => {
+                  style: 'destructive',
+                  onPress: async () => {
             // TODO: Call delete-account API
             Alert.alert('Account Deleted', 'Your account has been deleted.');
             await logout();

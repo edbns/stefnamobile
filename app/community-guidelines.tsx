@@ -9,7 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { COLORS, SPACING, FONT_SIZES } from '../src/constants/colors';
+import { COLORS, SPACING, FONT_SIZES, BORDER_RADIUS } from '../src/constants/colors';
 import { ArrowLeft, CheckCircle } from 'lucide-react-native';
 
 export default function CommunityGuidelinesScreen() {

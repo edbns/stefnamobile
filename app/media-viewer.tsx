@@ -26,7 +26,7 @@ export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { media, deleteMedia } = useMediaStore();
-  
+
   const mediaId = params.mediaId as string;
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -122,12 +122,29 @@ export default function MediaViewerScreen() {
   const renderImage = ({ item }: { item: any }) => {
     const url = item.cloudUrl || item.localUri;
     
-    return (
+    console.log('🖼️ [MediaViewer] Rendering image:', {
+      id: item.id,
+      url: url?.substring(0, 50),
+      hasCloudUrl: !!item.cloudUrl,
+      hasLocalUri: !!item.localUri,
+    });
+    
+    if (!url) {
+      return (
+        <View style={styles.imageSlide}>
+          <Text style={styles.errorText}>Image URL not found</Text>
+        </View>
+      );
+    }
+
+  return (
       <View style={styles.imageSlide}>
-        <Image
+          <Image
           source={{ uri: url }}
-          style={styles.image}
-          resizeMode="contain"
+            style={styles.image}
+            resizeMode="contain"
+          onError={(error) => console.error('Image load error:', error)}
+          onLoad={() => console.log('✅ Image loaded:', url.substring(0, 50))}
         />
       </View>
     );
@@ -194,8 +211,8 @@ export default function MediaViewerScreen() {
         <View style={styles.counter}>
           <Text style={styles.counterText}>
             {currentIndex + 1} / {media.length}
-          </Text>
-        </View>
+            </Text>
+          </View>
       </View>
 
       {/* Bottom Actions */}
@@ -215,7 +232,7 @@ export default function MediaViewerScreen() {
             </>
           )}
         </TouchableOpacity>
-
+        
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleShare}
@@ -231,7 +248,7 @@ export default function MediaViewerScreen() {
             </>
           )}
         </TouchableOpacity>
-
+        
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleDelete}
@@ -270,9 +287,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   topBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
+    position: 'absolute', 
+    top: 0, 
+    left: 0, 
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -289,7 +306,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: COLORS.surface,
-    alignItems: 'center',
+    alignItems: 'center', 
     justifyContent: 'center',
   },
   counter: {

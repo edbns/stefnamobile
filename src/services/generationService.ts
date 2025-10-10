@@ -606,6 +606,7 @@ class GenerationService {
       sourceAssetId: cloudinaryUrl,
       userId: userId,
       runId: runId,
+      aspect_ratio: '4:5', // Portrait (Instagram/social media friendly) - CRITICAL for mobile
       meta: {},
       // IPA parameters (matching website defaults)
       ipaThreshold: 0.7, // 70% similarity required (same as website)
