@@ -502,7 +502,7 @@ export default function GenerationFolderScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#f5f5f5',
     paddingTop: 0, // Remove top margin - media should be directly under back button
   },
   titleContainer: {
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
     width: 36, 
     height: 36, 
     borderRadius: 18, 
-    backgroundColor: '#000000', 
+    backgroundColor: '#f5f5f5', 
     alignItems: 'center', 
     justifyContent: 'center' 
   },

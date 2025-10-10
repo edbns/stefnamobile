@@ -42,13 +42,13 @@ export default function Layout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor="#000000" />
+      <StatusBar style="dark" backgroundColor="#f5f5f5" />
       <NotificationManager />
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: {
-            backgroundColor: '#000000',
+            backgroundColor: '#f5f5f5',
           },
           animation: 'slide_from_right',
           animationDuration: 200, // Faster animations
@@ -145,14 +145,6 @@ export default function Layout() {
           }}
         />
         <Stack.Screen
-          name="generate-presets"
-          options={{
-            title: 'Presets',
-            animation: 'slide_from_right',
-            animationDuration: 300,
-          }}
-        />
-        <Stack.Screen
           name="generate-custom"
           options={{
             title: 'Custom',
@@ -163,39 +155,7 @@ export default function Layout() {
         <Stack.Screen
           name="generate-studio"
           options={{
-            title: 'Studio',
-            animation: 'slide_from_right',
-            animationDuration: 300,
-          }}
-        />
-        <Stack.Screen
-          name="generate-unreal-reflection"
-          options={{
-            title: 'Unreal Reflection',
-            animation: 'slide_from_right',
-            animationDuration: 300,
-          }}
-        />
-        <Stack.Screen
-          name="generate-ghibli"
-          options={{
-            title: 'Ghibli',
-            animation: 'slide_from_right',
-            animationDuration: 300,
-          }}
-        />
-        <Stack.Screen
-          name="generate-neo"
-          options={{
-            title: 'Neo Tokyo',
-            animation: 'slide_from_right',
-            animationDuration: 300,
-          }}
-        />
-        <Stack.Screen
-          name="generate-parallel-self"
-          options={{
-            title: 'Parallel Self',
+            title: 'Edit',
             animation: 'slide_from_right',
             animationDuration: 300,
           }}

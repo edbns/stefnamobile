@@ -100,7 +100,7 @@ export const SkeletonMediaFolder = ({ style }: { style?: any }) => (
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#eeeeee',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -113,13 +113,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
   },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#eeeeee',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
   },
   mediaFolder: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#eeeeee',
     overflow: 'hidden',
     marginBottom: 12,
     marginHorizontal: 6,

@@ -3,143 +3,162 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
   Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { navigateBack } from '../src/utils/navigation';
-import { Feather } from '@expo/vector-icons';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../src/constants/colors';
+import { ArrowLeft, Mail, ExternalLink } from 'lucide-react-native';
 
 export default function HelpCenterScreen() {
   const router = useRouter();
 
+  const faqs = [
+    {
+      question: 'How does image generation work?',
+      answer: 'Our AI uses advanced models to create or transform images based on your prompts. Simply describe what you want or upload a photo to edit.',
+    },
+    {
+      question: 'What are credits?',
+      answer: 'Credits are used for each generation. You receive free credits when you sign up, and more can be purchased or earned through referrals.',
+    },
+    {
+      question: 'How do I save my images?',
+      answer: 'All generated images are automatically saved to your gallery in the app. You can also download them to your device from the image viewer.',
+    },
+    {
+      question: 'What are the different modes?',
+      answer: 'Custom lets you create from text, Studio transforms your photos, and Parallel Self™ and Unreal Reflection™ create alternate versions of yourself.',
+    },
+  ];
+
   return (
-    <View style={styles.container}>
-      {/* Floating Back Button */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigateBack.toProfile()} style={styles.iconBackButton}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <ArrowLeft size={20} color={COLORS.text} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Help Center</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Stefna Help Center</Text>
-          <Text style={styles.sectionText}>
-            Welcome to Stefna — your AI-powered creative studio. Whether you're here to glitch your face into neon chaos, cry anime tears, or turn a simple photo into art, you're in the right place.
-            {'\n\n'}Below are answers to your most common questions.
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* FAQs */}
+        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        {faqs.map((faq, index) => (
+          <View key={index} style={styles.faqCard}>
+            <Text style={styles.faqQuestion}>{faq.question}</Text>
+            <Text style={styles.faqAnswer}>{faq.answer}</Text>
+          </View>
+        ))}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How do I use Stefna?</Text>
-          <Text style={styles.sectionText}>
-            1. Upload a photo{'\n'}
-            • Use a clear, well-lit image with a visible face.{'\n'}
-            • You must be logged in to generate.{'\n\n'}
-            2. Pick a mode{'\n'}
-            • Each mode transforms your image differently — from subtle edits to full glitch chaos.{'\n'}
-            • New modes drop regularly. No spoilers.{'\n\n'}
-            3. Tap generate{'\n'}
-            • Your creation will appear in your gallery shortly.{'\n'}
-            • You can save, share, or delete any result.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How do credits work?</Text>
-          <Text style={styles.sectionText}>
-            • You get 14 free credits daily (reset every 24h).{'\n'}
-            • Most generations cost 2 credits.{'\n'}
-            • No payment needed — it's free.{'\n'}
-            • If you run out, come back tomorrow.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How does referral work?</Text>
-          <Text style={styles.sectionText}>
-            • Invite a friend using your referral link.{'\n'}
-            • They get +10 credits, you get +10 credits once they generate.{'\n'}
-            • Win-win.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Why does the AI sometimes get it wrong?</Text>
-          <Text style={styles.sectionText}>
-            AI can be powerful, weird, and unpredictable.{'\n\n'}
-            It may:{'\n'}
-            • Bend reality{'\n'}
-            • Change expressions{'\n'}
-            • Confuse genders, ages, or backgrounds{'\n\n'}
-            That's part of the fun — and the art. If anything feels wrong, just regenerate or try another mode.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Can I delete my photos?</Text>
-          <Text style={styles.sectionText}>
-            Yes. Tap the trash icon on any photo in your gallery to remove it from Stefna and the cloud.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Is my data private?</Text>
-          <Text style={styles.sectionText}>
-            • Your uploads are private by default.{'\n'}
-            • You can choose to share to the public feed.{'\n'}
-            • You control what stays or goes.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Need help or want to report something?</Text>
-          <Text style={styles.sectionText}>
-            Email us at{' '}
-            <Text 
-              style={styles.emailLink}
-              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=Help Request')}
-            >
-              hello@stefna.xyz
-            </Text>
-            {' '}and we'll handle it. We don't use bots — real humans reply.
-          </Text>
+        {/* Contact Support */}
+        <View style={styles.contactSection}>
+          <Text style={styles.sectionTitle}>Need More Help?</Text>
+          <TouchableOpacity
+            style={styles.contactButton}
+            onPress={() => Linking.openURL('mailto:support@stefna.xyz')}
+            activeOpacity={0.8}
+          >
+            <Mail size={16} color={COLORS.text} />
+            <Text style={styles.contactButtonText}>Contact Support</Text>
+            <ExternalLink size={14} color={COLORS.textTertiary} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
-  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
-  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 100,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  section: {
-    marginBottom: 24,
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  headerRight: {
+    width: 36,
+  },
+  scrollContent: {
+    padding: SPACING.lg,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 12,
+    color: COLORS.text,
+    marginBottom: SPACING.md,
   },
-  sectionText: {
-    fontSize: 16,
-    color: '#cccccc',
-    lineHeight: 24,
+  faqCard: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  emailLink: {
-    color: '#4A9EFF',
-    textDecorationLine: 'underline',
+  faqQuestion: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  faqAnswer: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  contactSection: {
+    marginTop: SPACING.xl,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  contactButtonText: {
+    flex: 1,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '500',
+    color: COLORS.text,
   },
 });

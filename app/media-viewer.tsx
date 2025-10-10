@@ -1,93 +1,84 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Image, Share, Alert, Platform, Dimensions, ScrollView, PanResponder } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Image,
+  Alert,
+  Dimensions,
+  SafeAreaView,
+  StatusBar,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { navigateBack } from '../src/utils/navigation';
-import { Feather } from '@expo/vector-icons';
+import { useMediaStore } from '../src/stores/mediaStore';
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../src/constants/colors';
+import { X, Download, Share2, Trash2 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
-import { useMediaStore } from '../src/stores/mediaStore';
-import ModernSpinner from '../src/components/ModernSpinner';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { deleteMedia } = useMediaStore();
-
+  const { media, deleteMedia } = useMediaStore();
+  
   const mediaId = params.mediaId as string;
-  const cloudId = params.cloudId as string;
-  const mediaUri = params.mediaUri as string;
-  const mediaType = params.mediaType as string;
-  const folderData = params.folderData ? JSON.parse(params.folderData as string) : null;
-  const currentIndex = params.currentIndex ? parseInt(params.currentIndex as string) : 0;
-
-  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(currentIndex);
-  const [gestureFeedback, setGestureFeedback] = useState<string | null>(null);
-  
-  const panResponder = useRef(PanResponder.create({
-    onMoveShouldSetPanResponder: (evt, gestureState) => {
-      return Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dy) < 150;
-    },
-    onPanResponderMove: (evt, gestureState) => {
-      // Show visual feedback during gesture
-      if (folderData && folderData.length > 1) {
-        if (gestureState.dx > 50) {
-          setGestureFeedback('← Previous');
-        } else if (gestureState.dx < -50) {
-          setGestureFeedback('Next →');
-        } else {
-          setGestureFeedback(null);
-        }
-      }
-    },
-    onPanResponderRelease: (evt, gestureState) => {
-      setGestureFeedback(null);
-      
-      if (folderData && folderData.length > 1) {
-        if (gestureState.dx > 80) {
-          // Swipe right - go to previous image
-          const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : folderData.length - 1;
-          setCurrentImageIndex(newIndex);
-        } else if (gestureState.dx < -80) {
-          // Swipe left - go to next image
-          const newIndex = currentImageIndex < folderData.length - 1 ? currentImageIndex + 1 : 0;
-          setCurrentImageIndex(newIndex);
-        }
-      }
-    },
-  })).current;
 
-  // Debug logging
-  console.log('MediaViewer params:', { mediaId, cloudId, mediaUri, mediaType, folderDataLength: folderData?.length, currentIndex });
-  console.log('MediaViewer currentImage:', currentImage);
-  console.log('MediaViewer currentImage keys:', currentImage ? Object.keys(currentImage) : 'no currentImage');
+  // Find the media item
+  const currentMedia = media?.find((m: any) => m.id === mediaId);
+  const imageUrl = currentMedia?.url || currentMedia?.outputUrl;
 
-  const handleClose = () => {
-    navigateBack.toMain();
-  };
+  if (!currentMedia || !imageUrl) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Media not found</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const getCurrentImage = () => {
-    if (!folderData || folderData.length === 0) {
-      return { uri: mediaUri, id: mediaId, cloudId };
-    }
-    return folderData[currentImageIndex] || folderData[0];
-  };
-
-  const currentImage = getCurrentImage();
-
-  const handleDelete = async () => {
+  const handleSave = async () => {
     try {
-      setIsDeleting(true);
-      await deleteMedia(currentImage.id, currentImage.cloudId);
-      navigateBack.toMain();
-    } catch (e) {
-      Alert.alert('Delete Error', 'Unable to delete this image.');
+      setIsSaving(true);
+      
+      // Request permissions
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please grant photo library access to save images.');
+        return;
+      }
+
+      // Download image
+      const filename = `stefna_${Date.now()}.jpg`;
+      const fileUri = FileSystem.documentDirectory + filename;
+      
+      const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
+      
+      if (downloadResult.uri) {
+        // Save to photo library
+        await MediaLibrary.createAssetAsync(downloadResult.uri);
+        Alert.alert('Success', 'Image saved to your photo library');
+      }
+    } catch (error) {
+      console.error('Save error:', error);
+      Alert.alert('Error', 'Failed to save image');
     } finally {
-      setIsDeleting(false);
+      setIsSaving(false);
     }
   };
 
@@ -95,243 +86,199 @@ export default function MediaViewerScreen() {
     try {
       setIsSharing(true);
       
-      const imageUri = currentImage.cloudUrl || currentImage.localUri || mediaUri;
+      // Download image first
+      const filename = `stefna_${Date.now()}.jpg`;
+      const fileUri = FileSystem.documentDirectory + filename;
       
-      // Download the image first to get a local file
-      const fileName = `stefna_share_${Date.now()}_${currentImage.id}.jpg`;
-      const localPath = FileSystem.cacheDirectory + fileName;
+      const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
       
-      console.log('📱 Downloading image for sharing from:', imageUri);
-      const download = await FileSystem.downloadAsync(imageUri, localPath);
-      
-      if (download.status === 200) {
-        // Share the actual image file
-        if (Platform.OS === 'ios') {
-          await Share.share({
-            url: localPath,
-            type: 'image/jpeg'
-          });
+      if (downloadResult.uri) {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(downloadResult.uri);
         } else {
-          if (await Sharing.isAvailableAsync()) {
-            await Sharing.shareAsync(localPath, {
-              mimeType: 'image/jpeg',
-              dialogTitle: 'Share Image'
-            });
-          } else {
-            Alert.alert('Sharing not available', 'Sharing is not available on this device.');
-          }
+          Alert.alert('Error', 'Sharing is not available on this device');
         }
-      } else {
-        throw new Error(`Download failed with status: ${download.status}`);
       }
     } catch (error) {
       console.error('Share error:', error);
-      Alert.alert('Share Error', 'Unable to share this image. Please try again.');
+      Alert.alert('Error', 'Failed to share image');
     } finally {
       setIsSharing(false);
     }
   };
 
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please grant permission to save images to your photo library.');
-        return;
-      }
-
-      // Download the image first
-      const imageUri = currentImage.cloudUrl || currentImage.localUri || mediaUri;
-      const fileName = `stefna_${Date.now()}_${currentImage.id}.jpg`;
-      const localPath = FileSystem.cacheDirectory + fileName;
-      
-      console.log('📱 Downloading image from:', imageUri);
-      const download = await FileSystem.downloadAsync(imageUri, localPath);
-      
-      if (download.status === 200) {
-        // Save to photo library
-        const asset = await MediaLibrary.createAssetAsync(localPath);
-        await MediaLibrary.createAlbumAsync('Stefna', asset, false);
-        
-        Alert.alert('Success', 'Image saved to your photo library!');
-      } else {
-        throw new Error(`Download failed with status: ${download.status}`);
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Save Error', 'Unable to save this image. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Image',
+      'Are you sure you want to delete this image? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeleting(true);
+              await deleteMedia(mediaId, currentMedia.cloudId);
+              router.back();
+            } catch (error) {
+              console.error('Delete error:', error);
+              Alert.alert('Error', 'Failed to delete image');
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.gestureContainer} {...panResponder.panHandlers}>
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          maximumZoomScale={3}
-          minimumZoomScale={1}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      
+      {/* Image */}
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
         >
-          <Image
-            source={{ uri: currentImage.cloudUrl || currentImage.localUri || mediaUri }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-        </ScrollView>
-        
-        {/* Gesture Feedback Overlay */}
-        {gestureFeedback && (
-          <View style={styles.gestureFeedbackOverlay}>
-            <Text style={styles.gestureFeedbackText}>{gestureFeedback}</Text>
-          </View>
-        )}
+          <X size={24} color={COLORS.buttonPrimaryText} />
+        </TouchableOpacity>
       </View>
 
-      {/* Floating Back Button */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.iconBackButton} onPress={handleClose}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
-        </TouchableOpacity>
-        
-        {/* Media Counter */}
-        {folderData && folderData.length > 1 && (
-          <View style={styles.mediaCounter}>
-            <Text style={styles.mediaCounterText}>
-              {currentImageIndex + 1} / {folderData.length}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Floating Action Buttons */}
-      <View style={styles.floatingActions}>
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleShare} disabled={isSharing}>
-          {isSharing ? (
-            <Feather name="loader" size={24} color="#ffffff" />
-          ) : (
-            <Feather name="share-2" size={24} color="#ffffff" />
-          )}
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleSave} disabled={isSaving}>
+      {/* Bottom Actions */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleSave}
+          disabled={isSaving}
+          activeOpacity={0.8}
+        >
           {isSaving ? (
-            <Feather name="loader" size={24} color="#ffffff" />
+            <ActivityIndicator size="small" color={COLORS.buttonPrimaryText} />
           ) : (
-            <Feather name="download" size={24} color="#ffffff" />
+            <Download size={20} color={COLORS.buttonPrimaryText} />
           )}
+          <Text style={styles.actionButtonText}>Save</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.floatingActionButton} onPress={handleDelete} disabled={isSaving || isSharing || isDeleting}>
-          {isDeleting ? (
-            <ModernSpinner size={16} color="#ff4444" />
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleShare}
+          disabled={isSharing}
+          activeOpacity={0.8}
+        >
+          {isSharing ? (
+            <ActivityIndicator size="small" color={COLORS.buttonPrimaryText} />
           ) : (
-            <Feather name="trash-2" size={24} color="#ff4444" />
+            <Share2 size={20} color={COLORS.buttonPrimaryText} />
           )}
+          <Text style={styles.actionButtonText}>Share</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={handleDelete}
+          disabled={isDeleting}
+          activeOpacity={0.8}
+        >
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={COLORS.error} />
+          ) : (
+            <Trash2 size={20} color={COLORS.error} />
+          )}
+          <Text style={[styles.actionButtonText, { color: COLORS.error }]}>
+            Delete
+          </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
-const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000000',
   },
-  gestureContainer: {
-    flex: 1,
-  },
-  gestureFeedbackOverlay: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -50 }, { translateY: -50 }],
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    zIndex: 1000,
-  },
-  gestureFeedbackText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Floating Back Button
-  headerRow: { 
-    position: 'absolute', 
-    top: 0, 
-    left: 0, 
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 50, 
-    zIndex: 1000 
-  },
-  iconBackButton: { 
-    width: 36, 
-    height: 36, 
-    borderRadius: 18, 
-    backgroundColor: '#000000', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
-  },
-  mediaCounter: {
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  mediaCounterText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 60, // Space for floating back button
-  },
-  scrollContent: {
+  imageContainer: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    minHeight: height,
-    paddingTop: 20,
+    justifyContent: 'center',
   },
   image: {
-    width: width,
-    height: height * 0.75, // Position image under back button
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT - 160,
   },
-  // Floating Action Buttons
-  floatingActions: {
+  topBar: {
     position: 'absolute',
-    bottom: 40,
-    right: 20,
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 20,
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingTop: 50,
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.lg,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  floatingActionButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xl,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  actionButton: {
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  actionButtonText: {
+    color: COLORS.buttonPrimaryText,
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.xl,
+  },
+  errorText: {
+    fontSize: FONT_SIZES.lg,
+    color: COLORS.text,
+    marginBottom: SPACING.lg,
+  },
+  button: {
+    backgroundColor: COLORS.buttonPrimary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  buttonText: {
+    color: COLORS.buttonPrimaryText,
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
   },
 });

@@ -1,162 +1,192 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../src/stores/authStore';
-import AnimatedButton from '../src/components/AnimatedButton';
-
-const { width, height } = Dimensions.get('window');
-const columnWidth = width / 3; // True 3 columns, no margins for fullscreen
-
-// Grid images - 9 images for 3x3 grid
-const backgroundImages = [
-  require('../assets/w1.jpg'),
-  require('../assets/w2.jpg'),
-  require('../assets/w3.jpg'),
-  require('../assets/w4.jpg'),
-  require('../assets/w5.jpg'),
-  require('../assets/w6.jpg'),
-  require('../assets/w7.jpg'),
-  require('../assets/w8.jpg'),
-  require('../assets/w9.jpg'),
-];
+import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../src/constants/colors';
+import { ArrowRight, Wand2, Sparkles, Camera, Zap } from 'lucide-react-native';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { login } = useAuthStore();
 
-  const handleGetStarted = () => {
-    router.replace('/auth');
-  };
-
+  const features = [
+    {
+      icon: Wand2,
+      title: 'AI Image Generation',
+      description: 'Create stunning images from text prompts',
+    },
+    {
+      icon: Camera,
+      title: 'Photo Transformation',
+      description: 'Edit and transform your photos with AI',
+    },
+    {
+      icon: Sparkles,
+      title: 'Parallel Self™',
+      description: 'Discover alternate versions of yourself',
+    },
+    {
+      icon: Zap,
+      title: 'Unreal Reflection™',
+      description: 'Mirror dimension transformations',
+    },
+  ];
 
   return (
-    <View style={styles.container}>
-      {/* Background Image Grid */}
-      <View style={styles.imageGrid}>
-        {backgroundImages.map((image, index) => {
-          const rowHeight = height / 3; // Each row takes 1/3 of screen height
-          return (
-            <View key={index} style={[styles.imageContainer, { height: rowHeight }]}> 
-              <Image
-                source={image}
-                style={styles.backgroundImage}
-              />
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Dark Overlay */}
-      <View style={styles.overlay} />
-
-      {/* Content */}
-      <View style={styles.content}>
-        {/* Main Content */}
-        <View style={styles.mainContent}>
-          <Text style={styles.title}>Welcome to Stefna</Text>
-          <Text style={styles.subtitle}>One photo. One transformation. Which preset?</Text>
-          
-          <AnimatedButton
-            title="Get Started"
-            onPress={handleGetStarted}
-            variant="primary"
-            size="large"
-            style={styles.getStartedButton}
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Hero Section */}
+        <View style={styles.hero}>
+          <Image 
+            source={require('../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
           />
-          
+          <Text style={styles.title}>Welcome to Stefna</Text>
+          <Text style={styles.subtitle}>
+            AI-powered image generation and transformation
+          </Text>
         </View>
 
-        {/* Legal Text with clickable links */}
-        <View style={styles.legalContainer}>
-          <Text style={styles.legalText}>By proceeding, you agree to our </Text>
-          <TouchableOpacity onPress={() => router.push('/terms')}>
-            <Text style={styles.legalLink}>Terms of Use</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalText}> & </Text>
-          <TouchableOpacity onPress={() => router.push('/privacy')}>
-            <Text style={styles.legalLink}>Privacy Policy</Text>
-          </TouchableOpacity>
+        {/* Features Grid */}
+        <View style={styles.featuresContainer}>
+          {features.map((feature, index) => (
+            <View key={index} style={styles.featureCard}>
+              <View style={styles.featureIcon}>
+                <feature.icon size={20} color={COLORS.text} />
+              </View>
+              <Text style={styles.featureTitle}>{feature.title}</Text>
+              <Text style={styles.featureDescription}>{feature.description}</Text>
+            </View>
+          ))}
         </View>
-      </View>
-    </View>
+
+        {/* CTA Buttons */}
+        <View style={styles.ctaContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.push('/auth')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.buttonContent}>
+              <Text style={styles.primaryButtonText}>Get Started</Text>
+              <ArrowRight size={16} color={COLORS.buttonPrimaryText} />
+            </View>
+          </TouchableOpacity>
+
+          <Text style={styles.termsText}>
+            By continuing, you agree to our Terms & Conditions{'\n'}
+            and Privacy Policy (18+ only)
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
-  imageGrid: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.xxl,
   },
-  imageContainer: {
-    width: columnWidth,
-    // Fullscreen effect - no margins or borders
-  },
-  backgroundImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Darker for better text readability
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  mainContent: {
+  hero: {
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: SPACING.xxl,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: SPACING.lg,
   },
   title: {
-    fontSize: 24,
+    fontSize: FONT_SIZES.title,
     fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginBottom: 8,
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#ffffff',
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 18,
+    paddingHorizontal: SPACING.lg,
   },
-  getStartedButton: {
-    minWidth: 200,
-  },
-  legalContainer: {
+  featuresContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.xxl,
   },
-  legalText: {
-    fontSize: 12,
-    color: '#ffffff',
-    opacity: 0.8,
+  featureCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  featureIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+  },
+  featureTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: SPACING.xs,
+  },
+  featureDescription: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
-  legalLink: {
-    fontSize: 12,
-    color: '#ffffff',
-    textDecorationLine: 'underline',
+  ctaContainer: {
+    marginTop: 'auto',
+  },
+  primaryButton: {
+    backgroundColor: COLORS.buttonPrimary,
+    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  primaryButtonText: {
+    color: COLORS.buttonPrimaryText,
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
+  },
+  termsText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
     lineHeight: 16,
   },
 });

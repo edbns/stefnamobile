@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   secondary: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#eeeeee',
     borderWidth: 1,
     borderColor: '#333333',
   },

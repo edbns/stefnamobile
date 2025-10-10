@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   mediaItem: {
     flex: 1,
     overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffffff',
     aspectRatio: 1, // Square images
   },
   mediaImage: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     margin: 4,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffffff',
     minHeight: 150,
     maxHeight: 400,
     height: 200, // Default height for generation placeholders

@@ -3,149 +3,103 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   ScrollView,
-  Linking,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { navigateBack } from '../src/utils/navigation';
-import { Feather } from '@expo/vector-icons';
+import { COLORS, SPACING, FONT_SIZES } from '../src/constants/colors';
+import { ArrowLeft } from 'lucide-react-native';
 
 export default function CommunityGuidelinesScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      {/* Floating Back Button */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity onPress={() => navigateBack.toProfile()} style={styles.iconBackButton}>
-          <Feather name="arrow-left" size={20} color="#ffffff" />
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <ArrowLeft size={20} color={COLORS.text} />
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Community Guidelines</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionText}>
-            Welcome to Stefna. We're building a creative space powered by AI, imagination, and a touch of chaos. Here's how we keep it safe and inspiring for everyone.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>1. Be Respectful</Text>
-          <Text style={styles.sectionText}>
-            This is a shared space. Respect others' creativity, privacy, and presence. Don't use Stefna to mock, harass, impersonate, or target anyone — directly or indirectly.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>2. Keep It Appropriate</Text>
-          <Text style={styles.sectionText}>
-            Stefna isn't for adult content, hate speech, violence, or anything that crosses legal or ethical boundaries. If you're unsure, don't post it.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>3. Use Your Own Content</Text>
-          <Text style={styles.sectionText}>
-            Only upload photos you have the right to use. Do not upload images of other people without their clear permission. No stolen content, no impersonation.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>4. Expect AI Weirdness</Text>
-          <Text style={styles.sectionText}>
-            Our AI sometimes gets things wrong. It might glitch, change genders, misread faces, or invent something surreal. That's part of the fun — but remember: not everything it generates is accurate or flattering.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>5. Protect the Mystery</Text>
-          <Text style={styles.sectionText}>
-            We love cryptic captions and artistic ambiguity. But don't use mystery as a cover for harmful behavior. Suspicious or abusive behavior will not be tolerated.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>6. Reporting Content</Text>
-          <Text style={styles.sectionText}>
-            We don't yet have automatic moderation. If you see something harmful, dangerous, or inappropriate, email us directly at{' '}
-            <Text 
-              style={styles.emailLink}
-              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=Content Report')}
-            >
-              hello@stefna.xyz
-            </Text>
-            . We'll take it seriously and review promptly.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>7. No Spam or Self-Promo</Text>
-          <Text style={styles.sectionText}>
-            Please don't use Stefna as a platform to sell, recruit, or spam. This includes links, affiliate drops, and aggressive promotion. Share your creativity, not your pitch.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>8. You Are Responsible</Text>
-          <Text style={styles.sectionText}>
-            By using Stefna, you agree that you're responsible for the content you upload, share, and create. We're not liable for what users generate — but we will take action when guidelines are violated.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Final Note</Text>
-          <Text style={styles.sectionText}>
-            Stefna is meant to be a safe, strange, beautiful place for creative expression. We built this platform with care. Help us protect the experience — for yourself and for everyone else.
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Us</Text>
-          <Text style={styles.sectionText}>
-            If you have questions, concerns, or want to report a user or post:{'\n\n'}
-            Contact us at{' '}
-            <Text 
-              style={styles.emailLink}
-              onPress={() => Linking.openURL('mailto:hello@stefna.xyz?subject=General Inquiry')}
-            >
-              hello@stefna.xyz
-            </Text>
-          </Text>
-        </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.content}>
+          Help us maintain a creative and respectful community.{'\n\n'}
+          
+          Be Respectful:{'\n'}
+          - Respect others' creativity{'\n'}
+          - No harassment or hate speech{'\n'}
+          - Constructive feedback only{'\n\n'}
+          
+          Create Responsibly:{'\n'}
+          - Don't impersonate others{'\n'}
+          - Respect copyrights and trademarks{'\n'}
+          - No illegal or harmful content{'\n\n'}
+          
+          Share Wisely:{'\n'}
+          - Only share appropriate content{'\n'}
+          - Credit original creators when inspired{'\n'}
+          - Report inappropriate content{'\n\n'}
+          
+          Violations may result in account suspension or termination.{'\n\n'}
+          
+          For full guidelines, visit stefna.xyz/guidelines
+        </Text>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
-  headerRow: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: 40, paddingLeft: 8, zIndex: 1000 },
-  iconBackButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 100,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  section: {
-    marginBottom: 24,
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sectionTitle: {
-    fontSize: 18,
+  headerTitle: {
+    fontSize: FONT_SIZES.lg,
     fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 12,
+    color: COLORS.text,
   },
-  sectionText: {
-    fontSize: 16,
-    color: '#cccccc',
-    lineHeight: 24,
+  headerRight: {
+    width: 36,
   },
-  emailLink: {
-    color: '#4A9EFF',
-    textDecorationLine: 'underline',
+  scrollContent: {
+    padding: SPACING.lg,
+  },
+  content: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
   },
 });
