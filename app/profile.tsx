@@ -23,12 +23,53 @@ import {
   HelpCircle,
   LogOut,
   ChevronRight,
+  Trash2,
+  UserPlus,
+  Share2,
 } from 'lucide-react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { balance } = useCreditsStore();
+
+  const handleInviteFriend = async () => {
+    // TODO: Get referral link from API
+    const referralCode = user?.id?.substring(0, 8) || 'STEFNA';
+    const shareMessage = `Join me on Stefna - AI image generation!\n\nUse my code: ${referralCode}\n\nhttps://stefna.xyz?ref=${referralCode}`;
+    
+    Alert.alert(
+      'Invite Friends',
+      shareMessage,
+      [
+        { text: 'Copy Link', onPress: () => {
+          // TODO: Copy to clipboard
+          Alert.alert('Link Copied', 'Referral link copied to clipboard');
+        }},
+        { text: 'Close', style: 'cancel' },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone. All your data, images, and credits will be permanently deleted.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            // TODO: Call delete-account API
+            Alert.alert('Account Deleted', 'Your account has been deleted.');
+            await logout();
+            router.replace('/welcome');
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -64,6 +105,11 @@ export default function ProfileScreen() {
           value: `${balance || 0} available`,
           onPress: null,
         },
+        {
+          icon: UserPlus,
+          label: 'Invite Friends',
+          onPress: handleInviteFriend,
+        },
       ],
     },
     {
@@ -88,11 +134,6 @@ export default function ProfileScreen() {
           icon: Shield,
           label: 'Privacy Policy',
           onPress: () => router.push('/privacy'),
-        },
-        {
-          icon: FileText,
-          label: 'Cookie Policy',
-          onPress: () => router.push('/cookies'),
         },
         {
           icon: Shield,
@@ -153,7 +194,7 @@ export default function ProfileScreen() {
                       <Text style={styles.menuItemLabel}>{item.label}</Text>
                     </View>
                     <View style={styles.menuItemRight}>
-                      {item.value && (
+                      {'value' in item && item.value && (
                         <Text style={styles.menuItemValue}>{item.value}</Text>
                       )}
                       {item.onPress && (
@@ -178,6 +219,16 @@ export default function ProfileScreen() {
         >
           <LogOut size={16} color={COLORS.error} />
           <Text style={styles.logoutText}>Sign Out</Text>
+        </TouchableOpacity>
+
+        {/* Delete Account Button */}
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDeleteAccount}
+          activeOpacity={0.8}
+        >
+          <Trash2 size={16} color="#DC2626" />
+          <Text style={styles.deleteText}>Delete Account</Text>
         </TouchableOpacity>
 
         {/* App Version */}
@@ -323,6 +374,23 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     fontWeight: '600',
     color: COLORS.error,
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    marginTop: SPACING.md,
+  },
+  deleteText: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: '#DC2626',
   },
   versionText: {
     fontSize: FONT_SIZES.xs,

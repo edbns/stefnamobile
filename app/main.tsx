@@ -135,38 +135,6 @@ export default function MainScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Image 
-            source={require('../assets/logo.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <View style={styles.creditsContainer}>
-            <Text style={styles.creditsText}>{balance || 0} credits</Text>
-          </View>
-        </View>
-
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => router.push('/profile')}
-            activeOpacity={0.8}
-          >
-            <User size={20} color={COLORS.text} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={handleLogout}
-            activeOpacity={0.8}
-          >
-            <LogOut size={20} color={COLORS.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* Media Grid */}
       {isLoading && !media?.length ? (
@@ -203,7 +171,16 @@ export default function MainScreen() {
         />
       )}
 
-      {/* Floating Action Button */}
+      {/* Floating Profile Button - Bottom Left */}
+      <TouchableOpacity
+        style={styles.fabProfile}
+        onPress={() => router.push('/profile')}
+        activeOpacity={0.9}
+      >
+        <User size={24} color={COLORS.buttonPrimaryText} />
+        </TouchableOpacity>
+        
+      {/* Floating Action Button - Bottom Right */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push('/composer')}
@@ -227,48 +204,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  logo: {
-    width: 80,
-    height: 30,
-  },
-  creditsContainer: {
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-  },
-  creditsText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   gridContent: {
     padding: GRID_SPACING,
@@ -318,6 +253,22 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
   },
+  fabProfile: {
+    position: 'absolute',
+    left: SPACING.lg,
+    bottom: SPACING.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.buttonPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
   fab: {
     position: 'absolute',
     right: SPACING.lg,
@@ -336,7 +287,7 @@ const styles = StyleSheet.create({
   },
   generatingBanner: {
     position: 'absolute',
-    top: 80,
+    top: SPACING.lg,
     left: SPACING.lg,
     right: SPACING.lg,
     backgroundColor: COLORS.buttonPrimary,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useMediaStore } from '../src/stores/mediaStore';
@@ -25,65 +26,45 @@ export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { media, deleteMedia } = useMediaStore();
-
+  
   const mediaId = params.mediaId as string;
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
 
-  // Find the media item
-  const currentMedia = media?.find((m: any) => m.id === mediaId);
-  const imageUrl = currentMedia?.cloudUrl || currentMedia?.localUri;
+  // Find current media item
+  const mediaIndex = media?.findIndex((m: any) => m.id === mediaId) || 0;
   
-  console.log('🖼️ [MediaViewer] Current media:', {
-    id: mediaId,
-    found: !!currentMedia,
-    hasCloudUrl: !!currentMedia?.cloudUrl,
-    hasLocalUri: !!currentMedia?.localUri,
-    imageUrl: imageUrl?.substring(0, 50)
-  });
+  // Set initial index
+  React.useEffect(() => {
+    setCurrentIndex(mediaIndex);
+  }, [mediaIndex]);
 
-  if (!currentMedia || !imageUrl) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Media not found</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.back()}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const currentMedia = media?.[currentIndex];
+  const imageUrl = currentMedia?.cloudUrl || currentMedia?.localUri;
 
   const handleSave = async () => {
+    if (!imageUrl) return;
+    
     try {
       setIsSaving(true);
       
-      // Request permissions
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Please grant photo library access to save images.');
+        Alert.alert('Permission Required', 'Please grant photo library access.');
         return;
       }
 
-      // Download image
       const filename = `stefna_${Date.now()}.jpg`;
       const fileUri = FileSystem.documentDirectory + filename;
       
-      const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
+      await FileSystem.downloadAsync(imageUrl, fileUri);
+      await MediaLibrary.createAssetAsync(fileUri);
       
-      if (downloadResult.uri) {
-        // Save to photo library
-        await MediaLibrary.createAssetAsync(downloadResult.uri);
-        Alert.alert('Success', 'Image saved to your photo library');
-      }
+      Alert.alert('Saved', 'Image saved to your photos');
     } catch (error) {
-      console.error('Save error:', error);
       Alert.alert('Error', 'Failed to save image');
     } finally {
       setIsSaving(false);
@@ -91,25 +72,21 @@ export default function MediaViewerScreen() {
   };
 
   const handleShare = async () => {
+    if (!imageUrl) return;
+    
     try {
       setIsSharing(true);
       
-      // Download image first
       const filename = `stefna_${Date.now()}.jpg`;
       const fileUri = FileSystem.documentDirectory + filename;
       
-      const downloadResult = await FileSystem.downloadAsync(imageUrl, fileUri);
+      await FileSystem.downloadAsync(imageUrl, fileUri);
       
-      if (downloadResult.uri) {
-        const canShare = await Sharing.isAvailableAsync();
-        if (canShare) {
-          await Sharing.shareAsync(downloadResult.uri);
-        } else {
-          Alert.alert('Error', 'Sharing is not available on this device');
-        }
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri);
       }
     } catch (error) {
-      console.error('Share error:', error);
       Alert.alert('Error', 'Failed to share image');
     } finally {
       setIsSharing(false);
@@ -117,9 +94,11 @@ export default function MediaViewerScreen() {
   };
 
   const handleDelete = () => {
+    if (!currentMedia) return;
+    
     Alert.alert(
       'Delete Image',
-      'Are you sure you want to delete this image? This cannot be undone.',
+      'Are you sure? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -128,11 +107,10 @@ export default function MediaViewerScreen() {
           onPress: async () => {
             try {
               setIsDeleting(true);
-              await deleteMedia(mediaId, currentMedia.cloudId);
+              await deleteMedia(currentMedia.id, currentMedia.cloudId);
               router.back();
-    } catch (error) {
-              console.error('Delete error:', error);
-              Alert.alert('Error', 'Failed to delete image');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete');
               setIsDeleting(false);
             }
           },
@@ -141,18 +119,66 @@ export default function MediaViewerScreen() {
     );
   };
 
+  const renderImage = ({ item }: { item: any }) => {
+    const url = item.cloudUrl || item.localUri;
+    
+    return (
+      <View style={styles.imageSlide}>
+        <Image
+          source={{ uri: url }}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  };
+
+  if (!media || media.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>No media found</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      {/* Image */}
-      <View style={styles.imageContainer}>
-          <Image
-          source={{ uri: imageUrl }}
-            style={styles.image}
-            resizeMode="contain"
-          />
-      </View>
+      {/* Image Carousel */}
+      <FlatList
+        ref={flatListRef}
+        data={media}
+        renderItem={renderImage}
+        keyExtractor={(item: any) => item.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        initialScrollIndex={mediaIndex}
+        getItemLayout={(data, index) => ({
+          length: SCREEN_WIDTH,
+          offset: SCREEN_WIDTH * index,
+          index,
+        })}
+        onScrollToIndexFailed={() => {
+          // Fallback if initial scroll fails
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({ index: mediaIndex, animated: false });
+          }, 100);
+        }}
+        onMomentumScrollEnd={(event) => {
+          const newIndex = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+          setCurrentIndex(newIndex);
+        }}
+      />
 
       {/* Top Bar */}
       <View style={styles.topBar}>
@@ -161,8 +187,15 @@ export default function MediaViewerScreen() {
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
-          <X size={24} color={COLORS.buttonPrimaryText} />
+          <X size={24} color={COLORS.text} />
         </TouchableOpacity>
+        
+        {/* Image Counter */}
+        <View style={styles.counter}>
+          <Text style={styles.counterText}>
+            {currentIndex + 1} / {media.length}
+          </Text>
+        </View>
       </View>
 
       {/* Bottom Actions */}
@@ -174,13 +207,15 @@ export default function MediaViewerScreen() {
           activeOpacity={0.8}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={COLORS.buttonPrimaryText} />
+            <ActivityIndicator size="small" color={COLORS.text} />
           ) : (
-            <Download size={20} color={COLORS.buttonPrimaryText} />
+            <>
+              <Download size={20} color={COLORS.text} />
+              <Text style={styles.actionButtonText}>Save</Text>
+            </>
           )}
-          <Text style={styles.actionButtonText}>Save</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleShare}
@@ -188,13 +223,15 @@ export default function MediaViewerScreen() {
           activeOpacity={0.8}
         >
           {isSharing ? (
-            <ActivityIndicator size="small" color={COLORS.buttonPrimaryText} />
+            <ActivityIndicator size="small" color={COLORS.text} />
           ) : (
-            <Share2 size={20} color={COLORS.buttonPrimaryText} />
+            <>
+              <Share2 size={20} color={COLORS.text} />
+              <Text style={styles.actionButtonText}>Share</Text>
+            </>
           )}
-          <Text style={styles.actionButtonText}>Share</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleDelete}
@@ -204,11 +241,13 @@ export default function MediaViewerScreen() {
           {isDeleting ? (
             <ActivityIndicator size="small" color={COLORS.error} />
           ) : (
-            <Trash2 size={20} color={COLORS.error} />
+            <>
+              <Trash2 size={20} color={COLORS.error} />
+              <Text style={[styles.actionButtonText, { color: COLORS.error }]}>
+                Delete
+              </Text>
+            </>
           )}
-          <Text style={[styles.actionButtonText, { color: COLORS.error }]}>
-            Delete
-          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -218,52 +257,74 @@ export default function MediaViewerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background,
   },
-  imageContainer: {
-    flex: 1,
+  imageSlide: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT - 160,
     alignItems: 'center',
     justifyContent: 'center',
   },
   image: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT - 160,
+    height: '100%',
   },
   topBar: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    paddingTop: 50,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingBottom: SPACING.md,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: COLORS.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  counter: {
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  counterText: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
   bottomBar: {
-    position: 'absolute', 
+    position: 'absolute',
     bottom: 0,
-    left: 0, 
+    left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingVertical: SPACING.lg,
+    backgroundColor: COLORS.background,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   actionButton: {
     alignItems: 'center',
     gap: SPACING.xs,
+    minWidth: 60,
   },
   actionButtonText: {
-    color: COLORS.buttonPrimaryText,
+    color: COLORS.text,
     fontSize: FONT_SIZES.xs,
     fontWeight: '600',
   },
