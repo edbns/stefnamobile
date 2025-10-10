@@ -14,7 +14,7 @@ import { COLORS, SPACING } from '../src/constants/colors';
 import { X } from 'lucide-react-native';
 import UnifiedComposer from '../src/components/UnifiedComposer';
 import { ImagePickerService } from '../src/services/imagePickerService';
-import { GenerationService } from '../src/services/generationService';
+import GenerationService from '../src/services/generationService';
 import { useAuthStore } from '../src/stores/authStore';
 
 export default function ComposerScreen() {
@@ -33,18 +33,26 @@ export default function ComposerScreen() {
           {
             text: 'Take Photo',
             onPress: async () => {
-              const result = await ImagePickerService.takePhoto();
-              if (result && result.uri) {
+              console.log('📸 Opening camera...');
+              const result = await ImagePickerService.captureFromCamera();
+              console.log('📸 Camera result:', result);
+              if (result.success && result.uri) {
                 setSelectedImage(result.uri);
+              } else if (result.error) {
+                Alert.alert('Camera Error', result.error);
               }
             },
           },
           {
             text: 'Choose from Gallery',
             onPress: async () => {
-              const result = await ImagePickerService.pickImage();
-              if (result && result.uri) {
+              console.log('📸 Opening gallery...');
+              const result = await ImagePickerService.pickFromGallery();
+              console.log('📸 Gallery result:', result);
+              if (result.success && result.uri) {
                 setSelectedImage(result.uri);
+              } else if (result.error) {
+                Alert.alert('Gallery Error', result.error);
               }
             },
           },
@@ -53,7 +61,7 @@ export default function ComposerScreen() {
       );
     } catch (error) {
       console.error('Upload error:', error);
-      Alert.alert('Error', 'Failed to upload image');
+      Alert.alert('Error', 'Failed to open picker');
     }
   };
 
@@ -63,29 +71,66 @@ export default function ComposerScreen() {
       return;
     }
 
+    if (!prompt.trim()) {
+      Alert.alert('Error', 'Please enter a prompt');
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
+      // Build generation request
+      let generationMode: 'custom-prompt' | 'edit-photo' | 'unreal-reflection' | 'parallel-self';
+      
+      if (presetId) {
+        // Preset-based generation
+        if (presetId.startsWith('unreal_reflection')) {
+          generationMode = 'unreal-reflection';
+        } else if (presetId.startsWith('parallel_self')) {
+          generationMode = 'parallel-self';
+        } else {
+          generationMode = 'edit-photo';
+        }
+      } else if (selectedImage) {
+        // Edit mode with custom prompt
+        generationMode = 'edit-photo';
+      } else {
+        // Custom text-to-image
+        generationMode = 'custom-prompt';
+      }
+
+      console.log('🚀 [Composer] Starting generation:', {
+        mode: generationMode,
+        hasImage: !!selectedImage,
+        hasPreset: !!presetId,
+        promptLength: prompt.length
+      });
+
+      // Show success alert before navigating
+      Alert.alert(
+        'Generation Started',
+        'Added to queue. We will start processing it shortly.',
+        [{ text: 'OK' }]
+      );
+
       // Navigate to gallery immediately (like website)
       router.replace('/main');
 
       // Start generation in background
-      if (mode === 'custom' && !selectedImage) {
-        // Text-to-image
-        await GenerationService.generateCustom(prompt);
-      } else if (mode === 'edit' && selectedImage) {
-        // Image-to-image with prompt
-        await GenerationService.generateEdit(selectedImage, prompt);
-      } else if (presetId && selectedImage) {
-        // Preset-based generation (Unreal Reflection or Parallel Self)
-        if (presetId.startsWith('unreal_reflection')) {
-          await GenerationService.generateUnrealReflection(selectedImage, presetId);
-        } else if (presetId.startsWith('parallel_self')) {
-          await GenerationService.generateParallelSelf(selectedImage, presetId);
-        }
+      const result = await GenerationService.generate({
+        imageUri: selectedImage || '', // Empty for text-to-image
+        mode: generationMode,
+        presetId: presetId,
+        customPrompt: prompt,
+      });
+
+      console.log('✅ [Composer] Generation result:', result);
+
+      if (!result.success) {
+        Alert.alert('Generation Failed', result.error || 'Please try again');
       }
     } catch (error: any) {
-      console.error('Generation error:', error);
+      console.error('❌ [Composer] Generation error:', error);
       Alert.alert('Generation Failed', error.message || 'Please try again');
     } finally {
       setIsGenerating(false);

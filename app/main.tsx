@@ -42,26 +42,39 @@ export default function MainScreen() {
   useFocusEffect(
     useCallback(() => {
       console.log('📱 Main screen focused - loading data...');
-      loadUserMedia();
-      if (user?.id) {
-        refreshBalance();
-      }
+      console.log('📱 User:', user);
+      console.log('📱 Current balance:', balance);
+      console.log('📱 Current media count:', media?.length);
+      
+    loadUserMedia();
+    if (user?.id) {
+      refreshBalance();
+    }
     }, [user?.id, loadUserMedia, refreshBalance])
   );
 
+  // Debug logs for state changes
+  useEffect(() => {
+    console.log('💰 Balance updated:', balance);
+  }, [balance]);
+
+  useEffect(() => {
+    console.log('🖼️ Media updated:', media?.length, 'items');
+  }, [media]);
+
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadUserMedia();
-    await refreshBalance();
-    setRefreshing(false);
+      await loadUserMedia();
+      await refreshBalance();
+      setRefreshing(false);
   };
 
   const handleMediaPress = (item: any) => {
     router.push({
       pathname: '/media-viewer',
       params: { mediaId: item.id }
-    });
-  };
+      });
+    };
 
   const handleLogout = async () => {
     await logout();
@@ -69,17 +82,25 @@ export default function MainScreen() {
   };
 
   const renderMediaItem = ({ item, index }: { item: any; index: number }) => {
+    // Use cloudUrl first (from API), fallback to localUri
+    const imageUrl = item.cloudUrl || item.localUri;
+    
+    if (!imageUrl) {
+      console.warn('⚠️ Media item has no URL:', item);
+      return null;
+    }
+
     return (
-      <TouchableOpacity
+      <TouchableOpacity 
         style={[styles.mediaItem, { width: IMAGE_SIZE, height: IMAGE_SIZE }]}
         onPress={() => handleMediaPress(item)}
         activeOpacity={0.9}
       >
-        <Image
-          source={{ uri: item.url }}
+            <Image 
+          source={{ uri: imageUrl }}
           style={styles.mediaImage}
-          resizeMode="cover"
-        />
+              resizeMode="cover"
+            />
       </TouchableOpacity>
     );
   };
@@ -182,14 +203,14 @@ export default function MainScreen() {
         activeOpacity={0.9}
       >
         <Plus size={24} color={COLORS.buttonPrimaryText} />
-      </TouchableOpacity>
-
+        </TouchableOpacity>
+        
       {/* Generation Indicator */}
       {isGenerating && (
         <View style={styles.generatingBanner}>
           <ActivityIndicator size="small" color={COLORS.buttonPrimaryText} />
           <Text style={styles.generatingText}>Generating...</Text>
-        </View>
+      </View>
       )}
     </SafeAreaView>
   );

@@ -46,13 +46,13 @@ export default function Layout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" backgroundColor="#f5f5f5" />
+      <StatusBar style="dark" backgroundColor={COLORS.background} />
       <NotificationManager />
       <Stack
         screenOptions={{
           headerShown: false,
           contentStyle: {
-            backgroundColor: '#f5f5f5',
+            backgroundColor: COLORS.background,
           },
           animation: 'slide_from_right',
           animationDuration: 200, // Faster animations

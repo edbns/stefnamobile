@@ -25,7 +25,7 @@ export default function MediaViewerScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { media, deleteMedia } = useMediaStore();
-  
+
   const mediaId = params.mediaId as string;
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -33,7 +33,15 @@ export default function MediaViewerScreen() {
 
   // Find the media item
   const currentMedia = media?.find((m: any) => m.id === mediaId);
-  const imageUrl = currentMedia?.url || currentMedia?.outputUrl;
+  const imageUrl = currentMedia?.cloudUrl || currentMedia?.localUri;
+  
+  console.log('🖼️ [MediaViewer] Current media:', {
+    id: mediaId,
+    found: !!currentMedia,
+    hasCloudUrl: !!currentMedia?.cloudUrl,
+    hasLocalUri: !!currentMedia?.localUri,
+    imageUrl: imageUrl?.substring(0, 50)
+  });
 
   if (!currentMedia || !imageUrl) {
     return (
@@ -122,7 +130,7 @@ export default function MediaViewerScreen() {
               setIsDeleting(true);
               await deleteMedia(mediaId, currentMedia.cloudId);
               router.back();
-            } catch (error) {
+    } catch (error) {
               console.error('Delete error:', error);
               Alert.alert('Error', 'Failed to delete image');
               setIsDeleting(false);
@@ -139,11 +147,11 @@ export default function MediaViewerScreen() {
       
       {/* Image */}
       <View style={styles.imageContainer}>
-        <Image
+          <Image
           source={{ uri: imageUrl }}
-          style={styles.image}
-          resizeMode="contain"
-        />
+            style={styles.image}
+            resizeMode="contain"
+          />
       </View>
 
       {/* Top Bar */}
@@ -172,7 +180,7 @@ export default function MediaViewerScreen() {
           )}
           <Text style={styles.actionButtonText}>Save</Text>
         </TouchableOpacity>
-
+        
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleShare}
@@ -186,7 +194,7 @@ export default function MediaViewerScreen() {
           )}
           <Text style={styles.actionButtonText}>Share</Text>
         </TouchableOpacity>
-
+        
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleDelete}
@@ -240,9 +248,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bottomBar: {
-    position: 'absolute',
+    position: 'absolute', 
     bottom: 0,
-    left: 0,
+    left: 0, 
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
