@@ -15,14 +15,12 @@ import {
   applyAdvancedPromptEnhancements 
 } from '../utils/promptEnhancement';
 import { getUnrealReflectionPreset } from '../presets/unrealReflection';
-import { getGhibliReactionPreset } from '../presets/ghibliReact';
-import { getNeoTokyoGlitchPreset } from '../presets/neoTokyoGlitch';
 import { getParallelSelfPreset } from '../presets/parallelSelf';
 import NotificationService from './notificationService';
 import CacheService from './cacheService';
 import PerformanceService from './performanceService';
 
-export type GenerationMode = 'presets' | 'custom-prompt' | 'unreal-reflection' | 'ghibli-reaction' | 'neo-glitch' | 'edit-photo' | 'parallel-self';
+export type GenerationMode = 'presets' | 'custom-prompt' | 'unreal-reflection' | 'edit-photo' | 'parallel-self';
 
 export interface GenerationRequest {
   imageUri: string;
@@ -542,8 +540,6 @@ class GenerationService {
       'presets': 'presets',
       'custom-prompt': 'custom',
       'unreal-reflection': 'unreal_reflection',
-      'ghibli-reaction': 'ghibli_reaction',
-      'neo-glitch': 'neo_glitch',
       'edit-photo': 'edit',
       'parallel-self': 'parallel_self'
     };
@@ -634,16 +630,10 @@ class GenerationService {
           unrealReflectionPresetId: request.presetId
         };
 
-      case 'ghibli-reaction':
+      case 'parallel-self':
         return {
           ...basePayload,
-          ghibliReactionPresetId: request.presetId
-        };
-
-      case 'neo-glitch':
-        return {
-          ...basePayload,
-          neoGlitchPresetId: request.presetId
+          parallelSelfPresetId: request.presetId
         };
 
       case 'edit-photo':
@@ -659,7 +649,7 @@ class GenerationService {
 
   /**
    * Get prompt for the generation mode
-   * Uses centralized presets for unreal-reflection, ghibli-reaction, neo-glitch modes
+   * Uses centralized presets for unreal-reflection and parallel-self modes
    */
   private getPromptForMode(request: GenerationRequest): string {
     console.log('[Mobile Generation] getPromptForMode called:', {
@@ -694,18 +684,6 @@ class GenerationService {
         prompt: preset?.prompt?.substring(0, 100) + '...',
         label: preset?.label
       });
-      return preset?.prompt || 'Transform the image with artistic enhancement';
-    }
-
-    // For ghibli-reaction mode, use centralized presets
-    if (request.mode === 'ghibli-reaction' && request.presetId) {
-      const preset = getGhibliReactionPreset(request.presetId);
-      return preset?.prompt || 'Transform the image with artistic enhancement';
-    }
-
-    // For neo-glitch mode, use centralized presets
-    if (request.mode === 'neo-glitch' && request.presetId) {
-      const preset = getNeoTokyoGlitchPreset(request.presetId);
       return preset?.prompt || 'Transform the image with artistic enhancement';
     }
 
