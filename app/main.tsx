@@ -120,9 +120,16 @@ export default function MainScreen() {
     );
   };
 
+  // Sort media by createdAt descending (latest first)
+  const sortedMedia = (media || []).sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA; // Latest first
+  });
+
   const allItems = [
     ...activeGenerations.map((_, i) => ({ id: `gen-${i}`, isPlaceholder: true })),
-    ...(media || [])
+    ...sortedMedia
   ];
 
   return (

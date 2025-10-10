@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { COLORS, SPACING } from '../src/constants/colors';
 import { X } from 'lucide-react-native';
 import UnifiedComposer from '../src/components/UnifiedComposer';
+import GeneratingOverlay from '../src/components/GeneratingOverlay';
 import { ImagePickerService } from '../src/services/imagePickerService';
 import GenerationService from '../src/services/generationService';
 import { useAuthStore } from '../src/stores/authStore';
@@ -34,12 +35,23 @@ export default function ComposerScreen() {
             text: 'Take Photo',
             onPress: async () => {
               console.log('📸 Opening camera...');
-              const result = await ImagePickerService.captureFromCamera();
-              console.log('📸 Camera result:', result);
-              if (result.success && result.uri) {
-                setSelectedImage(result.uri);
-              } else if (result.error) {
-                Alert.alert('Camera Error', result.error);
+              try {
+                const result = await ImagePickerService.captureFromCamera({
+                  quality: 0.8,
+                  allowsEditing: false,
+                });
+                console.log('📸 Camera result:', result);
+                
+                if (result.success && result.uri) {
+                  console.log('✅ Setting image from camera:', result.uri.substring(0, 50));
+                  setSelectedImage(result.uri);
+                } else if (result.error) {
+                  console.error('❌ Camera error:', result.error);
+                  Alert.alert('Camera Error', result.error);
+                }
+              } catch (error) {
+                console.error('❌ Camera exception:', error);
+                Alert.alert('Camera Error', 'Failed to capture photo');
               }
             },
           },
@@ -106,19 +118,11 @@ export default function ComposerScreen() {
         promptLength: prompt.length
       });
 
-      // Show success alert before navigating
-      Alert.alert(
-        'Generation Started',
-        'Added to queue. We will start processing it shortly.',
-        [{ text: 'OK' }]
-      );
-
-      // Navigate to gallery immediately (like website)
-      router.replace('/main');
-
-      // Start generation in background
+      // Start generation (progress overlay will show)
+      // For custom mode without image, we still need a dummy image for the API
+      // The backend will ignore it for text-to-image
       const result = await GenerationService.generate({
-        imageUri: selectedImage || '', // Empty for text-to-image
+        imageUri: selectedImage || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', // 1x1 transparent PNG for custom mode
         mode: generationMode,
         presetId: presetId,
         customPrompt: prompt,
@@ -126,7 +130,10 @@ export default function ComposerScreen() {
 
       console.log('✅ [Composer] Generation result:', result);
 
-      if (!result.success) {
+      if (result.success) {
+        // Navigate to gallery after successful generation
+        router.replace('/main');
+      } else {
         Alert.alert('Generation Failed', result.error || 'Please try again');
       }
     } catch (error: any) {
@@ -151,6 +158,7 @@ export default function ComposerScreen() {
         style={styles.backButton}
         onPress={() => router.back()}
         activeOpacity={0.8}
+        disabled={isGenerating}
       >
         <X size={24} color={COLORS.text} />
       </TouchableOpacity>
@@ -168,6 +176,9 @@ export default function ComposerScreen() {
           isGenerating={isGenerating}
         />
       </KeyboardAvoidingView>
+
+      {/* Progress Overlay */}
+      <GeneratingOverlay visible={isGenerating} />
     </SafeAreaView>
   );
 }

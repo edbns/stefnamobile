@@ -1,0 +1,12 @@
+Press Ctrl+C in your terminal first to exit the dquote> prompt
+
+Then run these commands:
+
+cd /Users/sennie/Desktop/Stefna-main/stefnamobile
+
+git add .
+
+git commit -m "Fix all 6 issues - media sorting, progress screen, custom mode, dynamic sizing, camera, presets"
+
+git push origin main
+

@@ -15,6 +15,7 @@ import { X, Plus, ArrowUp, Wand2 } from 'lucide-react-native';
 import { COLORS, SPACING, BORDER_RADIUS, FONT_SIZES } from '../constants/colors';
 import { UNREAL_REFLECTION_PRESETS } from '../presets/unrealReflection';
 import { PARALLEL_SELF_PRESETS } from '../presets/parallelSelf';
+import { MagicWandService } from '../services/magicWandService';
 
 interface UnifiedComposerProps {
   selectedImage: string | null;
@@ -53,23 +54,66 @@ export default function UnifiedComposer({
     };
   }, []);
 
-  // Smart media height based on mode and keyboard
+  // Smart media height based on mode and keyboard (matching mobile website clamp values)
   const getMediaHeight = () => {
-    if (isKeyboardVisible) return 100; // Small when keyboard open
-    if (mode === 'combined-presets') return 140; // Medium for presets
-    return 200; // Large for "Your Prompt" mode
+    const vh = SCREEN_HEIGHT / 100;
+    
+    // Keyboard is open - very small: clamp(100px, 12vh, 120px)
+    if (isKeyboardVisible) {
+      return Math.max(100, Math.min(12 * vh, 120));
+    }
+    
+    // "Get These Looks" mode - smaller: clamp(140px, 16vh, 170px)
+    if (mode === 'combined-presets') {
+      return Math.max(140, Math.min(16 * vh, 170));
+    }
+    
+    // "Your Prompt" mode - BIG: clamp(200px, 26vh, 260px)
+    return Math.max(200, Math.min(26 * vh, 260));
   };
 
-  // Smart button position
+  // Smart button position (matching mobile website)
   const getButtonPosition = () => {
-    if (mode === 'combined-presets') return 230; // Higher for presets
-    return SCREEN_HEIGHT - 260; // Bottom-anchored for "Your Prompt"
+    const vh = SCREEN_HEIGHT / 100;
+    
+    // Get These Looks - from top: clamp(230px, 28vh, 270px)
+    if (mode === 'combined-presets') {
+      return Math.max(230, Math.min(28 * vh, 270));
+    }
+    
+    // Your Prompt - from bottom: clamp(195px, 27vh, 240px)
+    return Math.max(195, Math.min(27 * vh, 240));
+  };
+
+  // Smart presets position (matching mobile website)
+  const getPresetsPosition = () => {
+    const vh = SCREEN_HEIGHT / 100;
+    // clamp(280px, 34vh, 320px)
+    return Math.max(280, Math.min(34 * vh, 320));
   };
 
   const handleEnhance = async () => {
-    // TODO: Integrate with magic wand service
+    if (!prompt.trim()) return;
+
     setIsEnhancing(true);
-    setTimeout(() => setIsEnhancing(false), 1000);
+    
+    try {
+      const result = await MagicWandService.enhancePrompt(prompt);
+      
+      if (result.success && result.enhancedPrompt) {
+        setPrompt(result.enhancedPrompt);
+        console.log('✨ [Enhance] Prompt enhanced:', {
+          original: result.originalPrompt.length,
+          enhanced: result.enhancedPrompt.length,
+          confidence: result.confidence
+        });
+      }
+    } catch (error) {
+      console.error('❌ [Enhance] Failed:', error);
+      // Silent fail - just keep original prompt
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
   const handleGenerate = () => {
@@ -87,7 +131,7 @@ export default function UnifiedComposer({
     <View style={styles.container}>
       {/* Media Preview (if image uploaded) */}
       {selectedImage && (
-        <View style={[styles.mediaContainer, { top: 72, height: getMediaHeight() }]}>
+        <View style={[styles.mediaContainer, { top: 64, height: getMediaHeight() }]}>
           <Image
             source={{ uri: selectedImage }}
             style={styles.mediaImage}
@@ -100,7 +144,7 @@ export default function UnifiedComposer({
             onPress={onClearImage}
             activeOpacity={0.8}
           >
-            <X size={14} color={COLORS.text} />
+            <X size={16} color={COLORS.text} />
           </TouchableOpacity>
         </View>
       )}
@@ -111,7 +155,7 @@ export default function UnifiedComposer({
           styles.actionButtons,
           mode === 'combined-presets' 
             ? { top: getButtonPosition() } 
-            : { bottom: 195 }
+            : { bottom: getButtonPosition() }
         ]}>
           <TouchableOpacity
             style={[
@@ -150,7 +194,7 @@ export default function UnifiedComposer({
       {/* Combined Presets Grid (when "Get These Looks" is active) */}
       {selectedImage && mode === 'combined-presets' && (
         <ScrollView
-          style={styles.presetsContainer}
+          style={[styles.presetsContainer, { top: getPresetsPosition() }]}
           contentContainerStyle={styles.presetsContent}
           showsVerticalScrollIndicator={false}
         >
@@ -159,12 +203,25 @@ export default function UnifiedComposer({
               key={preset.id}
               style={styles.presetCard}
               onPress={() => {
-                // TODO: Trigger generation with preset
+                // Switch back to edit mode and trigger generation
+                setMode('edit');
                 onGenerate('edit', preset.prompt, preset.id);
               }}
               activeOpacity={0.8}
             >
-              <Text style={styles.presetLabel}>{preset.label}</Text>
+              <View style={styles.presetCardContent}>
+                <View style={styles.presetHeader}>
+                  <Text style={styles.presetLabel}>{preset.label}</Text>
+                  <View style={styles.presetBadge}>
+                    <Text style={styles.presetBadgeText}>
+                      {preset.type === 'unreal' ? 'Unreal™' : 'Parallel™'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.presetDescription} numberOfLines={2}>
+                  {preset.prompt.substring(0, 100)}...
+                </Text>
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -314,7 +371,6 @@ const styles = StyleSheet.create({
   },
   presetsContainer: {
     position: 'absolute',
-    top: 280,
     left: 0,
     right: 0,
     bottom: 0,
@@ -331,11 +387,38 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
+    marginBottom: SPACING.sm,
+  },
+  presetCardContent: {
+    gap: SPACING.sm,
+  },
+  presetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
   },
   presetLabel: {
     fontSize: FONT_SIZES.md,
     fontWeight: '600',
     color: COLORS.text,
+    flex: 1,
+  },
+  presetBadge: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  presetBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+    color: COLORS.buttonPrimaryText,
+  },
+  presetDescription: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    lineHeight: 16,
   },
   promptContainer: {
     backgroundColor: COLORS.background,
