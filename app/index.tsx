@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../src/stores/authStore';
 import * as SplashScreen from 'expo-splash-screen';
+import { COLORS } from '../src/constants/colors';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -24,6 +26,19 @@ export default function AppSplashScreen() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Show nothing - let Expo's splash screen handle the loading
-  return null;
+  // Show loading screen instead of null
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color={COLORS.text} />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

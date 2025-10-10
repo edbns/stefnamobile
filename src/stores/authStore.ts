@@ -19,6 +19,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
   error: null,
 
+  // Set auth data after successful verification (called from verify screen)
+  setAuth: async (token: string, user: User): Promise<void> => {
+    try {
+      set({ isLoading: true });
+
+      // Store auth data
+      await AsyncStorage.setItem('auth_token', token);
+      await AsyncStorage.setItem('user_profile', JSON.stringify(user));
+
+      set({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Set auth error:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  // Legacy login method - kept for backward compatibility but not used
   login: async (email: string, otp: string): Promise<boolean> => {
     try {
       set({ isLoading: true });
@@ -32,18 +54,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           credits: result.user.credits || 0,
         };
 
-        // Store auth data
-        await AsyncStorage.setItem('auth_token', result.token);
-        await AsyncStorage.setItem('user_profile', JSON.stringify(user));
-
-        set({
-          user,
-          token: result.token,
-          isAuthenticated: true,
-          isLoading: false
-        });
-
-        // No welcome notification needed - user will see main screen
+        // Use setAuth instead of duplicating code
+        await get().setAuth(result.token, user);
 
         return true;
       } else {

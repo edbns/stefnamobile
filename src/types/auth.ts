@@ -21,6 +21,7 @@ export interface AuthState {
   error: string | null;
 
   // Actions
+  setAuth: (token: string, user: User) => Promise<void>;
   login: (email: string, otp: string) => Promise<boolean>;
   logout: () => Promise<void>;
   initialize: () => Promise<void>;

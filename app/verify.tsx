@@ -19,8 +19,8 @@ import { ArrowRight, ArrowLeft } from 'lucide-react-native';
 export default function VerifyScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const { login } = useAuthStore();
-  
+  const { setAuth } = useAuthStore();
+
   const email = (params.email as string) || '';
   const [otp, setOtp] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -37,12 +37,12 @@ export default function VerifyScreen() {
     }
   }, [resendTimer]);
 
-  // Auto-verify when 6 digits entered
+  // Auto-verify when 6 digits entered (only if no error)
   useEffect(() => {
-    if (otp.length === 6 && !isVerifying) {
+    if (otp.length === 6 && !isVerifying && !error) {
       handleVerifyOTP(otp);
     }
-  }, [otp]);
+  }, [otp, error]);
 
   const handleVerifyOTP = async (code: string) => {
     setIsVerifying(true);
@@ -52,10 +52,19 @@ export default function VerifyScreen() {
     try {
       const result = await AuthService.verifyOTP(email, code);
       
-      if (result.success) {
+      if (result.success && result.token && result.user) {
         setSuccess('Login successful!');
-        // Store auth and navigate
-        await login(result.token!, result.user!);
+        
+        // Store auth data (token and user)
+        const user = {
+          id: result.user.id,
+          email: result.user.email,
+          credits: result.user.credits || 0,
+        };
+        
+        await setAuth(result.token, user);
+        
+        // Navigate to main screen
         router.replace('/main');
       } else {
         setError(result.error || 'Invalid code');
@@ -63,7 +72,7 @@ export default function VerifyScreen() {
     } catch (err: any) {
       setError(err.message || 'Verification failed');
     } finally {
-      setIsVerifying(false);
+    setIsVerifying(false);
     }
   };
 
@@ -92,20 +101,26 @@ export default function VerifyScreen() {
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleTryAgain = () => {
+    setOtp('');
+    setError('');
+    setSuccess('');
+  };
+
   return (
-    <KeyboardAvoidingView
+      <KeyboardAvoidingView 
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Enter Login Code</Text>
-          <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
+            <Text style={styles.title}>Enter Login Code</Text>
+            <Text style={styles.subtitle}>We sent a 6-digit code to {email}</Text>
           <Text style={styles.hint}>No code? Check your spam folder</Text>
         </View>
 
@@ -196,11 +211,18 @@ export default function VerifyScreen() {
           {error ? (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity
+                style={styles.tryAgainButton}
+                onPress={handleTryAgain}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.tryAgainButtonText}>Clear & Try Again</Text>
+              </TouchableOpacity>
             </View>
           ) : null}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
   );
 }
 
@@ -234,14 +256,14 @@ const styles = StyleSheet.create({
   hint: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textTertiary,
-    textAlign: 'center',
+    textAlign: 'center', 
     marginTop: SPACING.xs,
   },
   formCard: {
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
-    borderWidth: 1,
+    borderWidth: 1, 
     borderColor: COLORS.border,
   },
   inputGroup: {
@@ -356,6 +378,18 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: FONT_SIZES.sm,
     textAlign: 'center',
+    marginBottom: SPACING.sm,
+  },
+  tryAgainButton: {
+    marginTop: SPACING.xs,
+    paddingVertical: SPACING.xs,
+  },
+  tryAgainButtonText: {
+    color: COLORS.error,
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+    textAlign: 'center',
+    textDecorationLine: 'underline',
   },
   footer: {
     marginTop: SPACING.xl,
