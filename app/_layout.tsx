@@ -2,8 +2,9 @@ import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { useAuthStore } from '../src/stores/authStore';
-import SplashScreen from './splash';
+import { COLORS } from '../src/constants/colors';
 import NotificationManager from '../src/components/NotificationManager';
 
 export default function Layout() {
@@ -14,13 +15,12 @@ export default function Layout() {
 
   useEffect(() => {
     initialize();
-    
     console.log('🚀 App initialized - Expo will handle updates automatically');
     
-    // Hide splash screen after auth initialization completes
+    // Hide loading after a brief moment to let initialization complete
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2000); // Increased to 2 seconds for smoother transition
+    }, 500);
     
     return () => clearTimeout(timer);
   }, [initialize]);
@@ -35,9 +35,13 @@ export default function Layout() {
     }
   }, [isAuthenticated, isLoading, pathname, router]);
 
-  // Show splash screen during initialization
-  if (showSplash) {
-    return <SplashScreen />;
+  // Show simple loading during initialization (not the full splash screen)
+  if (showSplash || isLoading) {
+    return (
+      <View style={layoutStyles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.text} />
+      </View>
+    );
   }
 
   return (
@@ -196,3 +200,12 @@ export default function Layout() {
     </SafeAreaProvider>
   );
 }
+
+const layoutStyles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
